@@ -151,7 +151,9 @@ export const uploadCompletionDocument = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid document type" });
     }
 
-    const url = await storeDocumentImage(file, `/booking-docs/${booking.reservationId}`);
+    const url = await storeDocumentImage(file, `/booking-docs/${booking.reservationId}`, {
+      ownerId: booking.owner,
+    });
     file = null;
 
     booking.completion = booking.completion || {};

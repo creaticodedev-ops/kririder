@@ -47,6 +47,7 @@ import {
   isModelAvailableForDates,
   publicUnavailablePayload,
 } from "../services/availabilityService.js";
+import { requirePublicOwnerId } from "../services/publicTenant.js";
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'ready_for_pickup', 'active', 'completed', 'cancelled'];
 const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'];
@@ -223,7 +224,10 @@ export const checkAvailabilityOfCar = async (req, res) => {
       return res.status(400).json({ success: false, message: dates.message });
     }
 
-    const carQuery = { isAvaliable: true, owner: { $ne: null } };
+    const ownerId = await requirePublicOwnerId(res);
+    if (!ownerId) return;
+
+    const carQuery = { isAvaliable: true, owner: ownerId };
     if (location) {
       Object.assign(carQuery, locationAvailabilityFilter(location));
     }
@@ -276,12 +280,18 @@ export const quoteBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car not found' });
     }
 
+    const publicOwnerId = await requirePublicOwnerId(res);
+    if (!publicOwnerId) return;
+    if (String(carData.owner) !== String(publicOwnerId)) {
+      return res.status(404).json({ success: false, message: 'Car not found' });
+    }
+
     let pickupLoc = null;
     let returnLoc = null;
     if (mongoose.isValidObjectId(pickupLocationId) && mongoose.isValidObjectId(returnLocationId)) {
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true }),
+        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: carData.owner }),
+        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: carData.owner }),
       ]);
     }
 
@@ -418,6 +428,12 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car is not available for booking' });
     }
 
+    const publicOwnerId = await requirePublicOwnerId(res);
+    if (!publicOwnerId) return;
+    if (String(carData.owner) !== String(publicOwnerId)) {
+      return res.status(404).json({ success: false, message: 'Car is not available for booking' });
+    }
+
     const assignedCar = await resolveAvailableCarUnit({
       ownerId: carData.owner,
       brand: carData.brand,
@@ -462,8 +478,8 @@ export const createBooking = async (req, res) => {
     let returnLoc = null;
     if (hasLocationIds) {
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true }),
+        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: carForBooking.owner }),
+        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: carForBooking.owner }),
       ]);
       if (!pickupLoc || !returnLoc) {
         return res.status(400).json({ success: false, message: 'Please select valid pickup and drop-off locations' });
@@ -596,6 +612,7 @@ export const createBooking = async (req, res) => {
     try {
       await Payment.create({
         booking: booking._id,
+        owner: carForBooking.owner,
         user: null,
         amount: price,
         status: 'pending',
@@ -782,8 +799,8 @@ export const createWalkInBooking = async (req, res) => {
     let returnLoc = null;
     if (hasLocationIds) {
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true }),
+        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: ownerId }),
+        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: ownerId }),
       ]);
       if (!pickupLoc || !returnLoc) {
         return res.status(400).json({ success: false, message: 'Please select valid pickup and drop-off locations' });
@@ -948,6 +965,7 @@ export const createWalkInBooking = async (req, res) => {
     try {
       await Payment.create({
         booking: booking._id,
+        owner: ownerId,
         user: null,
         amount: price,
         status: paymentStatus === 'paid' ? 'paid' : 'pending',
@@ -1379,10 +1397,10 @@ export const updateBooking = async (req, res) => {
       if (booking.pickupLocationId || booking.returnLocationId) {
         [pickupLoc, returnLoc] = await Promise.all([
           booking.pickupLocationId
-            ? PickupLocation.findById(booking.pickupLocationId)
+            ? PickupLocation.findOne({ _id: booking.pickupLocationId, owner: booking.owner })
             : null,
           booking.returnLocationId
-            ? PickupLocation.findById(booking.returnLocationId)
+            ? PickupLocation.findOne({ _id: booking.returnLocationId, owner: booking.owner })
             : null,
         ]);
         if (pickupLoc && returnLoc) {

@@ -255,7 +255,9 @@ export const uploadTemplateLogo = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
-    const stored = await persistDurableTemplateAsset(template._id, req.file, 'logo');
+    const stored = await persistDurableTemplateAsset(template._id, req.file, 'logo', {
+      ownerId: req.user._id,
+    });
     template.logoUrl = stored.url;
     await template.save();
 
@@ -289,7 +291,9 @@ export const uploadTemplateSignature = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
-    const stored = await persistDurableTemplateAsset(template._id, req.file, 'signature');
+    const stored = await persistDurableTemplateAsset(template._id, req.file, 'signature', {
+      ownerId: req.user._id,
+    });
     template.companySignatureUrl = stored.url;
     await template.save();
 
@@ -316,7 +320,7 @@ export const clearTemplateLogo = async (req, res) => {
     if (!template) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
-    clearLocalTemplateAsset(template._id, 'logo');
+    clearLocalTemplateAsset(template._id, 'logo', { ownerId: req.user._id });
     template.logoUrl = '';
     await template.save();
     res.json({ success: true, message: 'Logo removed', template });
@@ -335,7 +339,7 @@ export const clearTemplateSignature = async (req, res) => {
     if (!template) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
-    clearLocalTemplateAsset(template._id, 'signature');
+    clearLocalTemplateAsset(template._id, 'signature', { ownerId: req.user._id });
     template.companySignatureUrl = '';
     await template.save();
     res.json({ success: true, message: 'Signature removed', template });

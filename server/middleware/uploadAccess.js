@@ -8,14 +8,14 @@ import User from '../models/User.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOADS_ROOT = path.join(__dirname, '..', 'uploads');
 
-/** Prefixes that require signed URL or owner/superadmin JWT */
+/** Prefixes that require signed URL or owner-scoped JWT / superadmin */
 const PROTECTED_PREFIXES = ['documents', 'contracts', 'templates', 'tmp'];
 
 const hmacSecret = () => process.env.JWT_SECRET || 'dev';
 
 /**
  * Create a time-limited signature for a path under /uploads.
- * relPath example: "documents/RES-123/contract.pdf"
+ * relPath example: "documents/<ownerId>/files/contract.pdf"
  */
 export const signUploadAccess = (relPath, expiresInSec = 60 * 60 * 24 * 7) => {
   const normalized = String(relPath || '').replace(/^\/+/, '').replace(/\\/g, '/');
@@ -83,7 +83,24 @@ const isProtectedUploadPath = (rel) => {
 };
 
 /**
- * Protect sensitive /uploads trees — requires signed query OR owner/superadmin JWT.
+ * Owner JWT may only access paths namespaced under their own id.
+ * Legacy flat trees (documents/files/*, templates/* without owner) require a signed URL.
+ * Superadmin retains full access for support.
+ */
+export const ownerMayAccessUploadPath = (relNormalized, ownerId) => {
+  if (!relNormalized || !ownerId) return false;
+  const id = String(ownerId).toLowerCase();
+  const prefixes = [
+    `contracts/${id}/`,
+    `documents/${id}/`,
+    `templates/${id}/`,
+    `tmp/${id}/`,
+  ];
+  return prefixes.some((p) => relNormalized.startsWith(p));
+};
+
+/**
+ * Protect sensitive /uploads trees — requires signed query OR scoped owner/superadmin JWT.
  * Decodes percent-encoding before the prefix check (blocks /uploads/%64ocuments bypass).
  */
 export const protectDocumentUploads = async (req, res, next) => {
@@ -121,7 +138,12 @@ export const protectDocumentUploads = async (req, res, next) => {
       ) {
         const tv = decoded.tv ?? 0;
         if ((user.tokenVersion || 0) === tv) {
-          return next();
+          if (user.role === 'superadmin') {
+            return next();
+          }
+          if (ownerMayAccessUploadPath(relNormalized, user._id)) {
+            return next();
+          }
         }
       }
     } catch {
@@ -146,4 +168,5 @@ export default {
   verifyUploadAccess,
   appendSignedQuery,
   protectDocumentUploads,
+  ownerMayAccessUploadPath,
 };

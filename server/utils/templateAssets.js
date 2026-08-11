@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -5,11 +6,21 @@ import { cleanupUploadedFile } from '../middleware/multer.js';
 import { moveUploadedFile } from './fileMove.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_ASSET_DIR = path.join(__dirname, '..', 'uploads', 'templates');
+const TEMPLATE_ASSET_ROOT = path.join(__dirname, '..', 'uploads', 'templates');
 const MAX_INLINE_BYTES = 1.5 * 1024 * 1024;
 
-const ensureTemplateAssetDir = () => {
-  if (!fs.existsSync(TEMPLATE_ASSET_DIR)) fs.mkdirSync(TEMPLATE_ASSET_DIR, { recursive: true });
+const ownerSegment = (ownerId) => {
+  const id = String(ownerId || '').trim();
+  if (!id) return '_orphan';
+  return id.replace(/[^a-fA-F0-9]/g, '') || '_orphan';
+};
+
+const templateDirForOwner = (ownerId) => path.join(TEMPLATE_ASSET_ROOT, ownerSegment(ownerId));
+
+const ensureTemplateAssetDir = (ownerId) => {
+  const dir = templateDirForOwner(ownerId);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
 };
 
 const mimeFromExt = (ext = '') => {
@@ -36,8 +47,10 @@ export const fileToDataUri = (filePath) => {
  * 1) Prefer ImageKit CDN URL (survives deploys)
  * 2) Otherwise store a data URI in Mongo (survives ephemeral local disk)
  * Local files are still written when possible for admin preview convenience.
+ *
+ * Paths: uploads/templates/<ownerId>/<kind>-<templateId>.<ext>
  */
-export const persistDurableTemplateAsset = async (templateId, uploadedFile, kind) => {
+export const persistDurableTemplateAsset = async (templateId, uploadedFile, kind, opts = {}) => {
   if (!uploadedFile?.path) throw new Error('No uploaded file');
 
   const hasImageKit =
@@ -47,16 +60,18 @@ export const persistDurableTemplateAsset = async (templateId, uploadedFile, kind
 
   if (hasImageKit) {
     const { storeDocumentImage } = await import('../services/documentStore.js');
-    const url = await storeDocumentImage(uploadedFile, `/export-templates/${kind}`);
+    const url = await storeDocumentImage(uploadedFile, `/export-templates/${kind}`, {
+      ownerId: opts.ownerId,
+    });
     return { url, storage: 'imagekit' };
   }
 
-  ensureTemplateAssetDir();
+  const dir = ensureTemplateAssetDir(opts.ownerId);
   const ext = path.extname(uploadedFile.originalname || '') || '.png';
   const safeExt = ext.includes('.') ? ext : '.png';
-  const fileName = `${kind}-${templateId}${safeExt}`;
-  const destPath = path.join(TEMPLATE_ASSET_DIR, fileName);
-  if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+  const nonce = crypto.randomBytes(4).toString('hex');
+  const fileName = `${kind}-${templateId}-${nonce}${safeExt}`;
+  const destPath = path.join(dir, fileName);
   moveUploadedFile(uploadedFile.path, destPath);
 
   const dataUri = fileToDataUri(destPath);
@@ -64,20 +79,28 @@ export const persistDurableTemplateAsset = async (templateId, uploadedFile, kind
     return { url: dataUri, storage: 'data-uri', localPath: destPath };
   }
 
-  // Oversized: keep local public URL (best effort without ImageKit)
+  const seg = ownerSegment(opts.ownerId);
   const base = (process.env.API_PUBLIC_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
   return {
-    url: `${base}/uploads/templates/${fileName}`,
+    url: `${base}/uploads/templates/${seg}/${fileName}`,
     storage: 'local',
     localPath: destPath,
   };
 };
 
-export const clearLocalTemplateAsset = (templateId, kind) => {
+export const clearLocalTemplateAsset = (templateId, kind, opts = {}) => {
   try {
-    ensureTemplateAssetDir();
+    const dir = ensureTemplateAssetDir(opts.ownerId);
+    if (!fs.existsSync(dir)) return;
+    const prefix = `${kind}-${templateId}`;
+    for (const name of fs.readdirSync(dir)) {
+      if (name.startsWith(prefix)) {
+        fs.unlinkSync(path.join(dir, name));
+      }
+    }
+    // Legacy flat path (pre-P0)
     for (const ext of ['.png', '.jpg', '.jpeg', '.webp', '.gif']) {
-      const candidate = path.join(TEMPLATE_ASSET_DIR, `${kind}-${templateId}${ext}`);
+      const candidate = path.join(TEMPLATE_ASSET_ROOT, `${kind}-${templateId}${ext}`);
       if (fs.existsSync(candidate)) fs.unlinkSync(candidate);
     }
   } catch (error) {

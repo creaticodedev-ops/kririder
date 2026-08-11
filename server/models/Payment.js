@@ -1,8 +1,12 @@
 import mongoose from 'mongoose';
 
+const { ObjectId } = mongoose.Schema.Types;
+
 const paymentSchema = new mongoose.Schema({
-  booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  booking: { type: ObjectId, ref: 'Booking', required: true },
+  /** Tenant root — denormalized from booking.owner for defence in depth */
+  owner: { type: ObjectId, ref: 'User', index: true, default: null },
+  user: { type: ObjectId, ref: 'User', default: null },
   amount: { type: Number, required: true },
   currency: { type: String, default: 'USD' },
   method: { type: String, default: 'offline' },

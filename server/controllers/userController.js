@@ -16,6 +16,7 @@ import { attachDisplayPromotions } from '../services/promotionDisplayService.js'
 import { getBookingSettings } from '../services/bookingSettingsService.js';
 import { getModelUnavailablePeriods } from '../services/availabilityService.js';
 import { parseAgencyDateTime } from '../utils/moroccoTime.js';
+import { requirePublicOwnerId } from '../services/publicTenant.js';
 
 /** Normalize owner id whether it is ObjectId, string, or populated `{ _id }`. */
 const ownerKey = (owner) => {
@@ -170,9 +171,12 @@ export const getUserData = async (req, res) => {
 
 export const getCars = async (req, res) => {
     try {
+        const ownerId = await requirePublicOwnerId(res);
+        if (!ownerId) return;
+
         const cars = await Car.find({
             isAvaliable: true,
-            owner: { $ne: null },
+            owner: ownerId,
             status: { $ne: 'maintenance' },
         })
             .sort({ createdAt: -1 })
@@ -196,7 +200,10 @@ export const getCarById = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: { $ne: null } }).lean();
+        const ownerId = await requirePublicOwnerId(res);
+        if (!ownerId) return;
+
+        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: ownerId }).lean();
         if (!car) {
             return res.status(404).json({ success: false, message: 'Car not found' });
         }
@@ -230,7 +237,10 @@ export const getCarBookingRules = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: { $ne: null } })
+        const publicOwnerId = await requirePublicOwnerId(res);
+        if (!publicOwnerId) return;
+
+        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: publicOwnerId })
             .select('owner brand model')
             .lean();
         if (!car?.owner) {
@@ -261,7 +271,6 @@ export const getCarBookingRules = async (req, res) => {
             bookingRules: rules,
             unavailablePeriods,
             unitCount,
-            ownerId: String(car.owner),
         });
     } catch (error) {
         console.error('[getCarBookingRules]', error.message);

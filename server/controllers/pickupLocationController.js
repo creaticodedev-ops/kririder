@@ -1,5 +1,6 @@
 import PickupLocation from "../models/PickupLocation.js";
 import { safeErrorMessage } from "../utils/helpers.js";
+import { requirePublicOwnerId, resolvePublicOwnerId } from "../services/publicTenant.js";
 
 const defaultLocations = [
     { name: 'Casablanca Airport', city: 'Casablanca', address: 'Mohammed V International Airport, Casablanca', locationType: 'airport', deliveryFee: 0, isActive: true },
@@ -88,17 +89,65 @@ const applyLocationFields = (location, body, { requireCore = false } = {}) => {
     }
 };
 
+/** Seed default locations for one owner when they have none. */
+export const ensureOwnerDefaultLocations = async (ownerId) => {
+    if (!ownerId) return;
+    const count = await PickupLocation.countDocuments({ owner: ownerId });
+    if (count > 0) return;
+    await PickupLocation.insertMany(
+        defaultLocations.map((loc) => ({ ...loc, owner: ownerId })),
+    );
+    console.log(`[pickupLocations] Seeded defaults for owner ${ownerId}`);
+};
+
+/**
+ * Backfill ownerless pickup rows to the resolved public owner (or sole active owner).
+ * Safe no-op when there are no orphans or public owner cannot be resolved.
+ */
+export const backfillPickupLocationOwners = async () => {
+    const orphanFilter = {
+        $or: [{ owner: { $exists: false } }, { owner: null }],
+    };
+    const orphanCount = await PickupLocation.countDocuments(orphanFilter);
+    if (orphanCount === 0) return { updated: 0 };
+
+    let ownerId;
+    try {
+        ownerId = await resolvePublicOwnerId();
+    } catch (error) {
+        console.warn(
+            `[pickupLocations] ${orphanCount} ownerless location(s) found but public owner unresolved — skipping backfill`,
+        );
+        return { updated: 0, skipped: orphanCount };
+    }
+
+    const result = await PickupLocation.updateMany(orphanFilter, { $set: { owner: ownerId } });
+    const updated = result.modifiedCount || 0;
+    if (updated > 0) {
+        console.log(`[pickupLocations] Backfilled owner=${ownerId} on ${updated} location(s)`);
+    }
+    return { updated, ownerId };
+};
+
+/** @deprecated use backfillPickupLocationOwners + ensureOwnerDefaultLocations */
 export const seedPickupLocations = async () => {
-    const count = await PickupLocation.countDocuments();
-    if (count === 0) {
-        await PickupLocation.insertMany(defaultLocations);
-        console.log('Default pickup locations seeded');
+    await backfillPickupLocationOwners();
+    try {
+        const ownerId = await resolvePublicOwnerId();
+        await ensureOwnerDefaultLocations(ownerId);
+    } catch {
+        /* multi-owner / unset PUBLIC_OWNER_ID: do not plant global rows */
     }
 };
 
 export const getActivePickupLocations = async (req, res) => {
     try {
-        const locations = await PickupLocation.find({ isActive: true }).sort({ city: 1, name: 1 });
+        const ownerId = await requirePublicOwnerId(res);
+        if (!ownerId) return;
+
+        await ensureOwnerDefaultLocations(ownerId);
+        const locations = await PickupLocation.find({ owner: ownerId, isActive: true })
+            .sort({ city: 1, name: 1 });
         res.json({ success: true, locations });
     } catch (error) {
         console.error(error.message);
@@ -108,7 +157,9 @@ export const getActivePickupLocations = async (req, res) => {
 
 export const getAllPickupLocations = async (req, res) => {
     try {
-        const locations = await PickupLocation.find({}).sort({ createdAt: -1 });
+        const ownerId = req.user._id;
+        await ensureOwnerDefaultLocations(ownerId);
+        const locations = await PickupLocation.find({ owner: ownerId }).sort({ createdAt: -1 });
         res.json({ success: true, locations });
     } catch (error) {
         console.error(error.message);
@@ -118,7 +169,7 @@ export const getAllPickupLocations = async (req, res) => {
 
 export const createPickupLocation = async (req, res) => {
     try {
-        const location = new PickupLocation();
+        const location = new PickupLocation({ owner: req.user._id });
         applyLocationFields(location, {
             ...req.body,
             locationType: ALLOWED_TYPES.has(req.body.locationType) ? req.body.locationType : 'custom',
@@ -145,7 +196,7 @@ export const updatePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
 
-        const location = await PickupLocation.findById(locationId);
+        const location = await PickupLocation.findOne({ _id: locationId, owner: req.user._id });
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
@@ -166,7 +217,10 @@ export const updatePickupLocation = async (req, res) => {
 export const deletePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
-        const location = await PickupLocation.findByIdAndDelete(locationId);
+        const location = await PickupLocation.findOneAndDelete({
+            _id: locationId,
+            owner: req.user._id,
+        });
 
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
@@ -182,7 +236,7 @@ export const deletePickupLocation = async (req, res) => {
 export const togglePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
-        const location = await PickupLocation.findById(locationId);
+        const location = await PickupLocation.findOne({ _id: locationId, owner: req.user._id });
 
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });

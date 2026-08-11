@@ -369,7 +369,9 @@ export const saveSignatureAndMaybeFinalize = async (
   { signatureDataUrl, secondDriverSignatureDataUrl } = {}
 ) => {
   console.log('[SIGNATURE] Storing signature for booking:', booking.reservationId);
-  const url = await storeDataUrlImage(signatureDataUrl, `signature-${booking.reservationId}.png`);
+  const url = await storeDataUrlImage(signatureDataUrl, `signature-${booking.reservationId}.png`, {
+    ownerId: booking.owner,
+  });
   console.log('[SIGNATURE] Stored signature URL:', url);
   booking.completion = booking.completion || {};
   booking.completion.signatureUrl = url;
@@ -384,7 +386,8 @@ export const saveSignatureAndMaybeFinalize = async (
     }
     const secondUrl = await storeDataUrlImage(
       secondDriverSignatureDataUrl,
-      `signature-2nd-${booking.reservationId}.png`
+      `signature-2nd-${booking.reservationId}.png`,
+      { ownerId: booking.owner },
     );
     booking.completion.secondDriverSignatureUrl = secondUrl;
     booking.completion.secondDriverSignatureSignedAt = new Date();

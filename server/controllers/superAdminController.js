@@ -19,6 +19,7 @@ import {
 } from '../services/licenseService.js';
 import { escapeRegex } from '../utils/helpers.js';
 import { normalizeEmail, findUserByEmail } from '../utils/emailUtils.js';
+import { clearPublicTenantCache } from '../services/publicTenant.js';
 
 const generateToken = (user) =>
   jwt.sign(
@@ -278,6 +279,7 @@ export const createAdmin = async (req, res) => {
       ...trial,
     });
 
+    clearPublicTenantCache();
     await audit(req.user, admin, 'superadmin.admin.create', `Created admin ${admin.email}`);
 
     res.status(201).json({
@@ -354,6 +356,7 @@ export const setAccountStatus = async (req, res) => {
       admin.tokenVersion = (admin.tokenVersion || 0) + 1;
     }
     await admin.save();
+    clearPublicTenantCache();
     await audit(
       req.user,
       admin,
@@ -453,6 +456,7 @@ export const deleteAdmin = async (req, res) => {
       admin.accountStatus = 'disabled';
       admin.licenseStatus = 'expired';
       await admin.save();
+      clearPublicTenantCache();
       await audit(
         req.user,
         admin,
@@ -469,6 +473,7 @@ export const deleteAdmin = async (req, res) => {
     }
 
     await User.deleteOne({ _id: admin._id });
+    clearPublicTenantCache();
     await audit(req.user, { _id: admin._id }, 'superadmin.admin.delete', `Deleted admin ${email}`);
 
     res.json({ success: true, message: 'Admin account deleted', softDeleted: false });

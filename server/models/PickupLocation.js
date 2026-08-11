@@ -1,6 +1,15 @@
 import mongoose from "mongoose";
 
+const { ObjectId } = mongoose.Schema.Types;
+
 const pickupLocationSchema = new mongoose.Schema({
+    /** Tenant root — every location belongs to exactly one owner/agency */
+    owner: {
+        type: ObjectId,
+        ref: 'User',
+        required: true,
+        index: true,
+    },
     name: { type: String, required: true },
     city: { type: String, required: true },
     address: { type: String, required: true },
@@ -17,6 +26,8 @@ const pickupLocationSchema = new mongoose.Schema({
     longitude: { type: Number, default: null, min: -180, max: 180 },
     isActive: { type: Boolean, default: true }
 }, { timestamps: true });
+
+pickupLocationSchema.index({ owner: 1, isActive: 1 });
 
 const PickupLocation = mongoose.model('PickupLocation', pickupLocationSchema);
 

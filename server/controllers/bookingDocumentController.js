@@ -37,7 +37,9 @@ export const uploadBookingDocuments = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    const url = await storeDocumentImage(file, `/booking-docs/${booking.reservationId || bookingId}`);
+    const url = await storeDocumentImage(file, `/booking-docs/${booking.reservationId || bookingId}`, {
+      ownerId: booking.owner,
+    });
     file = null;
 
     applyAdminDocumentUpload(booking, {
