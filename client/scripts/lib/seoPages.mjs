@@ -58,8 +58,18 @@ export const fetchJson = async (url) => {
 }
 
 export const resolveApiOrigin = () => {
-  const raw = process.env.VITE_BASE_URL || process.env.SEO_API_ORIGIN || 'https://api.hdncar.com'
-  return String(raw).replace(/\/+$/, '').replace(/\/api$/, '')
+  const raw =
+    process.env.VITE_API_URL ||
+    process.env.VITE_BASE_URL ||
+    process.env.SEO_API_ORIGIN ||
+    ''
+  const base = String(raw).replace(/\/+$/, '').replace(/\/api$/, '')
+  if (!base) {
+    console.warn(
+      '[seoPages] Missing VITE_API_URL (or VITE_BASE_URL / SEO_API_ORIGIN); SEO fetch may fail.',
+    )
+  }
+  return base
 }
 
 export async function collectSeoPages() {
