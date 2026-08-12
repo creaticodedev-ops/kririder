@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 const documentSectionsSchema = new mongoose.Schema({
   headerHtml: { type: String, default: '' },
@@ -20,6 +21,7 @@ const templateSnapshotSchema = new mongoose.Schema({
 }, { _id: false });
 
 const contractSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true, index: true },
   template: { type: mongoose.Schema.Types.ObjectId, ref: 'ExportTemplate', default: null },

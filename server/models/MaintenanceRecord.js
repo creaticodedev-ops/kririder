@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
+import { agencyIdField } from "../utils/tenantScope.js";
 const { ObjectId } = mongoose.Schema.Types;
 
 /**
  * Service / maintenance history + scheduled work for a vehicle.
  */
 const maintenanceRecordSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: ObjectId, ref: "User", required: true, index: true },
   car: { type: ObjectId, ref: "Car", required: true, index: true },
   type: {

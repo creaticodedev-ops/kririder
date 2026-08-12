@@ -47,7 +47,17 @@ import {
   isModelAvailableForDates,
   publicUnavailablePayload,
 } from "../services/availabilityService.js";
-import { requirePublicOwnerId } from "../services/publicTenant.js";
+import { requirePublicAgency } from "../services/publicTenant.js";
+import { publicAgencyFilter, idsEqual } from "../utils/tenantScope.js";
+import Agency from "../models/Agency.js";
+
+/** Resolve canonical agencyId for a car (uses car.agencyId or Agency.legacyOwnerId map). */
+const resolveAgencyIdForOwner = async (ownerId, existingAgencyId = null) => {
+  if (existingAgencyId) return existingAgencyId;
+  if (!ownerId) return null;
+  const agency = await Agency.findOne({ legacyOwnerId: ownerId }).select('_id').lean();
+  return agency?._id || null;
+};
 
 const BOOKING_STATUSES = ['pending', 'confirmed', 'ready_for_pickup', 'active', 'completed', 'cancelled'];
 const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'];
@@ -224,10 +234,13 @@ export const checkAvailabilityOfCar = async (req, res) => {
       return res.status(400).json({ success: false, message: dates.message });
     }
 
-    const ownerId = await requirePublicOwnerId(res);
-    if (!ownerId) return;
+    const agency = await requirePublicAgency(res);
+    if (!agency) return;
 
-    const carQuery = { isAvaliable: true, owner: ownerId };
+    const carQuery = {
+      ...publicAgencyFilter(agency),
+      isAvaliable: true,
+    };
     if (location) {
       Object.assign(carQuery, locationAvailabilityFilter(location));
     }
@@ -280,18 +293,22 @@ export const quoteBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car not found' });
     }
 
-    const publicOwnerId = await requirePublicOwnerId(res);
-    if (!publicOwnerId) return;
-    if (String(carData.owner) !== String(publicOwnerId)) {
+    const agency = await requirePublicAgency(res);
+    if (!agency) return;
+    const carInAgency =
+      (agency.agencyId && idsEqual(carData.agencyId, agency.agencyId)) ||
+      idsEqual(carData.owner, agency.legacyOwnerId);
+    if (!carInAgency) {
       return res.status(404).json({ success: false, message: 'Car not found' });
     }
 
     let pickupLoc = null;
     let returnLoc = null;
     if (mongoose.isValidObjectId(pickupLocationId) && mongoose.isValidObjectId(returnLocationId)) {
+      const locScope = publicAgencyFilter(agency);
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: carData.owner }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: carData.owner }),
+        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, ...locScope }),
+        PickupLocation.findOne({ _id: returnLocationId, isActive: true, ...locScope }),
       ]);
     }
 
@@ -428,9 +445,12 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car is not available for booking' });
     }
 
-    const publicOwnerId = await requirePublicOwnerId(res);
-    if (!publicOwnerId) return;
-    if (String(carData.owner) !== String(publicOwnerId)) {
+    const agency = await requirePublicAgency(res);
+    if (!agency) return;
+    const carInAgency =
+      (agency.agencyId && idsEqual(carData.agencyId, agency.agencyId)) ||
+      idsEqual(carData.owner, agency.legacyOwnerId);
+    if (!carInAgency) {
       return res.status(404).json({ success: false, message: 'Car is not available for booking' });
     }
 
@@ -462,8 +482,15 @@ export const createBooking = async (req, res) => {
 
     const carForBooking = assignedCar;
 
+    const bookingAgencyId = await resolveAgencyIdForOwner(
+      carForBooking.owner,
+      carForBooking.agencyId || agency.agencyId,
+    );
+
     const blacklisted = await GuestCustomer.findOne({
-      owner: carForBooking.owner,
+      ...(bookingAgencyId
+        ? { agencyId: bookingAgencyId }
+        : { owner: carForBooking.owner }),
       email: email.trim().toLowerCase(),
       status: 'blacklisted',
     });
@@ -477,9 +504,10 @@ export const createBooking = async (req, res) => {
     let pickupLoc = null;
     let returnLoc = null;
     if (hasLocationIds) {
+      const locScope = publicAgencyFilter(agency);
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: carForBooking.owner }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: carForBooking.owner }),
+        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, ...locScope }),
+        PickupLocation.findOne({ _id: returnLocationId, isActive: true, ...locScope }),
       ]);
       if (!pickupLoc || !returnLoc) {
         return res.status(400).json({ success: false, message: 'Please select valid pickup and drop-off locations' });
@@ -573,6 +601,7 @@ export const createBooking = async (req, res) => {
       booking = await Booking.create({
         reservationId,
         car: carForBooking._id,
+        agencyId: bookingAgencyId,
         owner: carForBooking.owner,
         user: null,
         pickupDate: dates.picked,
@@ -612,6 +641,7 @@ export const createBooking = async (req, res) => {
     try {
       await Payment.create({
         booking: booking._id,
+        agencyId: bookingAgencyId,
         owner: carForBooking.owner,
         user: null,
         amount: price,
@@ -698,7 +728,8 @@ export const createBooking = async (req, res) => {
  */
 export const createWalkInBooking = async (req, res) => {
   try {
-    const ownerId = req.user._id;
+    const ownerId = req.agencyLegacyOwnerId || req.user._id;
+    const agencyId = req.agencyId || null;
     const {
       car: carId,
       pickupDate,
@@ -798,9 +829,12 @@ export const createWalkInBooking = async (req, res) => {
     let pickupLoc = null;
     let returnLoc = null;
     if (hasLocationIds) {
+      const locFilter = agencyId
+        ? { agencyId, isActive: true }
+        : { owner: ownerId, isActive: true };
       [pickupLoc, returnLoc] = await Promise.all([
-        PickupLocation.findOne({ _id: pickupLocationId, isActive: true, owner: ownerId }),
-        PickupLocation.findOne({ _id: returnLocationId, isActive: true, owner: ownerId }),
+        PickupLocation.findOne({ _id: pickupLocationId, ...locFilter }),
+        PickupLocation.findOne({ _id: returnLocationId, ...locFilter }),
       ]);
       if (!pickupLoc || !returnLoc) {
         return res.status(400).json({ success: false, message: 'Please select valid pickup and drop-off locations' });
@@ -896,9 +930,10 @@ export const createWalkInBooking = async (req, res) => {
       booking = await Booking.create({
       reservationId,
       car: carId,
+      agencyId: agencyId || (await resolveAgencyIdForOwner(ownerId, carData.agencyId)),
       owner: ownerId,
       user: null,
-      createdBy: ownerId,
+      createdBy: req.user._id,
       channel: 'walk_in',
       pickupDate: dates.picked,
       returnDate: dates.returned,
@@ -965,6 +1000,7 @@ export const createWalkInBooking = async (req, res) => {
     try {
       await Payment.create({
         booking: booking._id,
+        agencyId: booking.agencyId || agencyId,
         owner: ownerId,
         user: null,
         amount: price,

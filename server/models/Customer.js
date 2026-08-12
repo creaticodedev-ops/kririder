@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 const customerSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   phone: { type: String, default: '' },
   address: { type: String, default: '' },

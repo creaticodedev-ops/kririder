@@ -16,7 +16,8 @@ import { attachDisplayPromotions } from '../services/promotionDisplayService.js'
 import { getBookingSettings } from '../services/bookingSettingsService.js';
 import { getModelUnavailablePeriods } from '../services/availabilityService.js';
 import { parseAgencyDateTime } from '../utils/moroccoTime.js';
-import { requirePublicOwnerId } from '../services/publicTenant.js';
+import { requirePublicAgency } from '../services/publicTenant.js';
+import { publicAgencyFilter } from '../utils/tenantScope.js';
 
 /** Normalize owner id whether it is ObjectId, string, or populated `{ _id }`. */
 const ownerKey = (owner) => {
@@ -171,12 +172,12 @@ export const getUserData = async (req, res) => {
 
 export const getCars = async (req, res) => {
     try {
-        const ownerId = await requirePublicOwnerId(res);
-        if (!ownerId) return;
+        const agency = await requirePublicAgency(res);
+        if (!agency) return;
 
         const cars = await Car.find({
+            ...publicAgencyFilter(agency),
             isAvaliable: true,
-            owner: ownerId,
             status: { $ne: 'maintenance' },
         })
             .sort({ createdAt: -1 })
@@ -200,10 +201,14 @@ export const getCarById = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const ownerId = await requirePublicOwnerId(res);
-        if (!ownerId) return;
+        const agency = await requirePublicAgency(res);
+        if (!agency) return;
 
-        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: ownerId }).lean();
+        const car = await Car.findOne({
+            _id: id,
+            isAvaliable: true,
+            ...publicAgencyFilter(agency),
+        }).lean();
         if (!car) {
             return res.status(404).json({ success: false, message: 'Car not found' });
         }
@@ -237,11 +242,15 @@ export const getCarBookingRules = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const publicOwnerId = await requirePublicOwnerId(res);
-        if (!publicOwnerId) return;
+        const agency = await requirePublicAgency(res);
+        if (!agency) return;
 
-        const car = await Car.findOne({ _id: id, isAvaliable: true, owner: publicOwnerId })
-            .select('owner brand model')
+        const car = await Car.findOne({
+            _id: id,
+            isAvaliable: true,
+            ...publicAgencyFilter(agency),
+        })
+            .select('owner agencyId brand model')
             .lean();
         if (!car?.owner) {
             return res.status(404).json({ success: false, message: 'Car not found' });

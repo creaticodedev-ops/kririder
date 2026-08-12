@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
+import { agencyIdField } from "../utils/tenantScope.js";
 const { ObjectId } = mongoose.Schema.Types;
 
 const bookingSchema = new mongoose.Schema({
   reservationId: { type: String, unique: true, sparse: true, index: true },
   car: { type: ObjectId, ref: "Car", required: true },
   user: { type: ObjectId, ref: "User", default: null },
+  agencyId: agencyIdField,
   owner: { type: ObjectId, ref: "User", required: true },
   pickupDate: { type: Date, required: true },
   returnDate: { type: Date, required: true },

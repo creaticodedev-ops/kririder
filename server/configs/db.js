@@ -46,6 +46,12 @@ const connectDB = async () => {
 
     await mongoose.connect(buildMongoUri(process.env.MONGODB_URI));
     console.log("Database connected");
+    try {
+      const { runAgencyMigration } = await import("../services/agencyMigration.js");
+      await runAgencyMigration();
+    } catch (migrationError) {
+      console.error("[agencyMigration]", migrationError.message);
+    }
     await seedPickupLocations();
     try {
       const { ensurePromotionIndexes } = await import("../services/ensurePromotionIndexes.js");

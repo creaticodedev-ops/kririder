@@ -36,10 +36,20 @@ const bookingSettingsSchema = new mongoose.Schema(
 );
 
 /**
- * Per-agency runtime settings (owner-scoped).
+ * Per-agency runtime settings.
+ * agencyId is canonical (P1); owner kept for dual-write / migration compat.
  */
 const agencySettingsSchema = new mongoose.Schema(
   {
+    agencyId: {
+      type: ObjectId,
+      ref: 'Agency',
+      default: null,
+      index: true,
+      // unique sparse so multiple nulls allowed until backfill completes
+      sparse: true,
+      unique: true,
+    },
     owner: {
       type: ObjectId,
       ref: 'User',

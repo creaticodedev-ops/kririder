@@ -512,7 +512,8 @@ export const createManualInvoice = async (req, res) => {
     });
 
     const invoice = await Invoice.create({
-      owner: req.user._id,
+      agencyId: req.agencyId || null,
+      owner: req.agencyLegacyOwnerId || req.user._id,
       booking: null,
       template: generated.template._id,
       source: 'manual',

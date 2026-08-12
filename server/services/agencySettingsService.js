@@ -1,4 +1,5 @@
 import AgencySettings from '../models/AgencySettings.js';
+import Agency from '../models/Agency.js';
 import { DEFAULT_AGENCY_WHATSAPP, normalizeWhatsAppDial } from './whatsappNotify.js';
 import {
   normalizeBookingSettings,
@@ -13,25 +14,47 @@ const envFallbackDial = () =>
       DEFAULT_AGENCY_WHATSAPP,
   ) || DEFAULT_AGENCY_WHATSAPP;
 
-export const getOrCreateAgencySettings = async (ownerId) => {
+const resolveAgencyIdForOwner = async (ownerId, agencyId = null) => {
+  if (agencyId) return agencyId;
   if (!ownerId) return null;
-  let doc = await AgencySettings.findOne({ owner: ownerId });
+  const agency = await Agency.findOne({ legacyOwnerId: ownerId }).select('_id').lean();
+  return agency?._id || null;
+};
+
+export const getOrCreateAgencySettings = async (ownerId, agencyId = null) => {
+  if (!ownerId && !agencyId) return null;
+  const resolvedAgencyId = await resolveAgencyIdForOwner(ownerId, agencyId);
+
+  let doc = null;
+  if (resolvedAgencyId) {
+    doc = await AgencySettings.findOne({ agencyId: resolvedAgencyId });
+  }
+  if (!doc && ownerId) {
+    doc = await AgencySettings.findOne({ owner: ownerId });
+  }
   if (!doc) {
     doc = await AgencySettings.create({
       owner: ownerId,
+      agencyId: resolvedAgencyId,
       bookingSettings: DEFAULT_BOOKING_SETTINGS,
     });
+  } else if (resolvedAgencyId && !doc.agencyId) {
+    doc.agencyId = resolvedAgencyId;
+    await doc.save();
   }
   return doc;
 };
 
-export const resolveWhatsAppDials = async (ownerId) => {
+export const resolveWhatsAppDials = async (ownerId, agencyId = null) => {
   const fallback = envFallbackDial();
   let reservation = '';
   let confirmation = '';
 
-  if (ownerId) {
-    const settings = await AgencySettings.findOne({ owner: ownerId }).lean();
+  if (ownerId || agencyId) {
+    const resolvedAgencyId = await resolveAgencyIdForOwner(ownerId, agencyId);
+    const settings = resolvedAgencyId
+      ? await AgencySettings.findOne({ agencyId: resolvedAgencyId }).lean()
+      : await AgencySettings.findOne({ owner: ownerId }).lean();
     reservation = normalizeWhatsAppDial(settings?.whatsappReservationNumber);
     confirmation = normalizeWhatsAppDial(settings?.whatsappConfirmationNumber);
   }
@@ -50,8 +73,8 @@ export const resolveWhatsAppDials = async (ownerId) => {
   };
 };
 
-export const updateWhatsAppSettings = async (ownerId, body = {}) => {
-  const doc = await getOrCreateAgencySettings(ownerId);
+export const updateWhatsAppSettings = async (ownerId, body = {}, agencyId = null) => {
+  const doc = await getOrCreateAgencySettings(ownerId, agencyId);
   if (!doc) throw new Error('Owner required');
 
   if (body.whatsappReservationNumber !== undefined) {
@@ -65,8 +88,8 @@ export const updateWhatsAppSettings = async (ownerId, body = {}) => {
   return doc;
 };
 
-export const serializeAgencySettings = async (ownerId, doc) => {
-  const dials = await resolveWhatsAppDials(ownerId);
+export const serializeAgencySettings = async (ownerId, doc, agencyId = null) => {
+  const dials = await resolveWhatsAppDials(ownerId, agencyId);
   return {
     whatsappReservationNumber: doc?.whatsappReservationNumber || '',
     whatsappConfirmationNumber: doc?.whatsappConfirmationNumber || '',

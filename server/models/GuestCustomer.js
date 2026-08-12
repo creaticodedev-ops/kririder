@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 const { ObjectId } = mongoose.Schema.Types;
 
 const internalNoteSchema = new mongoose.Schema({
@@ -10,6 +11,7 @@ const internalNoteSchema = new mongoose.Schema({
 }, { _id: true });
 
 const guestCustomerSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: ObjectId, ref: 'User', required: true, index: true },
   email: { type: String, required: true, lowercase: true, trim: true },
   name: { type: String, default: '' },

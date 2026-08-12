@@ -41,11 +41,13 @@ const uploadToImageKit = async (imageFile, folder, width = '1280') => {
   });
 };
 
-const assertOwnerCar = async (carId, ownerId) => {
+const assertOwnerCar = async (carId, ownerId, agencyId = null) => {
   if (!mongoose.isValidObjectId(carId)) return null;
   const car = await Car.findById(carId);
-  if (!car || !car.owner || car.owner.toString() !== ownerId.toString()) return null;
-  return car;
+  if (!car) return null;
+  if (agencyId && car.agencyId && String(car.agencyId) === String(agencyId)) return car;
+  if (car.owner && ownerId && car.owner.toString() === ownerId.toString()) return car;
+  return null;
 };
 
 const ensureUniqueFleetId = async (ownerId, preferred = '') => {
@@ -152,7 +154,8 @@ export const addCar = async (req, res) => {
     const created = await Car.create({
       ...car,
       category: normalizeCategory(car.category),
-      owner: _id,
+      agencyId: req.agencyId || null,
+      owner: req.agencyLegacyOwnerId || _id,
       image,
       isAvaliable: true,
       fleetId,

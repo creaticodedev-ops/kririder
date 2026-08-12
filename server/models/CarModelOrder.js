@@ -1,12 +1,14 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 /**
  * Manual catalog display order for a vehicle model/group (not a physical unit).
- * Keyed the same way public catalog grouping works: owner + brand + model,
+ * Keyed the same way public catalog grouping works: agency + brand + model,
  * scoped per category so admins can reorder within each category section.
  */
 const carModelOrderSchema = new mongoose.Schema(
   {
+    agencyId: agencyIdField,
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

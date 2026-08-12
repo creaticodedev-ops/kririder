@@ -30,6 +30,17 @@ const userSchema = new mongoose.Schema({
     agencyName: { type: String, default: '' },
 
     /**
+     * Canonical tenant membership (P1).
+     * Required for role=owner after agency migration; null for superadmin.
+     */
+    agencyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Agency',
+        default: null,
+        index: true,
+    },
+
+    /**
      * Account gate (independent of license trial).
      * active    → can log in (subject to license for owners)
      * suspended → temporary lock

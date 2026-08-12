@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 const { ObjectId } = mongoose.Schema.Types;
 
 const notificationSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: ObjectId, ref: 'User', required: true, index: true },
   type: {
     type: String,

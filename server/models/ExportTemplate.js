@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 const exportTemplateSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   name: { type: String, required: true, trim: true },
   type: {

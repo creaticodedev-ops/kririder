@@ -1,9 +1,28 @@
 import AuditLog from '../models/AuditLog.js';
 import AdminNotification from '../models/AdminNotification.js';
+import Agency from '../models/Agency.js';
 
-export const logAudit = async ({ owner, actor, action, entityType = '', entityId = '', details = '', meta = {} }) => {
+const resolveAgencyId = async (ownerId, explicitAgencyId = null) => {
+  if (explicitAgencyId) return explicitAgencyId;
+  if (!ownerId) return null;
+  const agency = await Agency.findOne({ legacyOwnerId: ownerId }).select('_id').lean();
+  return agency?._id || null;
+};
+
+export const logAudit = async ({
+  owner,
+  agencyId = null,
+  actor,
+  action,
+  entityType = '',
+  entityId = '',
+  details = '',
+  meta = {},
+}) => {
   try {
+    const resolvedAgencyId = await resolveAgencyId(owner, agencyId);
     await AuditLog.create({
+      agencyId: resolvedAgencyId,
       owner,
       actor: actor || owner,
       action,
@@ -17,9 +36,26 @@ export const logAudit = async ({ owner, actor, action, entityType = '', entityId
   }
 };
 
-export const createNotification = async ({ owner, type = 'system', title, message = '', link = '/owner', meta = {} }) => {
+export const createNotification = async ({
+  owner,
+  agencyId = null,
+  type = 'system',
+  title,
+  message = '',
+  link = '/owner',
+  meta = {},
+}) => {
   try {
-    await AdminNotification.create({ owner, type, title, message, link, meta });
+    const resolvedAgencyId = await resolveAgencyId(owner, agencyId);
+    await AdminNotification.create({
+      agencyId: resolvedAgencyId,
+      owner,
+      type,
+      title,
+      message,
+      link,
+      meta,
+    });
   } catch (error) {
     console.error('Notification create failed:', error.message);
   }

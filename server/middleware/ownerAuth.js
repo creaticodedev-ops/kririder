@@ -4,10 +4,12 @@ import {
   LICENSE_EXPIRED_CODE,
 } from '../services/licenseService.js';
 import { BRAND_NAME } from '../utils/brand.js';
+import { attachAgency } from './attachAgency.js';
 
 /**
  * Ensures the authenticated user is the agency owner AND has an active license/trial.
  * Expired trials return 403 with code LICENSE_EXPIRED — data is never deleted.
+ * Also attaches req.agencyId via attachAgency (P1).
  */
 export const requireOwner = async (req, res, next) => {
   try {
@@ -40,7 +42,7 @@ export const requireOwner = async (req, res, next) => {
       });
     }
 
-    next();
+    return attachAgency(req, res, next);
   } catch (error) {
     console.error('[license]', error.message);
     return res.status(500).json({ success: false, message: 'License check failed' });

@@ -17,6 +17,9 @@ import {
   manageLicense,
   getPlatformAuditLogs,
   getPlatformActivity,
+  listAgencies,
+  getAgencyById,
+  setAgencyStatus,
 } from '../controllers/superAdminController.js';
 
 const superAdminRouter = express.Router();
@@ -31,6 +34,10 @@ const gate = [protect, requireSuperAdmin];
 
 superAdminRouter.get('/me', ...gate, getSuperAdminProfile);
 superAdminRouter.get('/overview', ...gate, getPlatformOverview);
+
+superAdminRouter.get('/agencies', ...gate, listAgencies);
+superAdminRouter.get('/agencies/:id', ...gate, getAgencyById);
+superAdminRouter.patch('/agencies/:id/status', ...gate, setAgencyStatus);
 
 superAdminRouter.get('/admins', ...gate, listAdmins);
 superAdminRouter.post('/admins', ...gate, createAdmin);

@@ -358,7 +358,8 @@ export const generateContract = async (req, res) => {
     };
 
     const contract = await Contract.create({
-      owner: req.user._id,
+      agencyId: req.agencyId || booking.agencyId || null,
+      owner: req.agencyLegacyOwnerId || req.user._id,
       booking: booking._id,
       template: template._id,
       contractNumber,

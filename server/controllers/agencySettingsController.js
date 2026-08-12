@@ -8,11 +8,12 @@ import { logAudit } from '../utils/adminOps.js';
 
 export const getAgencySettings = async (req, res) => {
   try {
-    const ownerId = req.user._id;
-    const doc = await getOrCreateAgencySettings(ownerId);
+    const ownerId = req.agencyLegacyOwnerId || req.user._id;
+    const agencyId = req.agencyId || null;
+    const doc = await getOrCreateAgencySettings(ownerId, agencyId);
     res.json({
       success: true,
-      settings: await serializeAgencySettings(ownerId, doc),
+      settings: await serializeAgencySettings(ownerId, doc, agencyId),
     });
   } catch (error) {
     console.error('[getAgencySettings]', error.message);
@@ -22,7 +23,8 @@ export const getAgencySettings = async (req, res) => {
 
 export const updateAgencySettings = async (req, res) => {
   try {
-    const ownerId = req.user._id;
+    const ownerId = req.agencyLegacyOwnerId || req.user._id;
+    const agencyId = req.agencyId || null;
     const body = req.body || {};
 
     if (
@@ -32,19 +34,20 @@ export const updateAgencySettings = async (req, res) => {
       await updateWhatsAppSettings(ownerId, {
         whatsappReservationNumber: body.whatsappReservationNumber,
         whatsappConfirmationNumber: body.whatsappConfirmationNumber,
-      });
+      }, agencyId);
     }
 
     if (body.bookingSettings && typeof body.bookingSettings === 'object') {
       await updateBookingSettings(ownerId, body.bookingSettings);
     }
 
-    const doc = await getOrCreateAgencySettings(ownerId);
+    const doc = await getOrCreateAgencySettings(ownerId, agencyId);
 
     try {
       await logAudit({
         owner: ownerId,
-        actor: ownerId,
+        agencyId,
+        actor: req.user._id,
         action: 'settings.update',
         entityType: 'AgencySettings',
         entityId: doc._id,
@@ -57,7 +60,7 @@ export const updateAgencySettings = async (req, res) => {
     res.json({
       success: true,
       message: 'Settings saved',
-      settings: await serializeAgencySettings(ownerId, doc),
+      settings: await serializeAgencySettings(ownerId, doc, agencyId),
     });
   } catch (error) {
     console.error('[updateAgencySettings]', error.message);

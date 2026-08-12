@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
+import { agencyIdField } from "../utils/tenantScope.js";
 
 const { ObjectId } = mongoose.Schema.Types;
 
 const pickupLocationSchema = new mongoose.Schema({
-    /** Tenant root — every location belongs to exactly one owner/agency */
+    /** Canonical tenant key (P1) */
+    agencyId: agencyIdField,
+    /** Legacy primary owner user id (P0 compat / upload paths) */
     owner: {
         type: ObjectId,
         ref: 'User',

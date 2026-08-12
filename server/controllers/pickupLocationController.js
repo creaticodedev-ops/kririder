@@ -1,6 +1,7 @@
 import PickupLocation from "../models/PickupLocation.js";
 import { safeErrorMessage } from "../utils/helpers.js";
-import { requirePublicOwnerId, resolvePublicOwnerId } from "../services/publicTenant.js";
+import { requirePublicAgency, resolvePublicAgency } from "../services/publicTenant.js";
+import { andTenant, publicAgencyFilter, tenantWriteFields } from "../utils/tenantScope.js";
 
 const defaultLocations = [
     { name: 'Casablanca Airport', city: 'Casablanca', address: 'Mohammed V International Airport, Casablanca', locationType: 'airport', deliveryFee: 0, isActive: true },
@@ -89,20 +90,25 @@ const applyLocationFields = (location, body, { requireCore = false } = {}) => {
     }
 };
 
-/** Seed default locations for one owner when they have none. */
-export const ensureOwnerDefaultLocations = async (ownerId) => {
-    if (!ownerId) return;
-    const count = await PickupLocation.countDocuments({ owner: ownerId });
+/** Seed default locations for one agency/owner when they have none. */
+export const ensureOwnerDefaultLocations = async (ownerId, agencyId = null) => {
+    if (!ownerId && !agencyId) return;
+    const countFilter = agencyId ? { agencyId } : { owner: ownerId };
+    const count = await PickupLocation.countDocuments(countFilter);
     if (count > 0) return;
     await PickupLocation.insertMany(
-        defaultLocations.map((loc) => ({ ...loc, owner: ownerId })),
+        defaultLocations.map((loc) => ({
+            ...loc,
+            owner: ownerId,
+            agencyId: agencyId || null,
+        })),
     );
-    console.log(`[pickupLocations] Seeded defaults for owner ${ownerId}`);
+    console.log(`[pickupLocations] Seeded defaults for agency=${agencyId || 'n/a'} owner=${ownerId}`);
 };
 
 /**
- * Backfill ownerless pickup rows to the resolved public owner (or sole active owner).
- * Safe no-op when there are no orphans or public owner cannot be resolved.
+ * Backfill ownerless pickup rows to the resolved public agency/owner.
+ * Safe no-op when there are no orphans or public agency cannot be resolved.
  */
 export const backfillPickupLocationOwners = async () => {
     const orphanFilter = {
@@ -111,43 +117,50 @@ export const backfillPickupLocationOwners = async () => {
     const orphanCount = await PickupLocation.countDocuments(orphanFilter);
     if (orphanCount === 0) return { updated: 0 };
 
-    let ownerId;
+    let agency;
     try {
-        ownerId = await resolvePublicOwnerId();
-    } catch (error) {
+        agency = await resolvePublicAgency();
+    } catch {
         console.warn(
-            `[pickupLocations] ${orphanCount} ownerless location(s) found but public owner unresolved — skipping backfill`,
+            `[pickupLocations] ${orphanCount} ownerless location(s) found but public agency unresolved — skipping backfill`,
         );
         return { updated: 0, skipped: orphanCount };
     }
 
-    const result = await PickupLocation.updateMany(orphanFilter, { $set: { owner: ownerId } });
+    const result = await PickupLocation.updateMany(orphanFilter, {
+        $set: {
+            owner: agency.legacyOwnerId,
+            ...(agency.agencyId ? { agencyId: agency.agencyId } : {}),
+        },
+    });
     const updated = result.modifiedCount || 0;
     if (updated > 0) {
-        console.log(`[pickupLocations] Backfilled owner=${ownerId} on ${updated} location(s)`);
+        console.log(`[pickupLocations] Backfilled ${updated} location(s) → agency=${agency.agencyId}`);
     }
-    return { updated, ownerId };
+    return { updated, agencyId: agency.agencyId };
 };
 
 /** @deprecated use backfillPickupLocationOwners + ensureOwnerDefaultLocations */
 export const seedPickupLocations = async () => {
     await backfillPickupLocationOwners();
     try {
-        const ownerId = await resolvePublicOwnerId();
-        await ensureOwnerDefaultLocations(ownerId);
+        const agency = await resolvePublicAgency();
+        await ensureOwnerDefaultLocations(agency.legacyOwnerId, agency.agencyId);
     } catch {
-        /* multi-owner / unset PUBLIC_OWNER_ID: do not plant global rows */
+        /* multi-agency / unset env: do not plant global rows */
     }
 };
 
 export const getActivePickupLocations = async (req, res) => {
     try {
-        const ownerId = await requirePublicOwnerId(res);
-        if (!ownerId) return;
+        const agency = await requirePublicAgency(res);
+        if (!agency) return;
 
-        await ensureOwnerDefaultLocations(ownerId);
-        const locations = await PickupLocation.find({ owner: ownerId, isActive: true })
-            .sort({ city: 1, name: 1 });
+        await ensureOwnerDefaultLocations(agency.legacyOwnerId, agency.agencyId);
+        const locations = await PickupLocation.find({
+            ...publicAgencyFilter(agency),
+            isActive: true,
+        }).sort({ city: 1, name: 1 });
         res.json({ success: true, locations });
     } catch (error) {
         console.error(error.message);
@@ -157,9 +170,9 @@ export const getActivePickupLocations = async (req, res) => {
 
 export const getAllPickupLocations = async (req, res) => {
     try {
-        const ownerId = req.user._id;
-        await ensureOwnerDefaultLocations(ownerId);
-        const locations = await PickupLocation.find({ owner: ownerId }).sort({ createdAt: -1 });
+        const ownerId = req.agencyLegacyOwnerId || req.user._id;
+        await ensureOwnerDefaultLocations(ownerId, req.agencyId);
+        const locations = await PickupLocation.find(andTenant(req)).sort({ createdAt: -1 });
         res.json({ success: true, locations });
     } catch (error) {
         console.error(error.message);
@@ -169,7 +182,7 @@ export const getAllPickupLocations = async (req, res) => {
 
 export const createPickupLocation = async (req, res) => {
     try {
-        const location = new PickupLocation({ owner: req.user._id });
+        const location = new PickupLocation(tenantWriteFields(req));
         applyLocationFields(location, {
             ...req.body,
             locationType: ALLOWED_TYPES.has(req.body.locationType) ? req.body.locationType : 'custom',
@@ -196,12 +209,13 @@ export const updatePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
 
-        const location = await PickupLocation.findOne({ _id: locationId, owner: req.user._id });
+        const location = await PickupLocation.findOne(andTenant(req, { _id: locationId }));
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
 
         applyLocationFields(location, req.body);
+        if (!location.agencyId && req.agencyId) location.agencyId = req.agencyId;
         await location.save();
         res.json({ success: true, message: 'Pickup location updated', location });
     } catch (error) {
@@ -217,10 +231,7 @@ export const updatePickupLocation = async (req, res) => {
 export const deletePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
-        const location = await PickupLocation.findOneAndDelete({
-            _id: locationId,
-            owner: req.user._id,
-        });
+        const location = await PickupLocation.findOneAndDelete(andTenant(req, { _id: locationId }));
 
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
@@ -236,13 +247,14 @@ export const deletePickupLocation = async (req, res) => {
 export const togglePickupLocation = async (req, res) => {
     try {
         const { locationId } = req.body;
-        const location = await PickupLocation.findOne({ _id: locationId, owner: req.user._id });
+        const location = await PickupLocation.findOne(andTenant(req, { _id: locationId }));
 
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
 
         location.isActive = !location.isActive;
+        if (!location.agencyId && req.agencyId) location.agencyId = req.agencyId;
         await location.save();
 
         res.json({

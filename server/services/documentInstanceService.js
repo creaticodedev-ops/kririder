@@ -546,6 +546,7 @@ export const upsertContractFromCompletion = async ({
   }
 
   const contract = await Contract.create({
+    agencyId: booking.agencyId || null,
     owner: ownerId,
     booking: booking._id,
     template: template?._id || null,

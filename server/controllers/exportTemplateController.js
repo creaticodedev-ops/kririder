@@ -57,10 +57,16 @@ export const ensureDefaultTemplates = async (ownerId) => {
     systemKey: 'builtin_invoice',
   };
 
+  const { resolveAgencyIdFromOwner } = await import('../utils/resolveAgencyId.js');
+  const agencyId = await resolveAgencyIdFromOwner(owner);
+
   const upsertBuiltin = async (systemKey, defaults) => {
     const doc = await ExportTemplate.findOne({ owner, systemKey });
     if (!doc) {
-      await ExportTemplate.create({ owner, ...defaults });
+      await ExportTemplate.create({ owner, agencyId, ...defaults });
+    } else if (agencyId && !doc.agencyId) {
+      doc.agencyId = agencyId;
+      await doc.save();
     }
   };
 
@@ -158,7 +164,8 @@ export const createExportTemplate = async (req, res) => {
     }
 
     const template = await ExportTemplate.create({
-      owner: req.user._id,
+      agencyId: req.agencyId || null,
+      owner: req.agencyLegacyOwnerId || req.user._id,
       name: name.trim(),
       type: templateType,
       headerHtml: headerHtml || '',

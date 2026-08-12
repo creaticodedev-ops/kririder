@@ -137,9 +137,14 @@ export const createPromotion = async (req, res) => {
         return res.status(409).json({ success: false, message: 'Promo code already exists' });
       }
     }
-    const doc = await Promotion.create({ ...payload, owner: req.user._id });
+    const doc = await Promotion.create({
+      ...payload,
+      agencyId: req.agencyId || null,
+      owner: req.agencyLegacyOwnerId || req.user._id,
+    });
     await logAudit({
-      owner: req.user._id,
+      owner: req.agencyLegacyOwnerId || req.user._id,
+      agencyId: req.agencyId || null,
       actor: req.user._id,
       action: 'promotion.create',
       entityType: 'Promotion',

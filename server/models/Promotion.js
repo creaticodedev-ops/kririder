@@ -1,13 +1,15 @@
 import mongoose from 'mongoose';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 const { ObjectId } = mongoose.Schema.Types;
 
 /**
- * Owner-scoped promotional offers / promo codes.
+ * Agency-scoped promotional offers / promo codes.
  * Discount amounts are always computed server-side at booking time.
  */
 const promotionSchema = new mongoose.Schema(
   {
+    agencyId: agencyIdField,
     owner: { type: ObjectId, ref: 'User', required: true, index: true },
     name: { type: String, required: true, trim: true, maxlength: 120 },
     description: { type: String, default: '', maxlength: 2000 },

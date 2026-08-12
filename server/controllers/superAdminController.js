@@ -20,6 +20,8 @@ import {
 import { escapeRegex } from '../utils/helpers.js';
 import { normalizeEmail, findUserByEmail } from '../utils/emailUtils.js';
 import { clearPublicTenantCache } from '../services/publicTenant.js';
+import Agency from '../models/Agency.js';
+import { ensureAgencyForOwner } from '../services/agencyMigration.js';
 
 const generateToken = (user) =>
   jwt.sign(
@@ -115,6 +117,8 @@ export const getPlatformOverview = async (req, res) => {
       totalCars,
       totalBookings,
       totalCustomers,
+      totalAgencies,
+      activeAgencies,
     ] = await Promise.all([
       User.countDocuments({ role: 'owner' }),
       User.countDocuments({ role: 'owner', accountStatus: 'active' }),
@@ -125,6 +129,8 @@ export const getPlatformOverview = async (req, res) => {
       Car.countDocuments({ owner: { $ne: null } }),
       Booking.countDocuments({}),
       GuestCustomer.countDocuments({}),
+      Agency.countDocuments({}),
+      Agency.countDocuments({ status: 'active' }),
     ]);
 
     const recentAdmins = await User.find({ role: 'owner' })
@@ -144,6 +150,8 @@ export const getPlatformOverview = async (req, res) => {
         totalCars,
         totalBookings,
         totalCustomers,
+        totalAgencies,
+        activeAgencies,
       },
       recentAdmins: recentAdmins.map(sanitizeAdmin),
       permissionCatalog: OWNER_PERMISSIONS,
@@ -279,17 +287,155 @@ export const createAdmin = async (req, res) => {
       ...trial,
     });
 
+    const agency = await ensureAgencyForOwner(admin);
     clearPublicTenantCache();
     await audit(req.user, admin, 'superadmin.admin.create', `Created admin ${admin.email}`);
 
+    const fresh = await User.findById(admin._id);
     res.status(201).json({
       success: true,
       message: 'Admin account created',
-      admin: sanitizeAdmin(admin),
+      admin: sanitizeAdmin(fresh || admin),
+      agency: agency
+        ? {
+            _id: agency._id,
+            name: agency.name,
+            slug: agency.slug,
+            status: agency.status,
+            isPublicStorefront: agency.isPublicStorefront,
+          }
+        : null,
     });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, message: 'Failed to create admin' });
+  }
+};
+
+const sanitizeAgency = (agency, owner = null) => {
+  const obj = agency.toObject ? agency.toObject() : { ...agency };
+  return {
+    ...obj,
+    primaryOwner: owner
+      ? {
+          _id: owner._id,
+          name: owner.name,
+          email: owner.email,
+          accountStatus: owner.accountStatus,
+          licenseStatus: owner.licenseStatus,
+          agencyName: owner.agencyName,
+        }
+      : null,
+  };
+};
+
+export const listAgencies = async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+    const q = String(req.query.q || '').trim();
+    const filter = {};
+    if (q) {
+      filter.$or = [
+        { name: new RegExp(escapeRegex(q), 'i') },
+        { slug: new RegExp(escapeRegex(q), 'i') },
+      ];
+    }
+
+    const [total, agencies] = await Promise.all([
+      Agency.countDocuments(filter),
+      Agency.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    ]);
+
+    const ownerIds = agencies.map((a) => a.primaryOwnerUserId).filter(Boolean);
+    const owners = await User.find({ _id: { $in: ownerIds } })
+      .select('name email accountStatus licenseStatus agencyName')
+      .lean();
+    const ownerMap = new Map(owners.map((o) => [String(o._id), o]));
+
+    res.json({
+      success: true,
+      total,
+      page,
+      pages: Math.ceil(total / limit) || 1,
+      agencies: agencies.map((a) => sanitizeAgency(a, ownerMap.get(String(a.primaryOwnerUserId)))),
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to list agencies' });
+  }
+};
+
+export const getAgencyById = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const agency = await Agency.findById(req.params.id).lean();
+    if (!agency) {
+      return res.status(404).json({ success: false, message: 'Agency not found' });
+    }
+    const owner = await User.findById(agency.primaryOwnerUserId)
+      .select('-password')
+      .lean();
+    const [cars, bookings, customers] = await Promise.all([
+      Car.countDocuments({ agencyId: agency._id }),
+      Booking.countDocuments({ agencyId: agency._id }),
+      GuestCustomer.countDocuments({ agencyId: agency._id }),
+    ]);
+    res.json({
+      success: true,
+      agency: sanitizeAgency(agency, owner),
+      stats: { cars, bookings, customers },
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to load agency' });
+  }
+};
+
+export const setAgencyStatus = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const { status } = req.body;
+    if (!['active', 'suspended', 'disabled'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency status' });
+    }
+    const agency = await Agency.findById(req.params.id);
+    if (!agency) {
+      return res.status(404).json({ success: false, message: 'Agency not found' });
+    }
+    agency.status = status;
+    await agency.save();
+
+    // Mirror onto primary owner account lock for dashboard access
+    if (agency.primaryOwnerUserId) {
+      const ownerStatus = status === 'active' ? 'active' : status;
+      await User.updateOne(
+        { _id: agency.primaryOwnerUserId, role: 'owner' },
+        {
+          $set: { accountStatus: ownerStatus },
+          ...(status !== 'active' ? { $inc: { tokenVersion: 1 } } : {}),
+        },
+      );
+    }
+
+    clearPublicTenantCache();
+    await audit(
+      req.user,
+      { _id: agency.primaryOwnerUserId },
+      'superadmin.agency.status',
+      `Set agency ${agency.slug} status=${status}`,
+      { agencyId: agency._id, status },
+    );
+
+    res.json({ success: true, message: `Agency ${status}`, agency: sanitizeAgency(agency) });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to update agency status' });
   }
 };
 
@@ -301,7 +447,15 @@ export const updateAdmin = async (req, res) => {
     const { name, email, agencyName, notes, permissions } = req.body;
 
     if (name !== undefined) admin.name = String(name).trim();
-    if (agencyName !== undefined) admin.agencyName = String(agencyName).trim();
+    if (agencyName !== undefined) {
+      admin.agencyName = String(agencyName).trim();
+      if (admin.agencyId) {
+        await Agency.updateOne(
+          { _id: admin.agencyId },
+          { $set: { name: admin.agencyName || admin.name } },
+        );
+      }
+    }
     if (notes !== undefined) admin.notes = String(notes);
     if (email !== undefined) {
       const normalized = String(email).trim().toLowerCase();
@@ -356,6 +510,12 @@ export const setAccountStatus = async (req, res) => {
       admin.tokenVersion = (admin.tokenVersion || 0) + 1;
     }
     await admin.save();
+    if (admin.agencyId) {
+      await Agency.updateOne(
+        { _id: admin.agencyId },
+        { $set: { status: status === 'active' ? 'active' : status } },
+      );
+    }
     clearPublicTenantCache();
     await audit(
       req.user,

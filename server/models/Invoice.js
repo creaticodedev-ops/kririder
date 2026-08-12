@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { documentSectionsSchema, templateSnapshotSchema } from './Contract.js';
+import { agencyIdField } from '../utils/tenantScope.js';
 
 const invoiceItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
@@ -9,6 +10,7 @@ const invoiceItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const invoiceSchema = new mongoose.Schema({
+  agencyId: agencyIdField,
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   booking: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', default: null, index: true },
   template: { type: mongoose.Schema.Types.ObjectId, ref: 'ExportTemplate', default: null },

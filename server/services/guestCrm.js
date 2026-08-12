@@ -87,7 +87,10 @@ export const upsertGuestFromBooking = async (booking) => {
     return guest;
   }
 
+  const { resolveAgencyIdFromOwner } = await import('../utils/resolveAgencyId.js');
+  const agencyId = await resolveAgencyIdFromOwner(ownerId);
   guest = await GuestCustomer.create({
+    agencyId,
     owner: ownerId,
     email,
     ...payload,
