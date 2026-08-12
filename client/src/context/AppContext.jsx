@@ -4,7 +4,7 @@ import {toast} from 'react-hot-toast'
 import { useLocation, useNavigate } from "react-router-dom";
 import { getErrorMessage } from '../utils/apiError';
 import { resolveOwnerPermissions, ownerHasPermission } from '../utils/ownerPermissions';
-import { parseStorefrontSlug, storefrontPath, detectHostTenant } from '../utils/storefront';
+import { resolveStorefrontSlug, storefrontPath, detectHostTenant } from '../utils/storefront';
 
 import { resolveApiBaseUrl } from '../utils/apiBase';
 
@@ -50,18 +50,15 @@ export const AppProvider = ({ children })=>{
 
     const hostTenant = useMemo(() => detectHostTenant(), [])
 
-    const storefrontSlug = useMemo(() => {
-      const fromPath = parseStorefrontSlug(location.pathname)
-      if (fromPath) return fromPath
-      if (hostTenant.slug) return hostTenant.slug
-      try {
-        return String(new URLSearchParams(location.search).get('agency') || '')
-          .trim()
-          .toLowerCase()
-      } catch {
-        return ''
-      }
-    }, [location.pathname, location.search, hostTenant.slug])
+    const storefrontSlug = useMemo(
+      () =>
+        resolveStorefrontSlug({
+          pathname: location.pathname,
+          search: location.search,
+          hostname: hostTenant.host,
+        }),
+      [location.pathname, location.search, hostTenant.host],
+    )
 
     /** On subdomain/custom domain, public links stay at site root (not /s/:slug). */
     const storefrontAtRoot = Boolean(hostTenant.atRoot)

@@ -17,6 +17,21 @@ export const getPlatformBaseDomain = () =>
     .toLowerCase()
     .replace(/^\.+|\.+$/g, '')
 
+/** Build-time default storefront for platform apex (kririder.com/) in multi-agency deploys. */
+export const getDefaultStorefrontSlug = () =>
+  normalizeAgencySlug(import.meta.env?.VITE_DEFAULT_STOREFRONT_SLUG || '')
+
+/** True when the browser is on the platform marketing apex (not a tenant subdomain/custom domain). */
+export const isPlatformApex = (hostname = typeof window !== 'undefined' ? window.location.hostname : '') => {
+  const host = String(hostname || '')
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+$/, '')
+  const base = getPlatformBaseDomain()
+  if (!base || !host) return false
+  return host === base || host === `www.${base}`
+}
+
 export const parseStorefrontSlug = (pathname) => {
   const match = String(pathname || '').match(/^\/s\/([a-z0-9-]+)(?:\/|$)/i)
   return match ? normalizeAgencySlug(match[1]) : ''
@@ -54,6 +69,35 @@ export const detectHostTenant = (hostname = typeof window !== 'undefined' ? wind
   return { slug: '', isCustomDomain: false, host, atRoot: false }
 }
 
+/**
+ * Resolve the active storefront slug for public API calls.
+ * Priority: /s/:slug path → subdomain → ?agency= → platform-apex default env slug.
+ */
+export const resolveStorefrontSlug = ({
+  pathname = '',
+  search = '',
+  hostname = typeof window !== 'undefined' ? window.location.hostname : '',
+} = {}) => {
+  const fromPath = parseStorefrontSlug(pathname)
+  if (fromPath) return fromPath
+
+  const hostTenant = detectHostTenant(hostname)
+  if (hostTenant.slug) return hostTenant.slug
+
+  try {
+    const fromQuery = normalizeAgencySlug(new URLSearchParams(search).get('agency') || '')
+    if (fromQuery) return fromQuery
+  } catch {
+    // ignore malformed search
+  }
+
+  if (isPlatformApex(hostname) && getDefaultStorefrontSlug()) {
+    return getDefaultStorefrontSlug()
+  }
+
+  return ''
+}
+
 /** Build a path under the current agency storefront, or a root path when no slug / host-root. */
 export const storefrontPath = (slug, path = '/', { atRoot = false } = {}) => {
   const clean =
@@ -83,9 +127,12 @@ export const isStorefrontHomePath = (pathname) => {
 export default {
   normalizeAgencySlug,
   parseStorefrontSlug,
+  resolveStorefrontSlug,
   storefrontPath,
   buildAbsoluteStorefrontUrl,
   isStorefrontHomePath,
   detectHostTenant,
   getPlatformBaseDomain,
+  getDefaultStorefrontSlug,
+  isPlatformApex,
 }

@@ -25,6 +25,8 @@
     "test:onboarding:offline": "node scripts/verify-agency-onboarding.mjs",
     "test:onboarding:e2e": "node scripts/verify-agency-onboarding-e2e.mjs",
     "test:storefront:e2e": "node scripts/verify-storefront-isolation.mjs",
+    "test:platform-apex": "node scripts/verify-platform-apex.mjs",
+    "diagnose:public-tenant": "node scripts/diagnose-public-tenant.mjs",
     "test:branding:e2e": "node scripts/verify-branding-isolation.mjs",
     "test:domains:e2e": "node scripts/verify-domains-isolation.mjs",
     "test:billing:e2e": "node scripts/verify-billing-isolation.mjs",
