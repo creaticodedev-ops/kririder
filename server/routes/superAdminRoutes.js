@@ -19,6 +19,8 @@ import {
   getPlatformActivity,
   listAgencies,
   getAgencyById,
+  createAgency,
+  updateAgency,
   setAgencyStatus,
 } from '../controllers/superAdminController.js';
 
@@ -36,7 +38,9 @@ superAdminRouter.get('/me', ...gate, getSuperAdminProfile);
 superAdminRouter.get('/overview', ...gate, getPlatformOverview);
 
 superAdminRouter.get('/agencies', ...gate, listAgencies);
+superAdminRouter.post('/agencies', ...gate, createAgency);
 superAdminRouter.get('/agencies/:id', ...gate, getAgencyById);
+superAdminRouter.patch('/agencies/:id', ...gate, updateAgency);
 superAdminRouter.patch('/agencies/:id/status', ...gate, setAgencyStatus);
 
 superAdminRouter.get('/admins', ...gate, listAdmins);

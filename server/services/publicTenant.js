@@ -3,20 +3,27 @@ import Agency from '../models/Agency.js';
 import User from '../models/User.js';
 
 /**
- * P1 public-tenant resolution — returns one Agency for the storefront.
+ * P1 public-tenant resolution — returns exactly one Agency for the storefront.
  * Never merges fleets across agencies.
  *
+ * Ops compatibility (single-agency first):
+ * - Single active agency → resolved automatically (no PUBLIC_AGENCY_ID required)
+ * - PUBLIC_AGENCY_ID is optional and only needed when multiple agencies exist
+ * - PUBLIC_OWNER_ID remains as legacy compat (maps via Agency.legacyOwnerId)
+ * - owner-namespaced upload paths stay legacy; agencyId is canonical for new/public data
+ *
  * Priority:
- * 1. PUBLIC_AGENCY_ID
+ * 1. PUBLIC_AGENCY_ID (explicit multi-agency override)
  * 2. PUBLIC_OWNER_ID → Agency.legacyOwnerId (P0 compat)
  * 3. Exactly one Agency with isPublicStorefront=true
- * 4. Exactly one active Agency
- * 5. Fail closed (503)
+ * 4. Exactly one active Agency (automatic single-agency deploy)
+ * 5. Sole active owner fallback (pre-migration)
+ * 6. Fail closed (503) — never merge
  */
 
 export class PublicTenantError extends Error {
   constructor(
-    message = 'Public catalog unavailable: set PUBLIC_AGENCY_ID (or PUBLIC_OWNER_ID) or mark one agency as public storefront',
+    message = 'Public catalog unavailable: with multiple agencies set PUBLIC_AGENCY_ID (or PUBLIC_OWNER_ID); single-agency deploys resolve automatically',
   ) {
     super(message);
     this.name = 'PublicTenantError';
@@ -148,10 +155,16 @@ export const resolvePublicAgency = async () => {
 
   cachedAgency = null;
   cachedAt = now;
-  console.error(
-    `[publicTenant] Cannot resolve public agency: activeAgencies=${active.length}. ` +
-      'Set PUBLIC_AGENCY_ID or PUBLIC_OWNER_ID.',
-  );
+  if (active.length > 1) {
+    console.error(
+      `[publicTenant] ${active.length} active agencies — automatic resolution disabled. ` +
+        'Set PUBLIC_AGENCY_ID to the storefront agency (PUBLIC_OWNER_ID still accepted as legacy).',
+    );
+  } else {
+    console.error(
+      `[publicTenant] Cannot resolve public agency: activeAgencies=${active.length}.`,
+    );
+  }
   throw new PublicTenantError();
 };
 

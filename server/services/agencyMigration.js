@@ -90,15 +90,10 @@ export const ensureAgencyForOwner = async (ownerUser) => {
   return agency.toObject ? agency.toObject() : agency;
 };
 
-const resolvePublicLegacyOwnerId = () => {
-  const fromEnv = String(process.env.PUBLIC_OWNER_ID || '').trim();
-  if (fromEnv && mongoose.isValidObjectId(fromEnv)) return fromEnv;
-  return null;
-};
-
 /**
  * Mark exactly one public storefront agency when possible.
  * Non-destructive: only sets flags, never deletes.
+ * Single active agency → auto-flagged (no PUBLIC_AGENCY_ID required).
  */
 const assignPublicStorefront = async (ownerToAgency) => {
   const already = await Agency.countDocuments({ isPublicStorefront: true });
@@ -114,15 +109,25 @@ const assignPublicStorefront = async (ownerToAgency) => {
     return;
   }
 
-  const envOwner = resolvePublicLegacyOwnerId();
-  if (envOwner && ownerToAgency.has(String(envOwner))) {
+  const envAgency = String(process.env.PUBLIC_AGENCY_ID || '').trim();
+  if (envAgency && mongoose.isValidObjectId(envAgency)) {
+    const exists = await Agency.findById(envAgency).select('_id').lean();
+    if (exists) {
+      await Agency.updateOne({ _id: exists._id }, { $set: { isPublicStorefront: true } });
+      return;
+    }
+  }
+
+  const envOwner = String(process.env.PUBLIC_OWNER_ID || '').trim();
+  if (envOwner && mongoose.isValidObjectId(envOwner) && ownerToAgency.has(envOwner)) {
     await Agency.updateOne(
-      { _id: ownerToAgency.get(String(envOwner)) },
+      { _id: ownerToAgency.get(envOwner) },
       { $set: { isPublicStorefront: true } },
     );
     return;
   }
 
+  // Automatic single-agency deploy: no env vars required
   const active = await Agency.find({ status: 'active' }).select('_id').limit(2).lean();
   if (active.length === 1) {
     await Agency.updateOne({ _id: active[0]._id }, { $set: { isPublicStorefront: true } });

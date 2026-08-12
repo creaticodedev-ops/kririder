@@ -55,8 +55,8 @@ const SuperAdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <Stat label="Agencies" value={o.totalAgencies} hint={`${o.activeAgencies || 0} active`} />
         <Stat label="Admin accounts" value={o.totalAdmins} />
-        <Stat label="Active accounts" value={o.activeAdmins} />
         <Stat label="On trial" value={o.trialAdmins} hint={`${o.licensedAdmins || 0} licensed`} />
         <Stat label="Expired / locked" value={(o.expiredAdmins || 0) + (o.suspendedAdmins || 0)} />
       </div>
@@ -69,16 +69,22 @@ const SuperAdminDashboard = () => {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          to="/superadmin/admins"
+          to="/superadmin/agencies"
           className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2.5 transition-colors"
         >
-          Manage admins
+          Manage agencies
         </Link>
         <Link
-          to="/superadmin/admins?create=1"
+          to="/superadmin/agencies?create=1"
           className="border border-white/15 hover:border-white/30 text-sm px-4 py-2.5 text-slate-200 transition-colors"
         >
-          Create admin
+          Create agency
+        </Link>
+        <Link
+          to="/superadmin/admins"
+          className="border border-white/15 hover:border-white/30 text-sm px-4 py-2.5 text-slate-200 transition-colors"
+        >
+          Manage admins
         </Link>
         <Link
           to="/superadmin/audit"

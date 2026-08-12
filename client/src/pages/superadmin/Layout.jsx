@@ -10,6 +10,7 @@ const SuperAdminLayout = () => {
   const links = useMemo(
     () => [
       { to: '/superadmin', end: true, label: 'Overview' },
+      { to: '/superadmin/agencies', label: 'Agencies' },
       { to: '/superadmin/admins', label: 'Admins' },
       { to: '/superadmin/permissions', label: t('superadmin.perms.nav') },
       { to: '/superadmin/activity', label: 'Activity' },

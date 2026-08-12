@@ -334,13 +334,17 @@ export const listAgencies = async (req, res) => {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
     const skip = (page - 1) * limit;
-    const q = String(req.query.q || '').trim();
+    const q = String(req.query.q || req.query.search || '').trim();
+    const status = String(req.query.status || '').trim();
     const filter = {};
     if (q) {
       filter.$or = [
         { name: new RegExp(escapeRegex(q), 'i') },
         { slug: new RegExp(escapeRegex(q), 'i') },
       ];
+    }
+    if (['active', 'suspended', 'disabled'].includes(status)) {
+      filter.status = status;
     }
 
     const [total, agencies] = await Promise.all([
@@ -359,11 +363,202 @@ export const listAgencies = async (req, res) => {
       total,
       page,
       pages: Math.ceil(total / limit) || 1,
+      pagination: {
+        page,
+        totalPages: Math.ceil(total / limit) || 1,
+        total,
+        limit,
+      },
       agencies: agencies.map((a) => sanitizeAgency(a, ownerMap.get(String(a.primaryOwnerUserId)))),
     });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, message: 'Failed to list agencies' });
+  }
+};
+
+/**
+ * Create Agency + primary owner account in one step.
+ * Body: name, slug?, ownerName, ownerEmail, ownerPassword, startTrial?, notes?, isPublicStorefront?
+ */
+export const createAgency = async (req, res) => {
+  try {
+    const {
+      name,
+      slug: requestedSlug = '',
+      ownerName,
+      ownerEmail,
+      ownerPassword,
+      startTrial: shouldStartTrial = true,
+      notes = '',
+      isPublicStorefront = false,
+    } = req.body || {};
+
+    if (!String(name || '').trim()) {
+      return res.status(400).json({ success: false, message: 'Agency name is required' });
+    }
+    if (!String(ownerName || '').trim() || !String(ownerEmail || '').trim() || !ownerPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Owner name, email and password are required',
+      });
+    }
+    if (String(ownerPassword).length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    }
+
+    const normalizedEmail = String(ownerEmail).trim().toLowerCase();
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists' });
+    }
+
+    const agencyName = String(name).trim();
+    const hashed = await bcrypt.hash(ownerPassword, 10);
+    const trial = shouldStartTrial
+      ? createTrialDefaults()
+      : {
+          licenseStatus: 'expired',
+          trialStartedAt: null,
+          trialEndsAt: null,
+          licensedAt: null,
+        };
+
+    const admin = await User.create({
+      name: String(ownerName).trim(),
+      email: normalizedEmail,
+      password: hashed,
+      role: 'owner',
+      agencyName,
+      accountStatus: 'active',
+      permissions: [],
+      notes: String(notes || ''),
+      ...trial,
+    });
+
+    let agencyDoc = await ensureAgencyForOwner(admin);
+    const agency = await Agency.findById(agencyDoc._id);
+    if (!agency) {
+      return res.status(500).json({ success: false, message: 'Agency provisioning failed' });
+    }
+
+    agency.name = agencyName;
+    const slugBase = String(requestedSlug || '').trim() || agencyName;
+    agency.slug = await Agency.ensureUniqueSlug(slugBase, agency._id);
+
+    if (isPublicStorefront) {
+      await Agency.updateMany(
+        { _id: { $ne: agency._id }, isPublicStorefront: true },
+        { $set: { isPublicStorefront: false } },
+      );
+      agency.isPublicStorefront = true;
+    }
+
+    await agency.save();
+    clearPublicTenantCache();
+    await audit(
+      req.user,
+      admin,
+      'superadmin.agency.create',
+      `Created agency ${agency.slug} with owner ${admin.email}`,
+      { agencyId: agency._id },
+    );
+
+    const owner = await User.findById(admin._id).select('-password').lean();
+    res.status(201).json({
+      success: true,
+      message: 'Agency created',
+      agency: sanitizeAgency(agency, owner),
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to create agency' });
+  }
+};
+
+/**
+ * Edit agency profile fields (name, slug, public storefront, locale stubs).
+ */
+export const updateAgency = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const agency = await Agency.findById(req.params.id);
+    if (!agency) {
+      return res.status(404).json({ success: false, message: 'Agency not found' });
+    }
+
+    const { name, slug, isPublicStorefront, timezone, currency, locale, status } = req.body || {};
+
+    if (name !== undefined) {
+      agency.name = String(name).trim() || agency.name;
+      if (agency.primaryOwnerUserId) {
+        await User.updateOne(
+          { _id: agency.primaryOwnerUserId },
+          { $set: { agencyName: agency.name } },
+        );
+      }
+    }
+
+    if (slug !== undefined && String(slug).trim()) {
+      agency.slug = await Agency.ensureUniqueSlug(String(slug).trim(), agency._id);
+    }
+
+    if (timezone !== undefined) agency.timezone = String(timezone || '').trim() || agency.timezone;
+    if (currency !== undefined) agency.currency = String(currency || '').trim() || agency.currency;
+    if (locale !== undefined) agency.locale = String(locale || '').trim() || agency.locale;
+
+    if (status !== undefined) {
+      if (!['active', 'suspended', 'disabled'].includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid agency status' });
+      }
+      agency.status = status;
+      if (agency.primaryOwnerUserId) {
+        const ownerStatus = status === 'active' ? 'active' : status;
+        await User.updateOne(
+          { _id: agency.primaryOwnerUserId, role: 'owner' },
+          {
+            $set: { accountStatus: ownerStatus },
+            ...(status !== 'active' ? { $inc: { tokenVersion: 1 } } : {}),
+          },
+        );
+      }
+    }
+
+    if (isPublicStorefront !== undefined) {
+      const wantPublic = Boolean(isPublicStorefront);
+      if (wantPublic) {
+        await Agency.updateMany(
+          { _id: { $ne: agency._id }, isPublicStorefront: true },
+          { $set: { isPublicStorefront: false } },
+        );
+      }
+      agency.isPublicStorefront = wantPublic;
+    }
+
+    await agency.save();
+    clearPublicTenantCache();
+    await audit(
+      req.user,
+      { _id: agency.primaryOwnerUserId },
+      'superadmin.agency.update',
+      `Updated agency ${agency.slug}`,
+      { agencyId: agency._id },
+    );
+
+    const owner = await User.findById(agency.primaryOwnerUserId)
+      .select('name email accountStatus licenseStatus agencyName')
+      .lean();
+
+    res.json({
+      success: true,
+      message: 'Agency updated',
+      agency: sanitizeAgency(agency, owner),
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to update agency' });
   }
 };
 
