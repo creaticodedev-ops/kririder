@@ -2,6 +2,7 @@ import React from 'react'
 import { assets } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../i18n/I18nContext'
+import { useAppContext } from '../context/AppContext'
 import { formatLocationsDisplay } from '../utils/carLocations'
 import PromotionBadge, { PromotionPriceTag } from './PromotionBadge'
 
@@ -9,18 +10,20 @@ const CarCard = ({ car }) => {
   const currency = import.meta.env.VITE_CURRENCY || 'MAD '
   const navigate = useNavigate()
   const { t } = useI18n()
+  const { publicPath } = useAppContext()
   const fallbackImage = assets.car_image1
   const promo = car?.displayPromotion || null
+  const detailsPath = publicPath?.(`/car-details/${car._id}`) || `/car-details/${car._id}`
 
   return (
     <article
       role="link"
       tabIndex={0}
-      onClick={() => { navigate(`/car-details/${car._id}`); window.scrollTo(0, 0) }}
+      onClick={() => { navigate(detailsPath); window.scrollTo(0, 0) }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          navigate(`/car-details/${car._id}`)
+          navigate(detailsPath)
           window.scrollTo(0, 0)
         }
       }}

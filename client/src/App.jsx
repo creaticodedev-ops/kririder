@@ -51,6 +51,7 @@ const SuperAdminActivity = lazy(() => import('./pages/superadmin/Activity'))
 const SuperAdminAudit = lazy(() => import('./pages/superadmin/AuditLogs'))
 const ActivateAccount = lazy(() => import('./pages/ActivateAccount'))
 const AgencySetup = lazy(() => import('./pages/AgencySetup'))
+const StorefrontShell = lazy(() => import('./components/StorefrontShell'))
 
 const MoroccoPillarPage = lazy(() => import('./pages/seo/MoroccoPillarPage'))
 const CityPage = lazy(() => import('./pages/seo/CityPage'))
@@ -73,7 +74,8 @@ const App = () => {
   const isOnboardingPath =
     pathname.startsWith('/activate-account') || pathname.startsWith('/agency-setup')
   const hidePublicChrome = isOwnerPath || isSuperAdminPath || isOnboardingPath
-  const needsNavOffset = !hidePublicChrome && pathname !== '/'
+  const isStorefrontHome = pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(pathname)
+  const needsNavOffset = !hidePublicChrome && !isStorefrontHome
 
   // Remove build-time SEO body after hydration (crawlers still see it in raw HTML).
   useEffect(() => {
@@ -129,6 +131,14 @@ const App = () => {
             <Route path="/complete-booking/:token" element={<CompleteBooking />} />
             <Route path="/activate-account/:token" element={<ActivateAccount />} />
             <Route path="/agency-setup" element={<AgencySetup />} />
+            {/* Per-agency public storefront (slug resolver — no custom domains) */}
+            <Route path="/s/:agencySlug" element={<StorefrontShell />}>
+              <Route index element={<Home />} />
+              <Route path="cars" element={<Cars />} />
+              <Route path="cars/:slug" element={<CarsSlugPage />} />
+              <Route path="car-details/:id" element={<CarDetails />} />
+              <Route path="booking-confirmation" element={<BookingConfirmation />} />
+            </Route>
             <Route path="/admin" element={<Navigate to="/owner" replace />} />
             <Route path="/owner" element={<Layout />}>
               <Route index element={withPerm('dashboard', Dashboard)} />

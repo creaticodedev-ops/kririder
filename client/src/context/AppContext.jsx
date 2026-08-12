@@ -1,14 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios from 'axios'
 import {toast} from 'react-hot-toast'
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getErrorMessage } from '../utils/apiError';
 import { resolveOwnerPermissions, ownerHasPermission } from '../utils/ownerPermissions';
+import { parseStorefrontSlug, storefrontPath } from '../utils/storefront';
 
 import { resolveApiBaseUrl } from '../utils/apiBase';
 
 const API_BASE_URL = resolveApiBaseUrl();
 axios.defaults.baseURL = API_BASE_URL
+
+const DEFAULT_PRIMARY = '#8F1F1F'
 
 export const AppContext = createContext();
 
@@ -23,10 +26,31 @@ const clearOwnerSession = () => {
   delete axios.defaults.headers.common['Authorization']
 }
 
+const applyAgencySlugHeader = (slug) => {
+  if (slug) {
+    axios.defaults.headers.common['X-Agency-Slug'] = slug
+  } else {
+    delete axios.defaults.headers.common['X-Agency-Slug']
+  }
+}
+
 export const AppProvider = ({ children })=>{
 
     const navigate = useNavigate()
+    const location = useLocation()
     const currency = import.meta.env.VITE_CURRENCY || 'MAD '
+
+    const storefrontSlug = useMemo(() => {
+      const fromPath = parseStorefrontSlug(location.pathname)
+      if (fromPath) return fromPath
+      try {
+        return String(new URLSearchParams(location.search).get('agency') || '')
+          .trim()
+          .toLowerCase()
+      } catch {
+        return ''
+      }
+    }, [location.pathname, location.search])
 
     const [token, setToken] = useState(null)
     const [user, setUser] = useState(null)
@@ -41,6 +65,9 @@ export const AppProvider = ({ children })=>{
     const [cars, setCars] = useState([])
     const [carsLoading, setCarsLoading] = useState(true)
     const [pickupLocations, setPickupLocations] = useState([])
+    const [storefrontProfile, setStorefrontProfile] = useState(null)
+    const [storefrontError, setStorefrontError] = useState('')
+    const [storefrontReady, setStorefrontReady] = useState(false)
 
     const applyLicense = useCallback((nextLicense, nextUser) => {
       const resolved = nextLicense || nextUser?.license || null
@@ -60,10 +87,14 @@ export const AppProvider = ({ children })=>{
     const fetchPickupLocations = useCallback(async () => {
         try {
             const { data } = await axios.get('/api/pickup-locations')
-            if (data.success) setPickupLocations(data.locations)
+            if (data.success) setPickupLocations(data.locations || [])
+            else setPickupLocations([])
         } catch (error) {
             console.error(getErrorMessage(error))
-            toast.error('Failed to load pickup locations')
+            setPickupLocations([])
+            if (!error.response || error.response.status >= 500) {
+              toast.error('Failed to load pickup locations')
+            }
         }
     }, [])
 
@@ -80,7 +111,6 @@ export const AppProvider = ({ children })=>{
             }
             setUser(normalizedUser)
             setOnboardingRequired(needsOnboarding)
-            // Pending owners are not full dashboard owners until onboarding completes
             setIsOwner(!needsOnboarding)
             applyLicense(data.license, data.user)
            } else {
@@ -94,7 +124,6 @@ export const AppProvider = ({ children })=>{
               setAuthReady(true)
               return
             }
-            // Auth / lock failures clear session; network errors keep token for retry
             if (error.response?.status === 401 || error.response?.status === 403) {
               resetOwnerAuth()
             }
@@ -107,19 +136,62 @@ export const AppProvider = ({ children })=>{
         setCarsLoading(true)
         try {
             const {data} = await axios.get('/api/user/cars')
-            data.success ? setCars(data.cars) : toast.error(data.message)
+            if (data.success) setCars(data.cars || [])
+            else {
+              setCars([])
+              toast.error(data.message)
+            }
         } catch (error) {
-            toast.error(getErrorMessage(error, 'Failed to load cars'))
+            setCars([])
+            const code = error.response?.data?.code
+            if (code === 'PUBLIC_AGENCY_NOT_FOUND') {
+              setStorefrontError(error.response?.data?.message || 'Storefront not found')
+            } else {
+              toast.error(getErrorMessage(error, 'Failed to load cars'))
+            }
         } finally {
             setCarsLoading(false)
         }
     }, [])
 
+    const fetchStorefrontProfile = useCallback(async (slug) => {
+      if (!slug) {
+        setStorefrontProfile(null)
+        setStorefrontError('')
+        setStorefrontReady(true)
+        return
+      }
+      setStorefrontReady(false)
+      setStorefrontError('')
+      try {
+        const { data } = await axios.get('/api/public/storefront', {
+          params: { agency: slug },
+          headers: { 'X-Agency-Slug': slug },
+        })
+        if (data.success) {
+          setStorefrontProfile(data.storefront || null)
+        } else {
+          setStorefrontProfile(null)
+          setStorefrontError(data.message || 'Storefront not found')
+        }
+      } catch (error) {
+        setStorefrontProfile(null)
+        setStorefrontError(getErrorMessage(error, 'Storefront not found'))
+      } finally {
+        setStorefrontReady(true)
+      }
+    }, [])
+
+    const publicPath = useCallback(
+      (path = '/') => storefrontPath(storefrontSlug, path),
+      [storefrontSlug],
+    )
+
     const logout = useCallback(()=>{
         resetOwnerAuth()
         toast.success('You have been logged out')
-        navigate('/')
-    }, [navigate, resetOwnerAuth])
+        navigate(storefrontPath(storefrontSlug, '/'))
+    }, [navigate, resetOwnerAuth, storefrontSlug])
 
     const hasPermission = useCallback((permission) => {
       return ownerHasPermission(user, permission)
@@ -179,6 +251,30 @@ export const AppProvider = ({ children })=>{
         return () => axios.interceptors.response.eject(interceptor)
     }, [token, navigate, resetOwnerAuth])
 
+    // Scope every public API call to the current agency storefront slug
+    useEffect(() => {
+      applyAgencySlugHeader(storefrontSlug)
+      if (storefrontSlug) {
+        fetchStorefrontProfile(storefrontSlug)
+      } else {
+        setStorefrontProfile(null)
+        setStorefrontError('')
+        setStorefrontReady(true)
+        document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
+      }
+      fetchCars()
+      fetchPickupLocations()
+    }, [storefrontSlug, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
+
+    useEffect(() => {
+      const color = storefrontProfile?.primaryBrandColor
+      if (color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+        document.documentElement.style.setProperty('--color-primary', color)
+      } else if (!storefrontSlug) {
+        document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
+      }
+    }, [storefrontProfile, storefrontSlug])
+
     useEffect(()=>{
         const storedToken = localStorage.getItem('token')
         if(storedToken){
@@ -187,9 +283,7 @@ export const AppProvider = ({ children })=>{
         } else {
             setAuthReady(true)
         }
-        fetchCars()
-        fetchPickupLocations()
-    },[fetchCars, fetchPickupLocations])
+    },[])
 
     useEffect(()=>{
         if(token){
@@ -207,9 +301,11 @@ export const AppProvider = ({ children })=>{
         pickupDate, setPickupDate, returnDate, setReturnDate,
         pickupLocations, fetchPickupLocations,
         license, setLicense, licenseLocked, applyLicense, hasPermission,
+        storefrontSlug, storefrontProfile, storefrontError, storefrontReady, publicPath,
     }), [
       navigate, currency, user, token, isOwner, onboardingRequired, authReady, fetchUser, showLogin, logout, fetchCars, cars, carsLoading,
       pickupDate, returnDate, pickupLocations, fetchPickupLocations, license, licenseLocked, applyLicense, hasPermission,
+      storefrontSlug, storefrontProfile, storefrontError, storefrontReady, publicPath,
     ])
 
     return (

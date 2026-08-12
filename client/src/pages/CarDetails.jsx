@@ -50,7 +50,17 @@ const formatFeeLabel = (location, currency, freeLabel) => {
 const CarDetails = () => {
   const { id } = useParams()
   const { t, language } = useI18n()
-  const { cars, axios, pickupDate, setPickupDate, returnDate, setReturnDate, pickupLocations, carsLoading } = useAppContext()
+  const {
+    cars,
+    axios,
+    pickupDate,
+    setPickupDate,
+    returnDate,
+    setReturnDate,
+    pickupLocations,
+    carsLoading,
+    publicPath,
+  } = useAppContext()
 
   const navigate = useNavigate()
   const [car, setCar] = useState(null)
@@ -602,12 +612,12 @@ const CarDetails = () => {
               duration: 5000,
             })
           }
-          navigate('/booking-confirmation', { state: confirmation })
+          navigate(publicPath?.('/booking-confirmation') || '/booking-confirmation', { state: confirmation })
           return
         }
 
         toast.success(data.message)
-        navigate('/booking-confirmation', { state: confirmation })
+        navigate(publicPath?.('/booking-confirmation') || '/booking-confirmation', { state: confirmation })
       } else {
         waTab?.close()
         if (data.code === 'DATES_UNAVAILABLE' && Array.isArray(data.unavailablePeriods)) {
@@ -657,7 +667,7 @@ const CarDetails = () => {
     return (
       <div className="page-pad page-shell mt-10 sm:mt-16 text-center pb-16">
         <h1 className="text-2xl font-semibold text-gray-800">{t('carDetails.notFound')}</h1>
-        <button type="button" onClick={() => navigate('/cars')} className="mt-4 text-primary cursor-pointer">{t('carDetails.back')}</button>
+        <button type="button" onClick={() => navigate(publicPath?.('/cars') || '/cars')} className="mt-4 text-primary cursor-pointer">{t('carDetails.back')}</button>
       </div>
     )
   }

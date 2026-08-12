@@ -6,17 +6,20 @@ import User from '../models/User.js';
  * P1 public-tenant resolution — returns exactly one Agency for the storefront.
  * Never merges fleets across agencies.
  *
- * Ops compatibility (single-agency first):
+ * Slug storefronts (no custom domains / P3):
+ * - When a slug is provided (query/header/body), resolve that active agency only
+ * - Default `/` storefront keeps env / isPublicStorefront / single-agency rules
+ *
+ * Ops compatibility (default storefront):
  * - Single active agency → resolved automatically (no PUBLIC_AGENCY_ID required)
  * - PUBLIC_AGENCY_ID is optional and only needed when multiple agencies exist
  * - PUBLIC_OWNER_ID remains as legacy compat (maps via Agency.legacyOwnerId)
- * - owner-namespaced upload paths stay legacy; agencyId is canonical for new/public data
  *
- * Priority:
- * 1. PUBLIC_AGENCY_ID (explicit multi-agency override)
- * 2. PUBLIC_OWNER_ID → Agency.legacyOwnerId (P0 compat)
+ * Priority (default, no slug):
+ * 1. PUBLIC_AGENCY_ID
+ * 2. PUBLIC_OWNER_ID → Agency.legacyOwnerId
  * 3. Exactly one Agency with isPublicStorefront=true
- * 4. Exactly one active Agency (automatic single-agency deploy)
+ * 4. Exactly one active Agency
  * 5. Sole active owner fallback (pre-migration)
  * 6. Fail closed (503) — never merge
  */
@@ -32,32 +35,90 @@ export class PublicTenantError extends Error {
   }
 }
 
-let cachedAgency = undefined;
-let cachedAt = 0;
+export class PublicAgencyNotFoundError extends Error {
+  constructor(message = 'Agency storefront not found') {
+    super(message);
+    this.name = 'PublicAgencyNotFoundError';
+    this.status = 404;
+    this.code = 'PUBLIC_AGENCY_NOT_FOUND';
+  }
+}
+
+const cache = new Map();
 const CACHE_MS = 30_000;
+const DEFAULT_KEY = '__default__';
 
 export const clearPublicTenantCache = () => {
-  cachedAgency = undefined;
-  cachedAt = 0;
+  cache.clear();
 };
 
-const toPublicAgency = (agency) => ({
+const cacheGet = (key) => {
+  const hit = cache.get(key);
+  if (!hit) return undefined;
+  if (Date.now() - hit.at >= CACHE_MS) {
+    cache.delete(key);
+    return undefined;
+  }
+  return hit.value;
+};
+
+const cacheSet = (key, value) => {
+  cache.set(key, { value, at: Date.now() });
+};
+
+const toPublicAgency = (agency, extras = {}) => ({
   agencyId: agency._id,
   legacyOwnerId: agency.legacyOwnerId || agency.primaryOwnerUserId,
   primaryOwnerUserId: agency.primaryOwnerUserId,
   slug: agency.slug,
   name: agency.name,
+  ...extras,
 });
 
-/**
- * @returns {Promise<{ agencyId, legacyOwnerId, primaryOwnerUserId, slug, name }>}
- * @throws {PublicTenantError}
- */
-export const resolvePublicAgency = async () => {
-  const now = Date.now();
-  if (cachedAgency !== undefined && now - cachedAt < CACHE_MS) {
-    if (cachedAgency === null) throw new PublicTenantError();
-    return cachedAgency;
+export const normalizeAgencySlug = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+
+/** Read storefront slug from query, header, or body (POST booking flows). */
+export const extractPublicAgencySlug = (req) => {
+  if (!req) return '';
+  const fromQuery = normalizeAgencySlug(req.query?.agency || req.query?.slug);
+  if (fromQuery) return fromQuery;
+  const header = req.headers?.['x-agency-slug'] || req.headers?.['X-Agency-Slug'];
+  const fromHeader = normalizeAgencySlug(header);
+  if (fromHeader) return fromHeader;
+  return normalizeAgencySlug(req.body?.agencySlug || req.body?.agency);
+};
+
+const resolveBySlug = async (slug) => {
+  const key = `slug:${slug}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) {
+    if (cached === null) throw new PublicAgencyNotFoundError();
+    return cached;
+  }
+
+  const agency = await Agency.findOne({ slug, status: 'active' })
+    .select('_id legacyOwnerId primaryOwnerUserId slug name')
+    .lean();
+  if (!agency) {
+    cacheSet(key, null);
+    throw new PublicAgencyNotFoundError(`No active storefront for agency "${slug}"`);
+  }
+  const resolved = toPublicAgency(agency);
+  cacheSet(key, resolved);
+  return resolved;
+};
+
+const resolveDefaultAgency = async () => {
+  const cached = cacheGet(DEFAULT_KEY);
+  if (cached !== undefined) {
+    if (cached === null) throw new PublicTenantError();
+    return cached;
   }
 
   const fromAgencyEnv = String(process.env.PUBLIC_AGENCY_ID || '').trim();
@@ -70,8 +131,7 @@ export const resolvePublicAgency = async () => {
       throw new PublicTenantError('PUBLIC_AGENCY_ID does not match any agency');
     }
     const resolved = toPublicAgency(agency);
-    cachedAgency = resolved;
-    cachedAt = now;
+    cacheSet(DEFAULT_KEY, resolved);
     return resolved;
   }
 
@@ -82,7 +142,6 @@ export const resolvePublicAgency = async () => {
     }
     let agency = await Agency.findOne({ legacyOwnerId: fromOwnerEnv }).lean();
     if (!agency) {
-      // Pre-migration / ensure path: map owner → create link if user exists
       const owner = await User.findOne({ _id: fromOwnerEnv, role: 'owner' }).select('_id agencyId').lean();
       if (owner?.agencyId) {
         agency = await Agency.findById(owner.agencyId).lean();
@@ -92,8 +151,7 @@ export const resolvePublicAgency = async () => {
       throw new PublicTenantError('PUBLIC_OWNER_ID does not map to an agency');
     }
     const resolved = toPublicAgency(agency);
-    cachedAgency = resolved;
-    cachedAt = now;
+    cacheSet(DEFAULT_KEY, resolved);
     return resolved;
   }
 
@@ -103,13 +161,11 @@ export const resolvePublicAgency = async () => {
     .lean();
   if (storefront.length === 1) {
     const resolved = toPublicAgency(storefront[0]);
-    cachedAgency = resolved;
-    cachedAt = now;
+    cacheSet(DEFAULT_KEY, resolved);
     return resolved;
   }
   if (storefront.length > 1) {
-    cachedAgency = null;
-    cachedAt = now;
+    cacheSet(DEFAULT_KEY, null);
     console.error('[publicTenant] Multiple isPublicStorefront agencies — fail closed');
     throw new PublicTenantError();
   }
@@ -120,12 +176,10 @@ export const resolvePublicAgency = async () => {
     .lean();
   if (active.length === 1) {
     const resolved = toPublicAgency(active[0]);
-    cachedAgency = resolved;
-    cachedAt = now;
+    cacheSet(DEFAULT_KEY, resolved);
     return resolved;
   }
 
-  // Last-resort P0 compat before agencies exist: sole active owner
   if (active.length === 0) {
     const owners = await User.find({
       role: 'owner',
@@ -147,14 +201,12 @@ export const resolvePublicAgency = async () => {
         name: null,
         ownerOnlyFallback: true,
       };
-      cachedAgency = resolved;
-      cachedAt = now;
+      cacheSet(DEFAULT_KEY, resolved);
       return resolved;
     }
   }
 
-  cachedAgency = null;
-  cachedAt = now;
+  cacheSet(DEFAULT_KEY, null);
   if (active.length > 1) {
     console.error(
       `[publicTenant] ${active.length} active agencies — automatic resolution disabled. ` +
@@ -168,28 +220,45 @@ export const resolvePublicAgency = async () => {
   throw new PublicTenantError();
 };
 
-/** @returns {Promise<string>} agencyId (or legacy owner id in ownerOnlyFallback) */
-export const resolvePublicAgencyId = async () => {
-  const agency = await resolvePublicAgency();
+/**
+ * @param {string|{ slug?: string }|undefined} slugOrOpts
+ * @returns {Promise<{ agencyId, legacyOwnerId, primaryOwnerUserId, slug, name }>}
+ */
+export const resolvePublicAgency = async (slugOrOpts) => {
+  const slug =
+    typeof slugOrOpts === 'string'
+      ? normalizeAgencySlug(slugOrOpts)
+      : normalizeAgencySlug(slugOrOpts?.slug);
+  if (slug) return resolveBySlug(slug);
+  return resolveDefaultAgency();
+};
+
+export const resolvePublicAgencyId = async (slugOrOpts) => {
+  const agency = await resolvePublicAgency(slugOrOpts);
   if (agency.agencyId) return String(agency.agencyId);
   if (agency.ownerOnlyFallback && agency.legacyOwnerId) return String(agency.legacyOwnerId);
   throw new PublicTenantError();
 };
 
-/**
- * Legacy helper — returns the public agency's legacyOwnerId (primary owner user id).
- * Prefer resolvePublicAgency() for new code.
- */
-export const resolvePublicOwnerId = async () => {
-  const agency = await resolvePublicAgency();
+export const resolvePublicOwnerId = async (slugOrOpts) => {
+  const agency = await resolvePublicAgency(slugOrOpts);
   return String(agency.legacyOwnerId || agency.primaryOwnerUserId);
 };
 
-export const requirePublicAgency = async (res) => {
+/**
+ * Express helper. Accepts (req, res) or legacy (res).
+ * @returns {Promise<object|null>}
+ */
+export const requirePublicAgency = async (reqOrRes, maybeRes) => {
+  const hasReq = Boolean(maybeRes);
+  const req = hasReq ? reqOrRes : null;
+  const res = hasReq ? maybeRes : reqOrRes;
+  const slug = extractPublicAgencySlug(req);
+
   try {
-    return await resolvePublicAgency();
+    return await resolvePublicAgency(slug ? { slug } : undefined);
   } catch (error) {
-    if (error instanceof PublicTenantError) {
+    if (error instanceof PublicTenantError || error instanceof PublicAgencyNotFoundError) {
       res.status(error.status).json({
         success: false,
         message: error.message,
@@ -201,11 +270,25 @@ export const requirePublicAgency = async (res) => {
   }
 };
 
-/** @deprecated use requirePublicAgency — kept for P0 call-site compat during transition */
-export const requirePublicOwnerId = async (res) => {
-  const agency = await requirePublicAgency(res);
+/** @deprecated use requirePublicAgency */
+export const requirePublicOwnerId = async (reqOrRes, maybeRes) => {
+  const agency = await requirePublicAgency(reqOrRes, maybeRes);
   if (!agency) return null;
   return String(agency.legacyOwnerId || agency.primaryOwnerUserId);
+};
+
+export const buildStorefrontPath = (slug) => {
+  const safe = normalizeAgencySlug(slug);
+  return safe ? `/s/${safe}` : '/';
+};
+
+export const buildStorefrontUrl = (slug) => {
+  const base = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')[0]
+    .trim()
+    .replace(/\/$/, '');
+  const path = buildStorefrontPath(slug);
+  return path === '/' ? `${base}/` : `${base}${path}`;
 };
 
 export default {
@@ -214,6 +297,11 @@ export default {
   resolvePublicOwnerId,
   requirePublicAgency,
   requirePublicOwnerId,
+  extractPublicAgencySlug,
+  normalizeAgencySlug,
+  buildStorefrontPath,
+  buildStorefrontUrl,
   clearPublicTenantCache,
   PublicTenantError,
+  PublicAgencyNotFoundError,
 };

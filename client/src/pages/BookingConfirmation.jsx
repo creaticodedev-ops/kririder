@@ -69,7 +69,9 @@ const BreakdownRows = ({ breakdown, currency, t }) => {
 const BookingConfirmation = () => {
   const { state: routeState } = useLocation()
   const { t } = useI18n()
-  const { currency } = useAppContext()
+  const { currency, publicPath } = useAppContext()
+  const carsPath = publicPath?.('/cars') || '/cars'
+  const homePath = publicPath?.('/') || '/'
 
   const state = useMemo(() => {
     if (routeState?.reservationId) return routeState
@@ -82,7 +84,7 @@ const BookingConfirmation = () => {
   }, [routeState])
 
   if (!state?.reservationId) {
-    return <Navigate to="/cars" replace />
+    return <Navigate to={carsPath} replace />
   }
 
   return (
@@ -136,10 +138,10 @@ const BookingConfirmation = () => {
           </div>
 
           <div className="sticky bottom-0 flex flex-col gap-3 border-t border-borderColor/70 bg-surface/95 px-5 py-4 backdrop-blur-md booking-safe-bottom sm:static sm:flex-row sm:justify-center sm:bg-transparent sm:px-8 sm:pb-8 sm:pt-0 sm:backdrop-blur-none">
-            <Link to="/cars" className={`${booking.btnPrimary} w-full sm:w-auto booking-tap`}>
+            <Link to={carsPath} className={`${booking.btnPrimary} w-full sm:w-auto booking-tap`}>
               {t('confirmation.browseMore')}
             </Link>
-            <Link to="/" className={`${booking.btnSecondary} w-full sm:w-auto booking-tap`}>
+            <Link to={homePath} className={`${booking.btnSecondary} w-full sm:w-auto booking-tap`}>
               {t('confirmation.backHome')}
             </Link>
           </div>

@@ -234,7 +234,7 @@ export const checkAvailabilityOfCar = async (req, res) => {
       return res.status(400).json({ success: false, message: dates.message });
     }
 
-    const agency = await requirePublicAgency(res);
+    const agency = await requirePublicAgency(req, res);
     if (!agency) return;
 
     const carQuery = {
@@ -293,7 +293,7 @@ export const quoteBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car not found' });
     }
 
-    const agency = await requirePublicAgency(res);
+    const agency = await requirePublicAgency(req, res);
     if (!agency) return;
     const carInAgency =
       (agency.agencyId && idsEqual(carData.agencyId, agency.agencyId)) ||
@@ -445,7 +445,7 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Car is not available for booking' });
     }
 
-    const agency = await requirePublicAgency(res);
+    const agency = await requirePublicAgency(req, res);
     if (!agency) return;
     const carInAgency =
       (agency.agencyId && idsEqual(carData.agencyId, agency.agencyId)) ||

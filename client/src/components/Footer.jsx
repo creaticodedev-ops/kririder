@@ -18,9 +18,14 @@ const fadeUp = (delay = 0) => ({
 
 const Footer = () => {
   const { t } = useI18n()
-  const { pickupLocations } = useAppContext()
+  const { pickupLocations, publicPath, storefrontProfile } = useAppContext()
   const cities = getPublishedCities().slice(0, 6)
   const airports = useMemo(() => airportsFromLocations(pickupLocations).slice(0, 4), [pickupLocations])
+  const homePath = publicPath?.('/') || '/'
+  const carsPath = publicPath?.('/cars') || '/cars'
+  const brandLabel = storefrontProfile?.name || BRAND_NAME
+  const brandLogo = storefrontProfile?.logoUrl || assets.logo
+  const contactPhone = storefrontProfile?.phone || storefrontProfile?.whatsapp || NAP.phone
 
   return (
     <footer className="page-pad page-shell mt-8 bg-light pb-[max(1.5rem,env(safe-area-inset-bottom))] text-sm text-muted md:mt-16">
@@ -31,8 +36,8 @@ const Footer = () => {
         <div className="max-w-sm w-full">
           <Motion.img
             {...fadeUp(0.2)}
-            src={assets.logo}
-            alt={BRAND_NAME}
+            src={brandLogo}
+            alt={brandLabel}
             width={176}
             height={44}
             loading="lazy"
@@ -49,19 +54,29 @@ const Footer = () => {
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${BRAND_NAME} Instagram`}
+              aria-label={`${brandLabel} Instagram`}
               className="inline-flex"
             >
               <img src={assets.instagram_logo} className="w-5 h-5 hover:opacity-70 transition" alt="" />
             </a>
-            <a
-              href={`mailto:${NAP.email}`}
-              aria-label="Email"
-              data-analytics-source="footer_social"
-              className="inline-flex"
-            >
-              <img src={assets.gmail_logo} className="w-5 h-5 hover:opacity-70 transition" alt="" />
-            </a>
+            {contactPhone ? (
+              <a
+                href={`tel:${String(contactPhone).replace(/\s/g, '')}`}
+                aria-label="Phone"
+                className="inline-flex text-xs text-ink/70 hover:text-ink"
+              >
+                {contactPhone}
+              </a>
+            ) : (
+              <a
+                href={`mailto:${NAP.email}`}
+                aria-label="Email"
+                data-analytics-source="footer_social"
+                className="inline-flex"
+              >
+                <img src={assets.gmail_logo} className="w-5 h-5 hover:opacity-70 transition" alt="" />
+              </a>
+            )}
           </Motion.div>
         </div>
 
@@ -74,8 +89,8 @@ const Footer = () => {
               {t('footer.quickLinks')}
             </h2>
             <ul className="mt-4 flex flex-col gap-2">
-              <li><Link className="hover:text-gray-700 transition" to="/">{t('footer.home')}</Link></li>
-              <li><Link className="hover:text-gray-700 transition" to="/cars">{t('footer.browseCars')}</Link></li>
+              <li><Link className="hover:text-gray-700 transition" to={homePath}>{t('footer.home')}</Link></li>
+              <li><Link className="hover:text-gray-700 transition" to={carsPath}>{t('footer.browseCars')}</Link></li>
               <li><Link className="hover:text-gray-700 transition" to="/location-voiture-maroc">Location Maroc</Link></li>
               <li><Link className="hover:text-gray-700 transition" to="/guide">Guides</Link></li>
             </ul>

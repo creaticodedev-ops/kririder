@@ -221,7 +221,7 @@ export const getUserData = async (req, res) => {
 
 export const getCars = async (req, res) => {
     try {
-        const agency = await requirePublicAgency(res);
+        const agency = await requirePublicAgency(req, res);
         if (!agency) return;
 
         const cars = await Car.find({
@@ -250,7 +250,7 @@ export const getCarById = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const agency = await requirePublicAgency(res);
+        const agency = await requirePublicAgency(req, res);
         if (!agency) return;
 
         const car = await Car.findOne({
@@ -291,7 +291,7 @@ export const getCarBookingRules = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid car ID' });
         }
 
-        const agency = await requirePublicAgency(res);
+        const agency = await requirePublicAgency(req, res);
         if (!agency) return;
 
         const car = await Car.findOne({

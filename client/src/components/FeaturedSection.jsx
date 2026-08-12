@@ -10,8 +10,9 @@ import { groupCarsByCategory } from '../utils/vehicleCategories'
 
 const FeaturedSection = () => {
   const navigate = useNavigate()
-  const { cars } = useAppContext()
+  const { cars, publicPath } = useAppContext()
   const { t } = useI18n()
+  const carsPath = publicPath?.('/cars') || '/cars'
 
   const sections = useMemo(() => {
     const grouped = groupCarsByCategory(cars)
@@ -52,7 +53,7 @@ const FeaturedSection = () => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate(`/cars?category=${encodeURIComponent(section.category)}`)
+                  navigate(`${carsPath}?category=${encodeURIComponent(section.category)}`)
                   window.scrollTo(0, 0)
                 }}
                 className="booking-tap inline-flex h-10 shrink-0 items-center text-xs text-primary hover:underline sm:text-sm"
@@ -86,7 +87,7 @@ const FeaturedSection = () => {
       >
         <button
           type="button"
-          onClick={() => { navigate('/cars'); window.scrollTo(0, 0) }}
+          onClick={() => { navigate(carsPath); window.scrollTo(0, 0) }}
           className="group booking-tap inline-flex h-12 items-center gap-2 rounded-2xl border border-ink/15 px-7 text-[15px] font-medium tracking-wide transition-all duration-300 hover:border-primary hover:text-primary cursor-pointer"
         >
           {t('featured.exploreAll')}

@@ -3,10 +3,12 @@ import { assets } from '../assets/assets'
 import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
 import { useNavigate } from 'react-router-dom'
+import { useAppContext } from '../context/AppContext'
 
 const Banner = () => {
   const { t } = useI18n()
   const navigate = useNavigate()
+  const { publicPath } = useAppContext()
 
   return (
     <section className="page-pad page-shell py-8 md:py-12">
@@ -45,7 +47,7 @@ const Banner = () => {
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.98 }}
             type="button"
-            onClick={() => navigate('/cars')}
+            onClick={() => navigate(publicPath?.('/cars') || '/cars')}
             className="booking-tap mt-7 inline-flex h-12 items-center self-start rounded-2xl bg-primary px-6 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-primary-dull cursor-pointer"
           >
             {t('banner.cta')}

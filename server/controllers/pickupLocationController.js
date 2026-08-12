@@ -153,7 +153,7 @@ export const seedPickupLocations = async () => {
 
 export const getActivePickupLocations = async (req, res) => {
     try {
-        const agency = await requirePublicAgency(res);
+        const agency = await requirePublicAgency(req, res);
         if (!agency) return;
 
         await ensureOwnerDefaultLocations(agency.legacyOwnerId, agency.agencyId);

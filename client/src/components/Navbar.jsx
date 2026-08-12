@@ -31,13 +31,18 @@ const InstagramGlyph = ({ className = 'h-[21px] w-[21px]' }) => (
 )
 
 const Navbar = () => {
-  const { logout, isOwner } = useAppContext()
+  const { logout, isOwner, publicPath, storefrontProfile } = useAppContext()
   const { t } = useI18n()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const navigate = useNavigate()
-  const isHome = location.pathname === '/'
+  const isHome =
+    location.pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(location.pathname)
+  const brandLabel = storefrontProfile?.name || BRAND_NAME
+  const brandLogo = storefrontProfile?.logoUrl || assets.logo
+  const homePath = publicPath?.('/') || '/'
+  const carsPath = publicPath?.('/cars') || '/cars'
 
   const navLabels = {
     Home: t('nav.home'),
@@ -104,20 +109,20 @@ const Navbar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/70 transition-opacity hover:text-ink hover:opacity-100 active:opacity-55"
-            aria-label={`${BRAND_NAME} Instagram`}
+            aria-label={`${brandLabel} Instagram`}
           >
             <InstagramGlyph />
           </a>
         </div>
 
         <Link
-          to="/"
+          to={homePath}
           className="pointer-events-auto absolute left-1/2 top-1/2 z-[1] -translate-x-1/2 -translate-y-1/2 flex items-center"
-          aria-label={BRAND_NAME}
+          aria-label={brandLabel}
         >
           <img
-            src={assets.logo}
-            alt={BRAND_NAME}
+            src={brandLogo}
+            alt={brandLabel}
             width={140}
             height={36}
             decoding="async"
@@ -128,7 +133,7 @@ const Navbar = () => {
         <div className="relative z-10 flex items-center -mr-1.5">
           <button
             type="button"
-            onClick={() => navigate('/cars')}
+            onClick={() => navigate(carsPath)}
             className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/70 transition-opacity hover:text-ink active:opacity-55 cursor-pointer"
             aria-label={t('nav.cars')}
           >
@@ -140,11 +145,11 @@ const Navbar = () => {
 
       {/* —— Desktop: unchanged —— */}
       <div className="page-pad page-shell hidden sm:flex items-center justify-between gap-4 py-3.5 sm:py-4">
-        <Link to="/" className="relative z-10 shrink-0 flex items-center">
+        <Link to={homePath} className="relative z-10 shrink-0 flex items-center">
           <Motion.img
             whileHover={{ scale: 1.03 }}
-            src={assets.logo}
-            alt={BRAND_NAME}
+            src={brandLogo}
+            alt={brandLabel}
             width={160}
             height={40}
             decoding="async"
@@ -156,7 +161,7 @@ const Navbar = () => {
           {menuLinks.map((link, index) => (
             <Link
               key={index}
-              to={link.path}
+              to={link.path === '/' ? homePath : carsPath}
               className="text-sm tracking-wide text-muted hover:text-ink transition-colors whitespace-nowrap"
             >
               {navLabels[link.name] || link.name}
@@ -196,7 +201,7 @@ const Navbar = () => {
             {menuLinks.map((link, index) => (
               <Link
                 key={index}
-                to={link.path}
+                to={link.path === '/' ? homePath : carsPath}
                 onClick={() => setOpen(false)}
                 className="booking-tap flex min-h-12 items-center border-b border-borderColor/60 py-3 text-sm tracking-wide text-muted transition-colors hover:text-ink"
               >

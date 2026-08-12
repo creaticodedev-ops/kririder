@@ -13,7 +13,17 @@ import { trackSearch } from '../analytics/ga4'
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState('')
   const { t } = useI18n()
-  const { pickupDate, setPickupDate, returnDate, setReturnDate, navigate, pickupLocations } = useAppContext()
+  const {
+    pickupDate,
+    setPickupDate,
+    returnDate,
+    setReturnDate,
+    navigate,
+    pickupLocations,
+    publicPath,
+    storefrontProfile,
+  } = useAppContext()
+  const displayBrand = storefrontProfile?.name || BRAND_NAME
 
   const cities = useMemo(() => {
     return [...new Set(pickupLocations.map((location) => location.city))].sort()
@@ -41,7 +51,8 @@ const Hero = () => {
       has_dates: true,
       source: 'hero',
     })
-    navigate(`/cars?${new URLSearchParams({
+    const carsBase = publicPath?.('/cars') || '/cars'
+    navigate(`${carsBase}?${new URLSearchParams({
       pickupLocation,
       pickupDate: startISO,
       returnDate: endISO,
@@ -85,7 +96,7 @@ const Hero = () => {
           </div>
 
           <p className="font-display text-5xl font-medium leading-none tracking-tight text-primary sm:text-6xl md:text-7xl">
-            {BRAND_NAME}
+            {displayBrand}
           </p>
           <h1 className="mt-3 font-display text-3xl font-medium leading-tight text-ink sm:mt-4 sm:text-4xl md:text-5xl">
             {t('hero.title')}
@@ -157,7 +168,7 @@ const Hero = () => {
             <source srcSet={HERO_IMAGE.webp} type="image/webp" />
             <img
               src={HERO_IMAGE.webp}
-              alt={`${BRAND_NAME} premium rental`}
+              alt={`${displayBrand} premium rental`}
               width={900}
               height={506}
               decoding="async"

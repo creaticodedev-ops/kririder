@@ -23,6 +23,7 @@ const Settings = () => {
   const [form, setForm] = useState(emptyWhatsApp)
   const [effective, setEffective] = useState({ reservationDial: '', confirmationDial: '' })
   const [bookingSettings, setBookingSettings] = useState(null)
+  const [agency, setAgency] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -38,7 +39,11 @@ const Settings = () => {
     setLoading(true)
     setError('')
     try {
-      const { data } = await axios.get('/api/owner/settings')
+      const [settingsRes, agencyRes] = await Promise.all([
+        axios.get('/api/owner/settings'),
+        axios.get('/api/owner/agency'),
+      ])
+      const data = settingsRes.data
       if (!data.success) {
         const msg = data.message || t('admin.settings.loadError')
         setError(msg)
@@ -55,6 +60,7 @@ const Settings = () => {
         confirmationDial: s.effective?.confirmationDial || '',
       })
       setBookingSettings(s.bookingSettings || null)
+      if (agencyRes.data?.success) setAgency(agencyRes.data.agency)
     } catch (err) {
       const msg = getErrorMessage(err)
       setError(msg)
@@ -164,6 +170,7 @@ const Settings = () => {
                 <GeneralSettingsPanel
                   bookingSettings={bookingSettings}
                   effective={effective}
+                  agency={agency}
                   t={t}
                   onNavigate={setTab}
                 />

@@ -24,6 +24,7 @@
     "test:agency:offline": "node scripts/verify-agency-isolation.mjs --offline",
     "test:onboarding:offline": "node scripts/verify-agency-onboarding.mjs",
     "test:onboarding:e2e": "node scripts/verify-agency-onboarding-e2e.mjs",
+    "test:storefront:e2e": "node scripts/verify-storefront-isolation.mjs",
     "migrate:agencies": "node scripts/migrate-agencies.mjs",
     "migrate:agencies:dry": "node scripts/migrate-agencies.mjs --dry-run",
     "test:email": "node scripts/testEmail.js",

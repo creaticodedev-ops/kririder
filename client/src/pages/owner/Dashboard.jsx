@@ -29,6 +29,7 @@ const Dashboard = () => {
   const { t } = useI18n();
   const [dash, setDash] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [agency, setAgency] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,13 +37,15 @@ const Dashboard = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const [ops, an] = await Promise.all([
+        const [ops, an, ag] = await Promise.all([
           axios.get('/api/owner/ops-dashboard'),
           axios.get('/api/owner/analytics'),
+          axios.get('/api/owner/agency'),
         ]);
         if (ops.data.success) setDash(ops.data.dashboard);
         else toast.error(ops.data.message);
         if (an.data.success) setAnalytics(an.data.analytics);
+        if (ag.data.success) setAgency(ag.data.agency);
       } catch (error) {
         toast.error(getErrorMessage(error));
       } finally {
@@ -85,6 +88,16 @@ const Dashboard = () => {
           subTitle={t('admin.dashboard.subtitle')}
         />
         <div className="flex flex-wrap gap-2">
+          {agency?.storefrontUrl || agency?.storefrontPath ? (
+            <a
+              href={agency.storefrontUrl || agency.storefrontPath}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 text-sm border border-primary/30 text-primary rounded-lg hover:bg-primary/5"
+            >
+              {t('admin.dashboard.viewWebsite')}
+            </a>
+          ) : null}
           <Link to="/owner/analytics" className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">{t('admin.dashboard.analytics')}</Link>
           <Link to="/owner/reports" className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">{t('admin.dashboard.reports')}</Link>
           {hasPermission('contracts') && (
@@ -96,6 +109,42 @@ const Dashboard = () => {
           <Link to="/owner/manage-bookings" className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dull">{t('admin.dashboard.reservations')}</Link>
         </div>
       </div>
+
+      {(agency?.storefrontUrl || agency?.storefrontPath) && (
+        <div className="mt-6 rounded-xl border border-borderColor bg-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-wide text-gray-500">{t('admin.dashboard.storefrontUrl')}</p>
+            <p className="mt-1 text-sm text-gray-800 font-mono break-all">
+              {agency.storefrontUrl || `${window.location.origin}${agency.storefrontPath}`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={async () => {
+                const url = agency.storefrontUrl || `${window.location.origin}${agency.storefrontPath}`
+                try {
+                  await navigator.clipboard.writeText(url)
+                  toast.success(t('admin.dashboard.storefrontCopied'))
+                } catch {
+                  toast.error(t('admin.dashboard.storefrontCopyFailed'))
+                }
+              }}
+              className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
+            >
+              {t('admin.dashboard.copyStorefront')}
+            </button>
+            <a
+              href={agency.storefrontUrl || agency.storefrontPath}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dull"
+            >
+              {t('admin.dashboard.openStorefront')}
+            </a>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-8">
         <KpiCard label={t('admin.dashboard.todayBookings')} value={dash.todayBookings} tone="info" />
