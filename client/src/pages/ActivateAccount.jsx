@@ -7,12 +7,14 @@ import { getErrorMessage } from '../utils/apiError'
 import { BRAND_NAME } from '../constants/brand'
 import NoIndexHead from '../seo/NoIndexHead'
 import Loader from '../components/Loader'
+import { useAppContext } from '../context/AppContext'
 
 const guestApi = axios.create({ baseURL: resolveApiBaseUrl() })
 
 const ActivateAccount = () => {
   const { token } = useParams()
   const navigate = useNavigate()
+  const { setToken, setOnboardingRequired, setIsOwner, setUser } = useAppContext()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [invite, setInvite] = useState(null)
@@ -67,6 +69,11 @@ const ActivateAccount = () => {
       if (!data.success) throw new Error(data.message || 'Failed')
       localStorage.setItem('token', data.token)
       axios.defaults.headers.common.Authorization = `Bearer ${data.token}`
+      // Must update AppContext — otherwise /agency-setup sees token=null and blocks the wizard
+      setToken(data.token)
+      setOnboardingRequired?.(true)
+      setIsOwner?.(false)
+      if (data.user) setUser?.(data.user)
       toast.success('Password saved')
       navigate('/agency-setup', { replace: true })
     } catch (err) {

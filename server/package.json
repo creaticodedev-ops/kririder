@@ -23,6 +23,7 @@
     "test:agency": "node scripts/verify-agency-isolation.mjs",
     "test:agency:offline": "node scripts/verify-agency-isolation.mjs --offline",
     "test:onboarding:offline": "node scripts/verify-agency-onboarding.mjs",
+    "test:onboarding:e2e": "node scripts/verify-agency-onboarding-e2e.mjs",
     "migrate:agencies": "node scripts/migrate-agencies.mjs",
     "migrate:agencies:dry": "node scripts/migrate-agencies.mjs --dry-run",
     "test:email": "node scripts/testEmail.js",
@@ -51,6 +52,7 @@
     "stripe": "^18.0.0"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.10"
   }
 }

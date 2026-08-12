@@ -150,7 +150,8 @@ export const setPasswordFromInvite = async (req, res) => {
     user.password = await bcrypt.hash(String(password), 10);
     user.passwordSetAt = new Date();
     user.inviteUsedAt = new Date();
-    user.inviteTokenHash = null;
+    // Keep inviteTokenHash so reused links resolve to INVITE_USED (not a silent 404).
+    // Resend-invite replaces the hash, which invalidates this token.
     user.tokenVersion = (user.tokenVersion || 0) + 1;
     user.accountStatus = 'pending';
     await user.save();
@@ -189,6 +190,13 @@ export const getOnboardingSession = async (req, res) => {
   try {
     const user = req.user;
     const agency = req.agency;
+    if (!user?._id || !agency?._id || !req.agencyId) {
+      return res.status(403).json({
+        success: false,
+        code: 'ONBOARDING_FORBIDDEN',
+        message: 'Onboarding session required',
+      });
+    }
     const settings = await serializeAgencySettings(
       req.agencyLegacyOwnerId,
       await getOrCreateAgencySettings(req.agencyLegacyOwnerId, req.agencyId),

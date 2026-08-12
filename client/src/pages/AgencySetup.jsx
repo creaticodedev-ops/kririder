@@ -50,9 +50,14 @@ const AgencySetup = () => {
   })
 
   const load = useCallback(async () => {
-    if (!token) {
+    const effectiveToken = token || localStorage.getItem('token')
+    if (!effectiveToken) {
       setLoading(false)
       return
+    }
+    if (!token && effectiveToken) {
+      axios.defaults.headers.common.Authorization = `Bearer ${effectiveToken}`
+      setToken(effectiveToken)
     }
     setLoading(true)
     try {
@@ -94,7 +99,7 @@ const AgencySetup = () => {
     } finally {
       setLoading(false)
     }
-  }, [token, navigate])
+  }, [token, navigate, setToken])
 
   useEffect(() => {
     load()

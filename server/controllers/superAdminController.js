@@ -554,7 +554,7 @@ export const createAgency = async (req, res) => {
 
     const owner = await User.findById(admin._id)
       .select(
-        '-password name email accountStatus licenseStatus agencyName inviteTokenHash inviteExpiresAt inviteUsedAt passwordSetAt onboardingCompletedAt',
+        'name email accountStatus licenseStatus agencyName inviteTokenHash inviteExpiresAt inviteUsedAt passwordSetAt onboardingCompletedAt',
       )
       .lean();
     const onboardingUrl = buildOnboardingUrl(invite.token);
