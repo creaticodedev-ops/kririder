@@ -58,16 +58,82 @@ const allowedOrigins = process.env.CLIENT_URL
       "http://localhost:5173",
       "http://localhost:3000"];
 
+const platformBase = String(process.env.PLATFORM_BASE_DOMAIN || "")
+  .trim()
+  .toLowerCase()
+  .replace(/^\.+|\.+$/g, "");
+
+const isPlatformSubdomainOrigin = (origin) => {
+  if (!platformBase || !origin) return false;
+  try {
+    const u = new URL(origin);
+    const host = u.hostname.toLowerCase();
+    return host === platformBase || host.endsWith(`.${platformBase}`);
+  } catch {
+    return false;
+  }
+};
+
+/** Cached set of verified custom domain hosts for CORS (refreshed periodically). */
+let customDomainOriginCache = { at: 0, hosts: new Set() };
+const refreshCustomDomainHosts = async () => {
+  if (Date.now() - customDomainOriginCache.at < 60_000) return;
+  try {
+    const Agency = (await import("./models/Agency.js")).default;
+    const rows = await Agency.find({
+      customDomainStatus: { $in: ["verified", "active"] },
+      customDomain: { $type: "string", $ne: "" },
+    })
+      .select("customDomain")
+      .lean();
+    const hosts = new Set();
+    for (const row of rows) {
+      const d = String(row.customDomain || "").toLowerCase().replace(/^www\./, "");
+      if (d) {
+        hosts.add(d);
+        hosts.add(`www.${d}`);
+      }
+    }
+    customDomainOriginCache = { at: Date.now(), hosts };
+  } catch {
+    /* ignore — fail closed to allowlist only */
+  }
+};
+
+const isCustomDomainOrigin = async (origin) => {
+  if (!origin) return false;
+  try {
+    await refreshCustomDomainHosts();
+    const host = new URL(origin).hostname.toLowerCase().replace(/^www\./, "");
+    return (
+      customDomainOriginCache.hosts.has(host) ||
+      customDomainOriginCache.hosts.has(`www.${host}`)
+    );
+  } catch {
+    return false;
+  }
+};
+
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: async (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
-      } else if (process.env.NODE_ENV !== "production") {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+        return;
       }
+      if (isPlatformSubdomainOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      if (await isCustomDomainOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      if (process.env.NODE_ENV !== "production") {
+        callback(null, true);
+        return;
+      }
+      callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })

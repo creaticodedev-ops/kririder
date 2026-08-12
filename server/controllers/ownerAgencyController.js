@@ -6,6 +6,13 @@ import {
 } from '../services/publicTenant.js';
 import { resolveAgencyBrand, toPublicStorefrontProfile, normalizeHexColor } from '../services/agencyBrand.js';
 import { updateWhatsAppSettings } from '../services/agencySettingsService.js';
+import {
+  serializeDomainState,
+  setAgencyCustomDomain,
+  clearAgencyCustomDomain,
+  setSubdomainEnabled,
+  verifyAgencyCustomDomain,
+} from '../services/agencyDomainService.js';
 
 const pickSocials = (input = {}) => ({
   instagram: String(input.instagram || '').trim(),
@@ -17,6 +24,7 @@ const pickSocials = (input = {}) => ({
 
 const serializeOwnerAgency = async (agency) => {
   const brand = await resolveAgencyBrand(agency);
+  const domains = serializeDomainState(agency);
   return {
     ...toPublicStorefrontProfile(brand),
     _id: agency._id,
@@ -26,6 +34,9 @@ const serializeOwnerAgency = async (agency) => {
     contractBranding: brand.contractBranding || {},
     isPublicStorefront: Boolean(agency.isPublicStorefront),
     onboardingCompletedAt: agency.onboardingCompletedAt || null,
+    domains,
+    storefrontUrl: domains.storefrontUrl || brand.storefrontUrl,
+    storefrontPath: domains.slugStorefrontPath || brand.storefrontPath,
   };
 };
 
@@ -146,7 +157,7 @@ export const updateOwnerAgencyBranding = async (req, res) => {
       success: true,
       agency: await serializeOwnerAgency(fresh),
       storefrontPath: buildStorefrontPath(agency.slug),
-      storefrontUrl: buildStorefrontUrl(agency.slug),
+      storefrontUrl: buildStorefrontUrl(agency.slug, agency),
     });
   } catch (error) {
     console.error('[updateOwnerAgencyBranding]', error.message);
@@ -154,4 +165,78 @@ export const updateOwnerAgencyBranding = async (req, res) => {
   }
 };
 
-export default { getOwnerAgency, updateOwnerAgencyBranding };
+export const getOwnerAgencyDomains = async (req, res) => {
+  try {
+    if (!req.agency) {
+      return res.status(500).json({ success: false, message: 'Agency context missing' });
+    }
+    res.json({ success: true, domains: serializeDomainState(req.agency) });
+  } catch (error) {
+    console.error('[getOwnerAgencyDomains]', error.message);
+    res.status(500).json({ success: false, message: 'Failed to load domains' });
+  }
+};
+
+export const updateOwnerAgencyDomain = async (req, res) => {
+  try {
+    if (!req.agencyId) {
+      return res.status(500).json({ success: false, message: 'Agency context missing' });
+    }
+    const body = req.body || {};
+    let agency;
+
+    if (body.clear === true || body.customDomain === '') {
+      agency = await clearAgencyCustomDomain(req.agencyId);
+    } else if (body.customDomain !== undefined) {
+      agency = await setAgencyCustomDomain(req.agencyId, body.customDomain);
+    } else {
+      agency = await Agency.findById(req.agencyId);
+    }
+
+    if (body.subdomainEnabled !== undefined) {
+      agency = await setSubdomainEnabled(req.agencyId, body.subdomainEnabled);
+    }
+
+    res.json({
+      success: true,
+      domains: serializeDomainState(agency),
+      agency: await serializeOwnerAgency(agency.toObject ? agency.toObject() : agency),
+    });
+  } catch (error) {
+    console.error('[updateOwnerAgencyDomain]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to update domain',
+    });
+  }
+};
+
+export const verifyOwnerAgencyDomain = async (req, res) => {
+  try {
+    if (!req.agencyId) {
+      return res.status(500).json({ success: false, message: 'Agency context missing' });
+    }
+    const agency = await verifyAgencyCustomDomain(req.agencyId, { force: false });
+    res.json({
+      success: true,
+      domains: serializeDomainState(agency),
+      agency: await serializeOwnerAgency(agency.toObject ? agency.toObject() : agency),
+    });
+  } catch (error) {
+    console.error('[verifyOwnerAgencyDomain]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Domain verification failed',
+    });
+  }
+};
+
+export default {
+  getOwnerAgency,
+  updateOwnerAgencyBranding,
+  getOwnerAgencyDomains,
+  updateOwnerAgencyDomain,
+  verifyOwnerAgencyDomain,
+};

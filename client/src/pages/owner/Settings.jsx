@@ -9,6 +9,7 @@ import PromotionsPanel from './settings/PromotionsPanel'
 import WhatsAppSettingsPanel from './settings/WhatsAppSettingsPanel'
 import GeneralSettingsPanel from './settings/GeneralSettingsPanel'
 import BrandingSettingsPanel from './settings/BrandingSettingsPanel'
+import DomainSettingsPanel from './settings/DomainSettingsPanel'
 import ComingSoonPanel from './settings/ComingSoonPanel'
 import { LoadingBlock, settingsUi } from './settings/settingsUi'
 
@@ -33,6 +34,7 @@ const Settings = () => {
     { id: 'promotions', label: t('admin.settings.tabPromotions'), blurb: t('admin.settings.navPromotionsBlurb') },
     { id: 'whatsapp', label: t('admin.settings.tabWhatsApp'), blurb: t('admin.settings.navWhatsAppBlurb') },
     { id: 'branding', label: t('admin.settings.tabBranding') || 'Branding', blurb: t('admin.settings.navBrandingBlurb') || 'Logo, colors, SEO, contracts' },
+    { id: 'domains', label: t('admin.settings.tabDomains') || 'Domains', blurb: t('admin.settings.navDomainsBlurb') || 'Subdomain & custom domain' },
     { id: 'general', label: t('admin.settings.tabGeneral'), blurb: t('admin.settings.navGeneralBlurb') },
     { id: 'future', label: t('admin.settings.tabFuture'), blurb: t('admin.settings.navFutureBlurb') },
   ]), [t])
@@ -170,6 +172,14 @@ const Settings = () => {
               )}
               {tab === 'branding' && (
                 <BrandingSettingsPanel
+                  agency={agency}
+                  axios={axios}
+                  t={t}
+                  onSaved={(saved) => setAgency(saved)}
+                />
+              )}
+              {tab === 'domains' && (
+                <DomainSettingsPanel
                   agency={agency}
                   axios={axios}
                   t={t}

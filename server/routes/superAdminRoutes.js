@@ -23,6 +23,7 @@ import {
   updateAgency,
   setAgencyStatus,
   resendAgencyInvite,
+  verifyAgencyDomain,
 } from '../controllers/superAdminController.js';
 
 const superAdminRouter = express.Router();
@@ -44,6 +45,7 @@ superAdminRouter.get('/agencies/:id', ...gate, getAgencyById);
 superAdminRouter.patch('/agencies/:id', ...gate, updateAgency);
 superAdminRouter.patch('/agencies/:id/status', ...gate, setAgencyStatus);
 superAdminRouter.post('/agencies/:id/resend-invite', ...gate, resendAgencyInvite);
+superAdminRouter.post('/agencies/:id/domains/verify', ...gate, verifyAgencyDomain);
 
 superAdminRouter.get('/admins', ...gate, listAdmins);
 superAdminRouter.post('/admins', ...gate, createAdmin);

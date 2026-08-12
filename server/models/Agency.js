@@ -103,6 +103,20 @@ const agencySchema = new mongoose.Schema(
     seo: { type: seoSchema, default: () => ({}) },
     hero: { type: heroSchema, default: () => ({}) },
     contractBranding: { type: contractBrandingSchema, default: () => ({}) },
+    /**
+     * P3 — custom apex/www domain (without scheme). Only used when status is verified/active.
+     * Uniqueness enforced for verified/active rows via partial index.
+     */
+    customDomain: { type: String, default: '', trim: true, lowercase: true },
+    customDomainStatus: {
+      type: String,
+      enum: ['none', 'pending', 'verified', 'active', 'failed'],
+      default: 'none',
+    },
+    customDomainVerifyToken: { type: String, default: '' },
+    customDomainVerifiedAt: { type: Date, default: null },
+    /** When true, `{slug}.{PLATFORM_BASE_DOMAIN}` resolves this agency (default on). */
+    subdomainEnabled: { type: Boolean, default: true },
     onboardingCompletedAt: { type: Date, default: null },
     timezone: { type: String, default: 'Africa/Casablanca' },
     currency: { type: String, default: 'MAD' },
@@ -116,6 +130,17 @@ agencySchema.index(
   {
     unique: true,
     partialFilterExpression: { isPublicStorefront: true },
+  },
+);
+
+agencySchema.index(
+  { customDomain: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      customDomain: { $type: 'string', $ne: '' },
+      customDomainStatus: { $in: ['verified', 'active'] },
+    },
   },
 );
 

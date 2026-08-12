@@ -1,27 +1,26 @@
 import mongoose from 'mongoose';
 import Agency from '../models/Agency.js';
 import User from '../models/User.js';
+import {
+  normalizeHost,
+  normalizeCustomDomain,
+  extractSubdomainSlug,
+  buildSubdomainUrl,
+  buildCustomDomainUrl,
+  getPlatformBaseDomain,
+} from '../utils/domainHost.js';
 
 /**
- * P1 public-tenant resolution — returns exactly one Agency for the storefront.
+ * Public-tenant resolution — returns exactly one Agency for the storefront.
  * Never merges fleets across agencies.
  *
- * Slug storefronts (no custom domains / P3):
- * - When a slug is provided (query/header/body), resolve that active agency only
- * - Default `/` storefront keeps env / isPublicStorefront / single-agency rules
+ * P3 resolution priority:
+ * 1. Verified/active custom domain (Host)
+ * 2. Platform subdomain `{slug}.{PLATFORM_BASE_DOMAIN}` (Host)
+ * 3. Explicit slug (query / X-Agency-Slug / body / /s/:slug client header)
+ * 4. Default `/` rules (PUBLIC_AGENCY_ID → … → fail closed)
  *
- * Ops compatibility (default storefront):
- * - Single active agency → resolved automatically (no PUBLIC_AGENCY_ID required)
- * - PUBLIC_AGENCY_ID is optional and only needed when multiple agencies exist
- * - PUBLIC_OWNER_ID remains as legacy compat (maps via Agency.legacyOwnerId)
- *
- * Priority (default, no slug):
- * 1. PUBLIC_AGENCY_ID
- * 2. PUBLIC_OWNER_ID → Agency.legacyOwnerId
- * 3. Exactly one Agency with isPublicStorefront=true
- * 4. Exactly one active Agency
- * 5. Sole active owner fallback (pre-migration)
- * 6. Fail closed (503) — never merge
+ * /s/:agencySlug remains supported forever (P1).
  */
 
 export class PublicTenantError extends Error {
@@ -72,6 +71,9 @@ const toPublicAgency = (agency, extras = {}) => ({
   primaryOwnerUserId: agency.primaryOwnerUserId,
   slug: agency.slug,
   name: agency.name,
+  customDomain: agency.customDomain || '',
+  customDomainStatus: agency.customDomainStatus || 'none',
+  subdomainEnabled: agency.subdomainEnabled !== false,
   ...extras,
 });
 
@@ -79,7 +81,7 @@ export const normalizeAgencySlug = (value) =>
   String(value || '')
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
 
@@ -94,6 +96,16 @@ export const extractPublicAgencySlug = (req) => {
   return normalizeAgencySlug(req.body?.agencySlug || req.body?.agency);
 };
 
+/** Prefer X-Agency-Host (SPA on custom domain/subdomain) → X-Forwarded-Host → Host. */
+export const extractRequestHost = (req) => {
+  if (!req) return '';
+  const agencyHost = req.headers?.['x-agency-host'] || req.headers?.['X-Agency-Host'];
+  if (agencyHost) return normalizeHost(agencyHost);
+  const forwarded = req.headers?.['x-forwarded-host'];
+  if (forwarded) return normalizeHost(String(forwarded).split(',')[0]);
+  return normalizeHost(req.headers?.host || req.hostname);
+};
+
 const resolveBySlug = async (slug) => {
   const key = `slug:${slug}`;
   const cached = cacheGet(key);
@@ -103,13 +115,69 @@ const resolveBySlug = async (slug) => {
   }
 
   const agency = await Agency.findOne({ slug, status: 'active' })
-    .select('_id legacyOwnerId primaryOwnerUserId slug name')
+    .select(
+      '_id legacyOwnerId primaryOwnerUserId slug name customDomain customDomainStatus subdomainEnabled',
+    )
     .lean();
   if (!agency) {
     cacheSet(key, null);
     throw new PublicAgencyNotFoundError(`No active storefront for agency "${slug}"`);
   }
   const resolved = toPublicAgency(agency);
+  cacheSet(key, resolved);
+  return resolved;
+};
+
+const resolveByCustomDomain = async (host) => {
+  const domain = normalizeCustomDomain(host);
+  if (!domain) return null;
+  const key = `domain:${domain}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) return cached;
+
+  const agency = await Agency.findOne({
+    status: 'active',
+    customDomainStatus: { $in: ['verified', 'active'] },
+    customDomain: { $in: [domain, `www.${domain}`] },
+  })
+    .select(
+      '_id legacyOwnerId primaryOwnerUserId slug name customDomain customDomainStatus subdomainEnabled',
+    )
+    .lean();
+
+  if (!agency) {
+    cacheSet(key, null);
+    return null;
+  }
+  const resolved = toPublicAgency(agency, { resolvedVia: 'custom_domain' });
+  cacheSet(key, resolved);
+  return resolved;
+};
+
+const resolveBySubdomainHost = async (host) => {
+  const slug = extractSubdomainSlug(host);
+  if (!slug) return null;
+  const key = `sub:${slug}`;
+  const cached = cacheGet(key);
+  if (cached !== undefined) {
+    if (cached === null) return null;
+    return cached;
+  }
+
+  const agency = await Agency.findOne({
+    slug,
+    status: 'active',
+    subdomainEnabled: { $ne: false },
+  })
+    .select(
+      '_id legacyOwnerId primaryOwnerUserId slug name customDomain customDomainStatus subdomainEnabled',
+    )
+    .lean();
+  if (!agency) {
+    cacheSet(key, null);
+    return null;
+  }
+  const resolved = toPublicAgency(agency, { resolvedVia: 'subdomain' });
   cacheSet(key, resolved);
   return resolved;
 };
@@ -121,58 +189,61 @@ const resolveDefaultAgency = async () => {
     return cached;
   }
 
-  const fromAgencyEnv = String(process.env.PUBLIC_AGENCY_ID || '').trim();
-  if (fromAgencyEnv) {
-    if (!mongoose.isValidObjectId(fromAgencyEnv)) {
-      throw new PublicTenantError('PUBLIC_AGENCY_ID is not a valid ObjectId');
+  const fromAgencyEnv = process.env.PUBLIC_AGENCY_ID?.trim();
+  if (fromAgencyEnv && mongoose.isValidObjectId(fromAgencyEnv)) {
+    const agency = await Agency.findById(fromAgencyEnv)
+      .select(
+        '_id legacyOwnerId primaryOwnerUserId slug name status customDomain customDomainStatus subdomainEnabled',
+      )
+      .lean();
+    if (agency && agency.status === 'active') {
+      const resolved = toPublicAgency(agency);
+      cacheSet(DEFAULT_KEY, resolved);
+      return resolved;
     }
-    const agency = await Agency.findById(fromAgencyEnv).lean();
-    if (!agency) {
-      throw new PublicTenantError('PUBLIC_AGENCY_ID does not match any agency');
-    }
-    const resolved = toPublicAgency(agency);
-    cacheSet(DEFAULT_KEY, resolved);
-    return resolved;
   }
 
-  const fromOwnerEnv = String(process.env.PUBLIC_OWNER_ID || '').trim();
-  if (fromOwnerEnv) {
-    if (!mongoose.isValidObjectId(fromOwnerEnv)) {
-      throw new PublicTenantError('PUBLIC_OWNER_ID is not a valid ObjectId');
-    }
-    let agency = await Agency.findOne({ legacyOwnerId: fromOwnerEnv }).lean();
+  const fromOwnerEnv = process.env.PUBLIC_OWNER_ID?.trim();
+  if (fromOwnerEnv && mongoose.isValidObjectId(fromOwnerEnv)) {
+    let agency = await Agency.findOne({ legacyOwnerId: fromOwnerEnv })
+      .select(
+        '_id legacyOwnerId primaryOwnerUserId slug name status customDomain customDomainStatus subdomainEnabled',
+      )
+      .lean();
     if (!agency) {
-      const owner = await User.findOne({ _id: fromOwnerEnv, role: 'owner' }).select('_id agencyId').lean();
+      const owner = await User.findOne({ _id: fromOwnerEnv, role: 'owner' })
+        .select('_id agencyId')
+        .lean();
       if (owner?.agencyId) {
-        agency = await Agency.findById(owner.agencyId).lean();
+        agency = await Agency.findById(owner.agencyId)
+          .select(
+            '_id legacyOwnerId primaryOwnerUserId slug name status customDomain customDomainStatus subdomainEnabled',
+          )
+          .lean();
       }
     }
-    if (!agency) {
-      throw new PublicTenantError('PUBLIC_OWNER_ID does not map to an agency');
+    if (agency && agency.status === 'active') {
+      const resolved = toPublicAgency(agency);
+      cacheSet(DEFAULT_KEY, resolved);
+      return resolved;
     }
-    const resolved = toPublicAgency(agency);
-    cacheSet(DEFAULT_KEY, resolved);
-    return resolved;
   }
 
-  const storefront = await Agency.find({ isPublicStorefront: true, status: 'active' })
-    .select('_id legacyOwnerId primaryOwnerUserId slug name')
-    .limit(2)
+  const flagged = await Agency.find({ isPublicStorefront: true, status: 'active' })
+    .select(
+      '_id legacyOwnerId primaryOwnerUserId slug name customDomain customDomainStatus subdomainEnabled',
+    )
     .lean();
-  if (storefront.length === 1) {
-    const resolved = toPublicAgency(storefront[0]);
+  if (flagged.length === 1) {
+    const resolved = toPublicAgency(flagged[0]);
     cacheSet(DEFAULT_KEY, resolved);
     return resolved;
-  }
-  if (storefront.length > 1) {
-    cacheSet(DEFAULT_KEY, null);
-    console.error('[publicTenant] Multiple isPublicStorefront agencies — fail closed');
-    throw new PublicTenantError();
   }
 
   const active = await Agency.find({ status: 'active' })
-    .select('_id legacyOwnerId primaryOwnerUserId slug name')
-    .limit(2)
+    .select(
+      '_id legacyOwnerId primaryOwnerUserId slug name customDomain customDomainStatus subdomainEnabled',
+    )
     .lean();
   if (active.length === 1) {
     const resolved = toPublicAgency(active[0]);
@@ -181,16 +252,8 @@ const resolveDefaultAgency = async () => {
   }
 
   if (active.length === 0) {
-    const owners = await User.find({
-      role: 'owner',
-      $or: [
-        { accountStatus: 'active' },
-        { accountStatus: { $exists: false } },
-        { accountStatus: null },
-      ],
-    })
+    const owners = await User.find({ role: 'owner', accountStatus: 'active' })
       .select('_id')
-      .limit(2)
       .lean();
     if (owners.length === 1) {
       const resolved = {
@@ -221,10 +284,38 @@ const resolveDefaultAgency = async () => {
 };
 
 /**
- * @param {string|{ slug?: string }|undefined} slugOrOpts
- * @returns {Promise<{ agencyId, legacyOwnerId, primaryOwnerUserId, slug, name }>}
+ * Resolve from an Express request (Host + slug headers).
+ */
+export const resolvePublicAgencyFromRequest = async (req) => {
+  const host = extractRequestHost(req);
+
+  if (host) {
+    const byDomain = await resolveByCustomDomain(host);
+    if (byDomain) return byDomain;
+
+    const bySub = await resolveBySubdomainHost(host);
+    if (bySub) return bySub;
+  }
+
+  const slug = extractPublicAgencySlug(req);
+  if (slug) return resolveBySlug(slug);
+
+  return resolveDefaultAgency();
+};
+
+/**
+ * @param {string|{ slug?: string, host?: string, req?: object }|undefined} slugOrOpts
  */
 export const resolvePublicAgency = async (slugOrOpts) => {
+  if (slugOrOpts?.req) {
+    return resolvePublicAgencyFromRequest(slugOrOpts.req);
+  }
+  if (slugOrOpts?.host) {
+    const byDomain = await resolveByCustomDomain(slugOrOpts.host);
+    if (byDomain) return byDomain;
+    const bySub = await resolveBySubdomainHost(slugOrOpts.host);
+    if (bySub) return bySub;
+  }
   const slug =
     typeof slugOrOpts === 'string'
       ? normalizeAgencySlug(slugOrOpts)
@@ -247,15 +338,16 @@ export const resolvePublicOwnerId = async (slugOrOpts) => {
 
 /**
  * Express helper. Accepts (req, res) or legacy (res).
- * @returns {Promise<object|null>}
+ * Uses Host-aware resolution when req is provided.
  */
 export const requirePublicAgency = async (reqOrRes, maybeRes) => {
   const hasReq = Boolean(maybeRes);
   const req = hasReq ? reqOrRes : null;
   const res = hasReq ? maybeRes : reqOrRes;
-  const slug = extractPublicAgencySlug(req);
 
   try {
+    if (req) return await resolvePublicAgencyFromRequest(req);
+    const slug = extractPublicAgencySlug(req);
     return await resolvePublicAgency(slug ? { slug } : undefined);
   } catch (error) {
     if (error instanceof PublicTenantError || error instanceof PublicAgencyNotFoundError) {
@@ -282,7 +374,31 @@ export const buildStorefrontPath = (slug) => {
   return safe ? `/s/${safe}` : '/';
 };
 
-export const buildStorefrontUrl = (slug) => {
+/**
+ * Prefer custom domain (active/verified) → platform subdomain → /s/:slug path URL.
+ */
+export const buildStorefrontUrl = (slug, agencyDoc = null) => {
+  const protocol =
+    String(process.env.STOREFRONT_URL_PROTOCOL || 'https').replace(':', '') || 'https';
+
+  if (agencyDoc) {
+    const status = agencyDoc.customDomainStatus || '';
+    if (
+      agencyDoc.customDomain &&
+      (status === 'verified' || status === 'active')
+    ) {
+      const custom = buildCustomDomainUrl(agencyDoc.customDomain, { protocol });
+      if (custom) return custom;
+    }
+    if (agencyDoc.subdomainEnabled !== false) {
+      const sub = buildSubdomainUrl(agencyDoc.slug || slug, { protocol });
+      if (sub) return sub;
+    }
+  } else if (getPlatformBaseDomain() && slug) {
+    const sub = buildSubdomainUrl(slug, { protocol });
+    if (sub) return sub;
+  }
+
   const base = (process.env.CLIENT_URL || 'http://localhost:5173')
     .split(',')[0]
     .trim()
@@ -293,11 +409,13 @@ export const buildStorefrontUrl = (slug) => {
 
 export default {
   resolvePublicAgency,
+  resolvePublicAgencyFromRequest,
   resolvePublicAgencyId,
   resolvePublicOwnerId,
   requirePublicAgency,
   requirePublicOwnerId,
   extractPublicAgencySlug,
+  extractRequestHost,
   normalizeAgencySlug,
   buildStorefrontPath,
   buildStorefrontUrl,

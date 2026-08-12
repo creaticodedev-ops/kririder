@@ -829,6 +829,41 @@ export const getAgencyById = async (req, res) => {
   }
 };
 
+/** Super Admin: force-verify or clear custom domain (ops). */
+export const verifyAgencyDomain = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const { verifyAgencyCustomDomain, serializeDomainState, setAgencyCustomDomain, clearAgencyCustomDomain } =
+      await import('../services/agencyDomainService.js');
+
+    if (req.body?.customDomain) {
+      await setAgencyCustomDomain(req.params.id, req.body.customDomain);
+    }
+    if (req.body?.clear === true) {
+      const cleared = await clearAgencyCustomDomain(req.params.id);
+      return res.json({ success: true, domains: serializeDomainState(cleared) });
+    }
+
+    const agency = await verifyAgencyCustomDomain(req.params.id, { force: 'superadmin' });
+    const owner = await User.findById(agency.primaryOwnerUserId).select('-password').lean();
+    res.json({
+      success: true,
+      message: 'Custom domain verified',
+      domains: serializeDomainState(agency),
+      agency: sanitizeAgency(agency, owner),
+    });
+  } catch (error) {
+    console.error('[verifyAgencyDomain]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to verify domain',
+    });
+  }
+};
+
 export const setAgencyStatus = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {

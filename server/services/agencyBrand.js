@@ -117,7 +117,7 @@ export const resolveAgencyBrand = async (agencyOrId, opts = {}) => {
     locale: agency.locale || 'fr-MA',
     timezone: agency.timezone || 'Africa/Casablanca',
     storefrontPath: buildStorefrontPath(slug),
-    storefrontUrl: buildStorefrontUrl(slug),
+    storefrontUrl: buildStorefrontUrl(slug, agency),
   };
 };
 

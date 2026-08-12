@@ -4,7 +4,7 @@ import {toast} from 'react-hot-toast'
 import { useLocation, useNavigate } from "react-router-dom";
 import { getErrorMessage } from '../utils/apiError';
 import { resolveOwnerPermissions, ownerHasPermission } from '../utils/ownerPermissions';
-import { parseStorefrontSlug, storefrontPath } from '../utils/storefront';
+import { parseStorefrontSlug, storefrontPath, detectHostTenant } from '../utils/storefront';
 
 import { resolveApiBaseUrl } from '../utils/apiBase';
 
@@ -34,15 +34,26 @@ const applyAgencySlugHeader = (slug) => {
   }
 }
 
+const applyAgencyHostHeader = (host) => {
+  if (host) {
+    axios.defaults.headers.common['X-Agency-Host'] = host
+  } else {
+    delete axios.defaults.headers.common['X-Agency-Host']
+  }
+}
+
 export const AppProvider = ({ children })=>{
 
     const navigate = useNavigate()
     const location = useLocation()
     const currency = import.meta.env.VITE_CURRENCY || 'MAD '
 
+    const hostTenant = useMemo(() => detectHostTenant(), [])
+
     const storefrontSlug = useMemo(() => {
       const fromPath = parseStorefrontSlug(location.pathname)
       if (fromPath) return fromPath
+      if (hostTenant.slug) return hostTenant.slug
       try {
         return String(new URLSearchParams(location.search).get('agency') || '')
           .trim()
@@ -50,7 +61,10 @@ export const AppProvider = ({ children })=>{
       } catch {
         return ''
       }
-    }, [location.pathname, location.search])
+    }, [location.pathname, location.search, hostTenant.slug])
+
+    /** On subdomain/custom domain, public links stay at site root (not /s/:slug). */
+    const storefrontAtRoot = Boolean(hostTenant.atRoot)
 
     const [token, setToken] = useState(null)
     const [user, setUser] = useState(null)
@@ -154,42 +168,44 @@ export const AppProvider = ({ children })=>{
         }
     }, [])
 
-    const fetchStorefrontProfile = useCallback(async (slug) => {
+    const fetchStorefrontProfile = useCallback(async (slug, { host } = {}) => {
       setStorefrontReady(false)
       setStorefrontError('')
       try {
+        const headers = {}
+        if (slug) headers['X-Agency-Slug'] = slug
+        if (host) headers['X-Agency-Host'] = host
         const { data } = await axios.get('/api/public/storefront', {
-          ...(slug
-            ? {
-                params: { agency: slug },
-                headers: { 'X-Agency-Slug': slug },
-              }
-            : {}),
+          ...(slug ? { params: { agency: slug } } : {}),
+          ...(Object.keys(headers).length ? { headers } : {}),
         })
         if (data.success) {
           setStorefrontProfile(data.storefront || null)
+          if (!slug && data.storefront?.slug && host) {
+            applyAgencySlugHeader(data.storefront.slug)
+          }
         } else {
           setStorefrontProfile(null)
-          if (slug) setStorefrontError(data.message || 'Storefront not found')
+          if (slug || host) setStorefrontError(data.message || 'Storefront not found')
         }
       } catch (error) {
         setStorefrontProfile(null)
-        if (slug) setStorefrontError(getErrorMessage(error, 'Storefront not found'))
+        if (slug || host) setStorefrontError(getErrorMessage(error, 'Storefront not found'))
       } finally {
         setStorefrontReady(true)
       }
     }, [])
 
     const publicPath = useCallback(
-      (path = '/') => storefrontPath(storefrontSlug, path),
-      [storefrontSlug],
+      (path = '/') => storefrontPath(storefrontSlug, path, { atRoot: storefrontAtRoot }),
+      [storefrontSlug, storefrontAtRoot],
     )
 
     const logout = useCallback(()=>{
         resetOwnerAuth()
         toast.success('You have been logged out')
-        navigate(storefrontPath(storefrontSlug, '/'))
-    }, [navigate, resetOwnerAuth, storefrontSlug])
+        navigate(storefrontPath(storefrontSlug, '/', { atRoot: storefrontAtRoot }))
+    }, [navigate, resetOwnerAuth, storefrontSlug, storefrontAtRoot])
 
     const hasPermission = useCallback((permission) => {
       return ownerHasPermission(user, permission)
@@ -249,13 +265,16 @@ export const AppProvider = ({ children })=>{
         return () => axios.interceptors.response.eject(interceptor)
     }, [token, navigate, resetOwnerAuth])
 
-    // Scope every public API call to the current agency storefront slug
+    // Scope every public API call to the current agency storefront (slug and/or Host)
     useEffect(() => {
       applyAgencySlugHeader(storefrontSlug)
-      fetchStorefrontProfile(storefrontSlug || null)
+      applyAgencyHostHeader(hostTenant.atRoot ? hostTenant.host : '')
+      fetchStorefrontProfile(storefrontSlug || null, {
+        host: hostTenant.atRoot ? hostTenant.host : '',
+      })
       fetchCars()
       fetchPickupLocations()
-    }, [storefrontSlug, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
+    }, [storefrontSlug, hostTenant.atRoot, hostTenant.host, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
 
     useEffect(() => {
       const color = storefrontProfile?.primaryBrandColor
@@ -307,10 +326,11 @@ export const AppProvider = ({ children })=>{
         pickupLocations, fetchPickupLocations,
         license, setLicense, licenseLocked, applyLicense, hasPermission,
         storefrontSlug, storefrontProfile, storefrontError, storefrontReady, publicPath,
+        storefrontAtRoot, hostTenant,
     }), [
       navigate, currency, user, token, isOwner, onboardingRequired, authReady, fetchUser, showLogin, logout, fetchCars, cars, carsLoading,
       pickupDate, returnDate, pickupLocations, fetchPickupLocations, license, licenseLocked, applyLicense, hasPermission,
-      storefrontSlug, storefrontProfile, storefrontError, storefrontReady, publicPath,
+      storefrontSlug, storefrontProfile, storefrontError, storefrontReady, publicPath, storefrontAtRoot, hostTenant,
     ])
 
     return (
