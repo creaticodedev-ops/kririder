@@ -145,7 +145,7 @@ export const generatePdfFromHtml = async (html, { filePath, title = 'Document', 
   return filePath;
 };
 
-export const generateContractPdf = async ({ template, booking, contractNumber, owner, includeCompanyStamp = true }) => {
+export const generateContractPdf = async ({ template, booking, contractNumber, owner, includeCompanyStamp = true, agency = null }) => {
   if (!template) {
     throw new Error('Contract template is required');
   }
@@ -153,8 +153,20 @@ export const generateContractPdf = async ({ template, booking, contractNumber, o
     throw new Error('Contract owner is required');
   }
 
-  const variables = buildTemplateVariables(booking, { contractNumber, owner, template, includeCompanyStamp });
-  const fullHtml = buildDocumentHtml(template, variables);
+  const { withAgencyForDocuments } = await import('./documentBrandContext.js');
+  const resolvedAgency = agency || (await withAgencyForDocuments({ booking, owner }));
+  const brandedTemplate = {
+    ...template,
+    logoUrl: template?.logoUrl || resolvedAgency?.logoUrl || '',
+  };
+  const variables = buildTemplateVariables(booking, {
+    contractNumber,
+    owner,
+    agency: resolvedAgency,
+    template: brandedTemplate,
+    includeCompanyStamp,
+  });
+  const fullHtml = buildDocumentHtml(brandedTemplate, variables);
 
   const dir = path.join(CONTRACTS_ROOT, String(owner._id || owner));
   ensureDir(dir);
@@ -165,7 +177,7 @@ export const generateContractPdf = async ({ template, booking, contractNumber, o
 
   // Pass prebuilt HTML to avoid building the document twice
   await generatePdfFromTemplate({
-    template,
+    template: brandedTemplate,
     variables,
     filePath,
     title: `Contract ${contractNumber}`,
@@ -180,13 +192,24 @@ export const generateContractPdf = async ({ template, booking, contractNumber, o
   };
 };
 
-export const generateDocumentFromTemplate = async ({ template, booking, owner, documentTitle, includeCompanyStamp = true }) => {
+export const generateDocumentFromTemplate = async ({ template, booking, owner, documentTitle, includeCompanyStamp = true, agency = null }) => {
   if (!template) {
     throw new Error('Export template is required');
   }
 
-  const variables = buildTemplateVariables(booking, { owner, template, includeCompanyStamp });
-  const fullHtml = buildDocumentHtml(template, variables);
+  const { withAgencyForDocuments } = await import('./documentBrandContext.js');
+  const resolvedAgency = agency || (await withAgencyForDocuments({ booking, owner }));
+  const brandedTemplate = {
+    ...template,
+    logoUrl: template?.logoUrl || resolvedAgency?.logoUrl || '',
+  };
+  const variables = buildTemplateVariables(booking, {
+    owner,
+    agency: resolvedAgency,
+    template: brandedTemplate,
+    includeCompanyStamp,
+  });
+  const fullHtml = buildDocumentHtml(brandedTemplate, variables);
 
   const dir = path.join(CONTRACTS_ROOT, String(owner._id || owner), 'exports');
   ensureDir(dir);
@@ -195,7 +218,7 @@ export const generateDocumentFromTemplate = async ({ template, booking, owner, d
   const filePath = path.join(dir, fileName);
 
   await generatePdfFromTemplate({
-    template,
+    template: brandedTemplate,
     variables,
     filePath,
     title: documentTitle || template.name,

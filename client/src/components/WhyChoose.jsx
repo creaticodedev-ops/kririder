@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
-import { BRAND_NAME } from '../constants/brand'
+import { useAppContext } from '../context/AppContext'
 import { buildWaMeUrl } from '../utils/whatsapp'
 
 const iconClass = 'h-5 w-5'
@@ -38,10 +38,16 @@ const ICONS = [FleetIcon, BoltIcon, PinIcon, ChatIcon]
 
 const WhyChoose = () => {
   const { t, getArray } = useI18n()
+  const { storefrontProfile } = useAppContext()
   const benefits = getArray('whyChoose.benefits')
-  const whatsappUrl = buildWaMeUrl(
-    t('whyChoose.whatsappMessage', { brand: BRAND_NAME }),
-  )
+  const brand = storefrontProfile?.name || ''
+  const dial = String(storefrontProfile?.whatsapp || storefrontProfile?.phone || '').replace(/\D/g, '')
+  const whatsappUrl = dial
+    ? buildWaMeUrl(
+        t('whyChoose.whatsappMessage', { brand: brand || 'car rental' }),
+        dial,
+      )
+    : ''
 
   return (
     <section className="page-pad page-shell bg-sand/30 py-16 sm:py-20 md:py-24 pb-20 sm:pb-28 md:pb-32">
@@ -88,6 +94,7 @@ const WhyChoose = () => {
         })}
       </div>
 
+      {whatsappUrl ? (
       <Motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -111,6 +118,7 @@ const WhyChoose = () => {
           </span>
         </a>
       </Motion.div>
+      ) : null}
     </section>
   )
 }

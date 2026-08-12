@@ -2,6 +2,8 @@ import React, { lazy, Suspense } from 'react'
 import Hero from '../components/Hero'
 import SeoHead from '../seo/SeoHead'
 import { localBusinessJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd'
+import { useAppContext } from '../context/AppContext'
+import { SITE_ORIGIN } from '../seo/constants'
 
 const FeaturedSection = lazy(() => import('../components/FeaturedSection'))
 const Banner = lazy(() => import('../components/Banner'))
@@ -14,13 +16,42 @@ const SectionFallback = () => (
 )
 
 const Home = () => {
+  const { storefrontProfile, storefrontSlug, publicPath } = useAppContext()
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  const brandName = storefrontProfile?.name || ''
+  const title = storefrontProfile?.seo?.title ||
+    (brandName ? `${brandName} — Car rental` : 'Car rental')
+  const description = storefrontProfile?.seo?.description ||
+    (brandName ? `Book a car with ${brandName}.` : 'Book a car online.')
+  const path = publicPath?.('/') || (storefrontSlug ? `/s/${storefrontSlug}` : '/')
+  const origin = storefrontProfile?.storefrontUrl
+    ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
+    : (typeof window !== 'undefined' ? window.location.origin : SITE_ORIGIN)
+  const ogImage = storefrontProfile?.seo?.ogImageUrl || storefrontProfile?.logoUrl || undefined
+
   return (
     <>
       <SeoHead
-        title="HDN Car — Location de voiture au Maroc"
-        description="HDN Car — location de voiture premium au Maroc. Réservez en ligne, aéroports actifs et flotte récente."
-        path="/"
-        jsonLd={[organizationJsonLd(), websiteJsonLd(), localBusinessJsonLd()]}
+        title={title}
+        description={description}
+        path={path}
+        image={ogImage}
+        siteName={brandName || undefined}
+        origin={origin}
+        faviconUrl={storefrontProfile?.faviconUrl || storefrontProfile?.logoUrl || ''}
+        jsonLd={
+          isTenant || storefrontProfile
+            ? [
+                organizationJsonLd(storefrontProfile),
+                websiteJsonLd(storefrontProfile),
+                localBusinessJsonLd(storefrontProfile),
+              ]
+            : [
+                organizationJsonLd(null),
+                websiteJsonLd(null),
+                localBusinessJsonLd(null),
+              ]
+        }
       />
       <Hero />
       <Suspense fallback={<SectionFallback />}>
@@ -35,9 +66,11 @@ const Home = () => {
       <Suspense fallback={<SectionFallback />}>
         <WhyChoose />
       </Suspense>
-      <Suspense fallback={<SectionFallback />}>
-        <SeoHomeModule />
-      </Suspense>
+      {!isTenant ? (
+        <Suspense fallback={<SectionFallback />}>
+          <SeoHomeModule />
+        </Suspense>
+      ) : null}
     </>
   )
 }

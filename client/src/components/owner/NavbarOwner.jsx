@@ -1,21 +1,41 @@
-import React from 'react'
-import { assets } from '../../assets/assets'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppContext } from '../../context/AppContext'
-import { BRAND_NAME } from '../../constants/brand'
+import { PLATFORM_NAME } from '../../constants/brand'
 import { useI18n } from '../../i18n/I18nContext'
 import LanguageSwitcher from '../LanguageSwitcher'
 import NotificationBell from './NotificationBell'
 import GlobalSearch from './GlobalSearch'
+import { assets } from '../../assets/assets'
 
 const NavbarOwner = ({ mobileNavOpen = false, onToggleMobileNav }) => {
-  const { user, logout, license, licenseLocked } = useAppContext()
+  const { user, logout, license, licenseLocked, axios } = useAppContext()
   const { t } = useI18n()
+  const [agency, setAgency] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data } = await axios.get('/api/owner/agency')
+        if (!cancelled && data.success) setAgency(data.agency)
+      } catch {
+        /* ignore — keep neutral */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [axios])
 
   const showTrialBadge =
     !licenseLocked &&
     license?.licenseStatus === 'trial' &&
     typeof license?.daysRemaining === 'number'
+
+  const brandLabel = agency?.name || user?.agencyName || PLATFORM_NAME
+  const brandLogo = agency?.logoUrl || ''
+  const homeLink = agency?.storefrontPath || agency?.storefrontUrl || '/owner'
 
   return (
     <div className="sticky top-0 z-30 flex items-center justify-between gap-3 px-4 md:px-8 lg:px-10 py-3 text-gray-500 border-b border-borderColor bg-white min-h-[57px]">
@@ -36,8 +56,16 @@ const NavbarOwner = ({ mobileNavOpen = false, onToggleMobileNav }) => {
             />
           </button>
         )}
-        <Link to="/" className="shrink-0">
-          <img src={assets.logo} alt={BRAND_NAME} className="block h-8 sm:h-9 w-auto max-h-9 object-contain" />
+        <Link to={homeLink} className="shrink-0 flex items-center gap-2">
+          {brandLogo ? (
+            <img
+              src={brandLogo}
+              alt={brandLabel}
+              className="block h-8 sm:h-9 w-auto max-h-9 object-contain"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-ink whitespace-nowrap">{brandLabel}</span>
+          )}
         </Link>
       </div>
 

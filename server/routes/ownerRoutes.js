@@ -48,7 +48,7 @@ import {
   getAgencySettings,
   updateAgencySettings,
 } from "../controllers/agencySettingsController.js";
-import { getOwnerAgency } from "../controllers/ownerAgencyController.js";
+import { getOwnerAgency, updateOwnerAgencyBranding } from "../controllers/ownerAgencyController.js";
 import {
   listPromotions,
   getPromotion,
@@ -100,6 +100,7 @@ ownerRouter.get('/reports/export', ...gate('reports'), exportReport);
 ownerRouter.post('/update-image', protect, requireOwner, upload.single("image"), handleMulterError, updateUserImage);
 
 ownerRouter.get('/agency', protect, requireOwner, getOwnerAgency);
+ownerRouter.put('/agency/branding', protect, requireOwner, updateOwnerAgencyBranding);
 ownerRouter.get('/settings', protect, requireOwner, getAgencySettings);
 ownerRouter.put('/settings', protect, requireOwner, updateAgencySettings);
 ownerRouter.get('/settings/whatsapp', protect, requireOwner, getAgencySettings);

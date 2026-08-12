@@ -46,7 +46,7 @@ for (const pathName of routes) {
 }
 
 // Home must show brand
-const homeOk = results[0]?.rootLen > 1000 && /HDN Car|Drive with distinction|Find cars/i.test(results[0]?.snippet || '')
+const homeOk = results[0]?.rootLen > 1000 && /Drive with distinction|Find cars|car rental|Location|Réserver|Book/i.test(results[0]?.snippet || '')
 const carsOk = results[1]?.rootLen > 500
 const notFoundOk = /404|not found/i.test(results[5]?.snippet || '')
 

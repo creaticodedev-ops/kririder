@@ -1,15 +1,19 @@
-/** wa.me deep links — no Meta API. Agency: +212 665 330 116 */
+/** wa.me deep links — no Meta API. Never invent another agency's WhatsApp number. */
 
-import { BRAND_NAME } from '../constants/brand'
+export const normalizeWhatsAppDial = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('0') && digits.length === 10) return `212${digits.slice(1)}`
+  return digits
+}
 
-export const DEFAULT_AGENCY_WHATSAPP = '212665330116'
-
+/** @deprecated Prefer storefront dial — returns empty when unset (no HDN leak). */
 export const getAgencyWhatsAppDial = () => {
   const raw =
     import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER ||
     import.meta.env.VITE_WHATSAPP_NUMBER ||
-    DEFAULT_AGENCY_WHATSAPP
-  return String(raw).replace(/\D/g, '') || DEFAULT_AGENCY_WHATSAPP
+    ''
+  return normalizeWhatsAppDial(raw)
 }
 
 const formatDateTime = (value) => {
@@ -18,23 +22,17 @@ const formatDateTime = (value) => {
   return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString()
 }
 
-export const buildWaMeUrl = (text, dial = getAgencyWhatsAppDial()) => {
-  const to = String(dial || '').replace(/\D/g, '') || DEFAULT_AGENCY_WHATSAPP
+export const buildWaMeUrl = (text, dial = '') => {
+  const to = normalizeWhatsAppDial(dial)
+  if (!to) return ''
   if (!text?.trim()) return `https://wa.me/${to}`
   return `https://wa.me/${to}?text=${encodeURIComponent(text)}`
 }
 
 /**
  * Open WhatsApp (or any external URL) in a new tab without navigating the current page.
- *
- * Important: do NOT pass `noopener` to window.open() when you need the WindowProxy —
- * with noopener, browsers return null and callers often fall back to location.href,
- * which destroys the reservation form.
- *
- * Call `prepare()` synchronously inside the user gesture, then `navigate(url)` after async work.
  */
 export const createExternalTabOpener = () => {
-  // about:blank keeps a usable WindowProxy; omit noopener so the handle is returned.
   let tab = null
   try {
     tab = window.open('about:blank', '_blank')
@@ -59,7 +57,6 @@ export const createExternalTabOpener = () => {
           /* fall through */
         }
       }
-      // Last resort: temporary anchor — still targets a new tab, never the current page.
       try {
         const anchor = document.createElement('a')
         anchor.href = url
@@ -88,9 +85,10 @@ export const createExternalTabOpener = () => {
 }
 
 /** Guest reservation after form submit */
-export const buildGuestReservationWaUrl = (reservation, { currency = 'MAD', dial } = {}) => {
+export const buildGuestReservationWaUrl = (reservation, { currency = 'MAD', dial, agencyName = '' } = {}) => {
+  const brand = agencyName || reservation.agencyName || 'car rental'
   const lines = [
-    `Hello, I would like to confirm my ${BRAND_NAME} car rental reservation.`,
+    `Hello, I would like to confirm my ${brand} reservation.`,
     '',
     `Reservation: ${reservation.reservationId || '—'}`,
     `Name: ${reservation.customerName || '—'}`,
@@ -102,18 +100,22 @@ export const buildGuestReservationWaUrl = (reservation, { currency = 'MAD', dial
     `Total: ${currency}${reservation.price ?? '—'}`,
   ]
   if (reservation.notes?.trim()) lines.push(`Notes: ${reservation.notes.trim()}`)
-  return buildWaMeUrl(lines.join('\n'), dial || reservation.whatsappDial || getAgencyWhatsAppDial())
+  return buildWaMeUrl(
+    lines.join('\n'),
+    dial || reservation.whatsappDial || getAgencyWhatsAppDial(),
+  )
 }
 
 /** Owner dashboard — open WhatsApp to agency with message to forward to customer */
-export const buildOwnerCompletionWaUrl = (booking, completionUrl, { currency = 'MAD', dial } = {}) => {
+export const buildOwnerCompletionWaUrl = (booking, completionUrl, { currency = 'MAD', dial, agencyName = '' } = {}) => {
   const reservationId = booking.reservationId || `RES-${booking._id?.toString().slice(-8).toUpperCase()}`
   const vehicle = booking.car
     ? `${booking.car.brand} ${booking.car.model}${booking.car.licensePlate ? ` (${booking.car.licensePlate})` : ''}`
     : booking.carName || '—'
+  const brand = agencyName || booking.agencyName || 'Booking'
 
   const lines = [
-    `${BRAND_NAME} — booking confirmation (message for customer):`,
+    `${brand} — booking confirmation (message for customer):`,
     '',
     `Hello ${booking.customerName || 'Customer'},`,
     '',
@@ -135,10 +137,8 @@ export const buildOwnerCompletionWaUrl = (booking, completionUrl, { currency = '
 /** @deprecated use buildOwnerCompletionWaUrl */
 export const buildCompletionWhatsAppUrl = buildOwnerCompletionWaUrl
 
-export const buildGuestToAgencyWhatsAppUrlFromDial = (dial, reservation, opts) => {
-  if (dial) return buildGuestReservationWaUrl(reservation, opts)
-  return buildGuestReservationWaUrl(reservation, opts)
-}
+export const buildGuestToAgencyWhatsAppUrlFromDial = (dial, reservation, opts) =>
+  buildGuestReservationWaUrl(reservation, { ...opts, dial })
 
 export default {
   buildGuestReservationWaUrl,

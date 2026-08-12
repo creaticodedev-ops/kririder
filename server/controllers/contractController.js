@@ -94,7 +94,7 @@ const createInvoiceForBooking = async ({ owner, booking, user, includeCompanySta
   const invoicePath = invoiceResult.filePath;
   const invoicePdfUrl = invoiceResult.pdfUrl;
   const sections = cloneSectionsFromTemplate(invoiceTemplate);
-  const sourceData = buildContractSourceData({
+  const sourceData = await buildContractSourceData({
     booking,
     owner,
     template: invoiceTemplate,
@@ -159,7 +159,7 @@ export const hydrateContractIfNeeded = async (contract, user, { persist = true }
     : contract.sections;
 
   const sourceData = needsSource
-    ? buildContractSourceData({
+    ? await buildContractSourceData({
         booking: booking || {},
         owner: user,
         template: template || {},
@@ -544,7 +544,7 @@ export const regenerateContract = async (req, res) => {
         template = await getDefaultContractTemplate(req.user._id);
       }
       doc.sections = cloneSectionsFromTemplate(template || {});
-      doc.sourceData = buildContractSourceData({
+      doc.sourceData = await buildContractSourceData({
         booking,
         owner: req.user,
         template: template || {},
@@ -756,8 +756,20 @@ export const previewContractFromBooking = async (req, res) => {
     }
 
     const contractNumber = 'PREVIEW';
-    const variables = buildTemplateVariables(booking, { contractNumber, owner: req.user, template, includeCompanyStamp });
-    const html = buildDocumentHtml(template, variables);
+    const { withAgencyForDocuments } = await import('../services/documentBrandContext.js');
+    const agency = await withAgencyForDocuments({ booking, owner: req.user });
+    const brandedTemplate = {
+      ...template,
+      logoUrl: template?.logoUrl || agency?.logoUrl || '',
+    };
+    const variables = buildTemplateVariables(booking, {
+      contractNumber,
+      owner: req.user,
+      agency,
+      template: brandedTemplate,
+      includeCompanyStamp,
+    });
+    const html = buildDocumentHtml(brandedTemplate, variables);
 
     res.json({ success: true, html, variables });
   } catch (error) {

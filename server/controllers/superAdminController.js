@@ -663,7 +663,18 @@ export const updateAgency = async (req, res) => {
       city,
       country,
       logoUrl,
+      faviconUrl,
+      email,
       primaryBrandColor,
+      secondaryBrandColor,
+      postalCode,
+      addressRegion,
+      legalName,
+      taxId,
+      socials,
+      seo,
+      hero,
+      contractBranding,
     } = req.body || {};
 
     if (name !== undefined) {
@@ -685,12 +696,54 @@ export const updateAgency = async (req, res) => {
     if (locale !== undefined) agency.locale = String(locale || '').trim() || agency.locale;
     if (phone !== undefined) agency.phone = String(phone || '').trim();
     if (whatsapp !== undefined) agency.whatsapp = String(whatsapp || '').trim();
+    if (email !== undefined) agency.email = String(email || '').trim().toLowerCase();
     if (address !== undefined) agency.address = String(address || '').trim();
     if (city !== undefined) agency.city = String(city || '').trim();
     if (country !== undefined) agency.country = String(country || '').trim();
+    if (postalCode !== undefined) agency.postalCode = String(postalCode || '').trim();
+    if (addressRegion !== undefined) agency.addressRegion = String(addressRegion || '').trim();
+    if (legalName !== undefined) agency.legalName = String(legalName || '').trim();
+    if (taxId !== undefined) agency.taxId = String(taxId || '').trim();
     if (logoUrl !== undefined) agency.logoUrl = String(logoUrl || '').trim();
+    if (faviconUrl !== undefined) agency.faviconUrl = String(faviconUrl || '').trim();
     if (primaryBrandColor !== undefined) {
       agency.primaryBrandColor = String(primaryBrandColor || '').trim();
+    }
+    if (secondaryBrandColor !== undefined) {
+      agency.secondaryBrandColor = String(secondaryBrandColor || '').trim();
+    }
+    if (socials && typeof socials === 'object') {
+      agency.socials = {
+        ...(agency.socials?.toObject?.() || agency.socials || {}),
+        instagram: String(socials.instagram || '').trim(),
+        facebook: String(socials.facebook || '').trim(),
+        tiktok: String(socials.tiktok || '').trim(),
+        youtube: String(socials.youtube || '').trim(),
+        website: String(socials.website || '').trim(),
+      };
+    }
+    if (seo && typeof seo === 'object') {
+      agency.seo = {
+        title: String(seo.title || '').trim().slice(0, 120),
+        description: String(seo.description || '').trim().slice(0, 320),
+        ogImageUrl: String(seo.ogImageUrl || '').trim(),
+      };
+    }
+    if (hero && typeof hero === 'object') {
+      agency.hero = {
+        headline: String(hero.headline || '').trim().slice(0, 160),
+        subheadline: String(hero.subheadline || '').trim().slice(0, 320),
+        badgeText: String(hero.badgeText || '').trim().slice(0, 80),
+        imageUrl: String(hero.imageUrl || '').trim(),
+      };
+    }
+    if (contractBranding && typeof contractBranding === 'object') {
+      agency.contractBranding = {
+        companyName: String(contractBranding.companyName || agency.name).trim(),
+        logoUrl: String(contractBranding.logoUrl || agency.logoUrl || '').trim(),
+        showLogoOnPdf: contractBranding.showLogoOnPdf !== false,
+        footerNote: String(contractBranding.footerNote || '').trim().slice(0, 500),
+      };
     }
 
     if (status !== undefined) {

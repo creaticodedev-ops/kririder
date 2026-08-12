@@ -107,7 +107,7 @@ export const hydrateInvoiceIfNeeded = async (invoice, user, { persist = true } =
 
   const sections = needsSections ? cloneSectionsFromTemplate(template || {}) : invoice.sections;
   const sourceData = needsSource
-    ? buildInvoiceSourceData({
+    ? await buildInvoiceSourceData({
         invoiceFields: invoiceFieldsFromDoc(invoice),
         booking,
         owner: user,
@@ -199,7 +199,7 @@ const generateInvoiceDocument = async ({ owner, invoiceNumber, invoiceData, incl
     includeCompanyStamp,
   });
 
-  const sourceData = buildInvoiceSourceData({
+  const sourceData = await buildInvoiceSourceData({
     invoiceFields: { ...invoiceData, invoiceNumber },
     booking: bookingLike,
     owner,
@@ -652,7 +652,7 @@ export const updateInvoice = async (req, res) => {
       doc.sections = mergeSections(doc.sections, sections);
     }
 
-    const rebuiltSource = buildInvoiceSourceData({
+    const rebuiltSource = await buildInvoiceSourceData({
       invoiceFields: invoiceFieldsFromDoc(doc),
       booking: doc.booking ? await Booking.findById(doc.booking).populate('car').lean() : null,
       owner: req.user,
@@ -753,7 +753,7 @@ export const regenerateInvoice = async (req, res) => {
         template = await getDefaultInvoiceTemplate(req.user._id);
       }
       doc.sections = cloneSectionsFromTemplate(template || {});
-      doc.sourceData = buildInvoiceSourceData({
+      doc.sourceData = await buildInvoiceSourceData({
         invoiceFields: invoiceFieldsFromDoc(doc),
         booking,
         owner: req.user,

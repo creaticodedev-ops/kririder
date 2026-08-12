@@ -383,8 +383,18 @@ export const previewTemplate = async (req, res) => {
     }
 
     const { buildTemplateVariables, buildDocumentHtml } = await import('../services/templateEngine.js');
-    const variables = buildTemplateVariables(booking || {}, { owner: req.user, template });
-    const html = buildDocumentHtml(template, variables);
+    const { withAgencyForDocuments } = await import('../services/documentBrandContext.js');
+    const agency = await withAgencyForDocuments({ booking, owner: req.user });
+    const brandedTemplate = {
+      ...template,
+      logoUrl: template?.logoUrl || agency?.logoUrl || '',
+    };
+    const variables = buildTemplateVariables(booking || {}, {
+      owner: req.user,
+      agency,
+      template: brandedTemplate,
+    });
+    const html = buildDocumentHtml(brandedTemplate, variables);
 
     res.json({ success: true, html, variables });
   } catch (error) {

@@ -5,7 +5,6 @@ import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
 import DateRangePicker from './DateRangePicker'
 import CitySelect from './CitySelect'
-import { BRAND_NAME } from '../constants/brand'
 import toast from 'react-hot-toast'
 import { booking } from './ui/bookingUi'
 import { trackSearch } from '../analytics/ga4'
@@ -23,7 +22,10 @@ const Hero = () => {
     publicPath,
     storefrontProfile,
   } = useAppContext()
-  const displayBrand = storefrontProfile?.name || BRAND_NAME
+  const displayBrand = storefrontProfile?.name || ''
+  const heroHeadline = storefrontProfile?.hero?.headline || ''
+  const heroSub = storefrontProfile?.hero?.subheadline || ''
+  const heroBadge = storefrontProfile?.hero?.badgeText || ''
 
   const cities = useMemo(() => {
     return [...new Set(pickupLocations.map((location) => location.city))].sort()
@@ -83,7 +85,7 @@ const Hero = () => {
                 aria-hidden="true"
               />
               <span className="min-w-0 truncate text-[10px] font-semibold uppercase leading-none tracking-[0.08em] text-ink sm:text-[11px] sm:tracking-[0.09em]">
-                {t('hero.badge')}
+                {heroBadge || t('hero.badge')}
               </span>
               <span
                 className="inline-flex shrink-0 translate-y-[0.5px] items-center text-[11px] leading-none sm:text-[12px]"
@@ -95,14 +97,16 @@ const Hero = () => {
             </div>
           </div>
 
-          <p className="font-display text-5xl font-medium leading-none tracking-tight text-primary sm:text-6xl md:text-7xl">
-            {displayBrand}
-          </p>
+          {displayBrand ? (
+            <p className="font-display text-5xl font-medium leading-none tracking-tight text-primary sm:text-6xl md:text-7xl">
+              {displayBrand}
+            </p>
+          ) : null}
           <h1 className="mt-3 font-display text-3xl font-medium leading-tight text-ink sm:mt-4 sm:text-4xl md:text-5xl">
-            {t('hero.title')}
+            {heroHeadline || t('hero.title')}
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm font-light leading-relaxed text-muted sm:mt-4 sm:text-base md:text-lg">
-            {t('hero.subtitle')}
+            {heroSub || t('hero.subtitle')}
           </p>
         </Motion.div>
 

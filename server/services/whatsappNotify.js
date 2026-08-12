@@ -1,10 +1,8 @@
 /**
  * WhatsApp — wa.me deep links only (no Meta/Twilio API).
- * Dial numbers are resolved from AgencySettings (DB) with env fallback.
+ * Dial numbers must come from the agency (DB). Never fall back to another tenant's number.
  */
-import { BRAND_NAME } from '../utils/brand.js';
-
-export const DEFAULT_AGENCY_WHATSAPP = '212665330116';
+import { PLATFORM_NAME } from '../utils/brand.js';
 
 export const normalizeWhatsAppDial = (phone) => {
   const digits = String(phone || '').replace(/\D/g, '');
@@ -13,18 +11,22 @@ export const normalizeWhatsAppDial = (phone) => {
   return digits;
 };
 
-/** Sync fallback for callers that do not have an owner context yet. */
+/**
+ * Platform-only dial (trial/license screens). Empty if unset — do not invent a number.
+ * @deprecated for tenant messaging — pass agency dial explicitly.
+ */
 export const getAgencyWhatsAppDial = () => {
   const raw =
+    process.env.PLATFORM_SUPPORT_WHATSAPP ||
     process.env.WHATSAPP_BUSINESS_NUMBER ||
     process.env.WHATSAPP_TO ||
-    process.env.AGENCY_PHONE ||
-    DEFAULT_AGENCY_WHATSAPP;
-  return normalizeWhatsAppDial(raw) || DEFAULT_AGENCY_WHATSAPP;
+    '';
+  return normalizeWhatsAppDial(raw);
 };
 
-export const buildWaMeUrl = (text, dial = getAgencyWhatsAppDial()) => {
-  const to = normalizeWhatsAppDial(dial) || DEFAULT_AGENCY_WHATSAPP;
+export const buildWaMeUrl = (text, dial) => {
+  const to = normalizeWhatsAppDial(dial);
+  if (!to) return '';
   if (!text?.trim()) return `https://wa.me/${to}`;
   return `https://wa.me/${to}?text=${encodeURIComponent(text)}`;
 };
@@ -49,9 +51,11 @@ export const buildReservationWhatsAppMessage = ({
   priceBreakdown,
   currency = 'MAD',
   notes = '',
+  agencyName = '',
 }) => {
+  const brand = String(agencyName || '').trim() || 'car rental';
   const lines = [
-    `Hello, I would like to confirm my ${BRAND_NAME} car rental reservation.`,
+    `Hello, I would like to confirm my ${brand} reservation.`,
     '',
     `Reservation: ${reservationId || '—'}`,
     `Customer: ${customerName || '—'}`,
@@ -76,10 +80,14 @@ export const buildReservationWhatsAppMessage = ({
 };
 
 /** Guest reservation → chat with agency on wa.me */
-export const buildGuestToAgencyWhatsAppUrl = (reservation = {}, dial) => {
+export const buildGuestToAgencyWhatsAppUrl = (reservation = {}, dial, agencyName = '') => {
   const currency = process.env.WHATSAPP_CURRENCY || process.env.CURRENCY || 'MAD';
-  const body = buildReservationWhatsAppMessage({ ...reservation, currency });
-  return buildWaMeUrl(body, dial || getAgencyWhatsAppDial());
+  const body = buildReservationWhatsAppMessage({
+    ...reservation,
+    currency,
+    agencyName: agencyName || reservation.agencyName || '',
+  });
+  return buildWaMeUrl(body, dial || reservation.whatsappDial || '');
 };
 
 /** Owner: message to agency with customer + completion link (review & send in WhatsApp) */
@@ -96,9 +104,11 @@ export const buildCompletionToAgencyWhatsAppUrl = ({
   currency = 'MAD',
   completionUrl,
   dial,
+  agencyName = '',
 }) => {
+  const brand = String(agencyName || '').trim() || 'Booking';
   const lines = [
-    `${BRAND_NAME} — booking confirmation (please send to customer):`,
+    `${brand} — booking confirmation (please send to customer):`,
     '',
     `Hello ${customerName || 'Customer'},`,
     '',
@@ -114,18 +124,17 @@ export const buildCompletionToAgencyWhatsAppUrl = ({
     '',
     `Customer phone: ${customerPhone || '—'}`,
   ];
-  return buildWaMeUrl(lines.join('\n'), dial || getAgencyWhatsAppDial());
+  return buildWaMeUrl(lines.join('\n'), dial || '');
 };
 
 /** Legacy no-op — API disabled */
-export const notifyNewReservationWhatsApp = async () => ({
+export const sendWhatsAppMessage = async () => ({
   success: false,
   skipped: true,
-  reason: 'WhatsApp API disabled — use wa.me links only',
+  reason: 'WhatsApp API disabled — use wa.me deep links',
 });
 
-export const sendWhatsAppText = async () => {
-  throw new Error('Server-side WhatsApp API is disabled. Use wa.me links only.');
-};
-
 export default buildGuestToAgencyWhatsAppUrl;
+
+/** Platform label for system/support messages only */
+export { PLATFORM_NAME };

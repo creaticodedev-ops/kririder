@@ -5,9 +5,9 @@ import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'framer-motion'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useI18n } from '../i18n/I18nContext'
-import { BRAND_NAME, INSTAGRAM_URL } from '../constants/brand'
+import { PLATFORM_NAME } from '../constants/brand'
 
-/** Thin monochrome Instagram glyph — matches HDN header line weight */
+/** Thin monochrome Instagram glyph */
 const InstagramGlyph = ({ className = 'h-[21px] w-[21px]' }) => (
   <svg
     className={className}
@@ -31,7 +31,7 @@ const InstagramGlyph = ({ className = 'h-[21px] w-[21px]' }) => (
 )
 
 const Navbar = () => {
-  const { logout, isOwner, publicPath, storefrontProfile } = useAppContext()
+  const { logout, isOwner, publicPath, storefrontProfile, storefrontSlug } = useAppContext()
   const { t } = useI18n()
   const location = useLocation()
   const [open, setOpen] = useState(false)
@@ -39,8 +39,10 @@ const Navbar = () => {
   const navigate = useNavigate()
   const isHome =
     location.pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(location.pathname)
-  const brandLabel = storefrontProfile?.name || BRAND_NAME
-  const brandLogo = storefrontProfile?.logoUrl || assets.logo
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  const brandLabel = storefrontProfile?.name || (isTenant ? '' : PLATFORM_NAME)
+  const brandLogo = storefrontProfile?.logoUrl || (isTenant ? '' : assets.logo)
+  const instagramUrl = storefrontProfile?.socials?.instagram || ''
   const homePath = publicPath?.('/') || '/'
   const carsPath = publicPath?.('/cars') || '/cars'
 
@@ -104,30 +106,36 @@ const Navbar = () => {
             />
           </button>
 
+          {instagramUrl ? (
           <a
-            href={INSTAGRAM_URL}
+            href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/70 transition-opacity hover:text-ink hover:opacity-100 active:opacity-55"
-            aria-label={`${brandLabel} Instagram`}
+            aria-label={`${brandLabel || 'Agency'} Instagram`}
           >
             <InstagramGlyph />
           </a>
+          ) : null}
         </div>
 
         <Link
           to={homePath}
           className="pointer-events-auto absolute left-1/2 top-1/2 z-[1] -translate-x-1/2 -translate-y-1/2 flex items-center"
-          aria-label={brandLabel}
+          aria-label={brandLabel || 'Home'}
         >
-          <img
-            src={brandLogo}
-            alt={brandLabel}
-            width={140}
-            height={36}
-            decoding="async"
-            className="block h-8 w-auto max-h-8 object-contain"
-          />
+          {brandLogo ? (
+            <img
+              src={brandLogo}
+              alt={brandLabel || 'Logo'}
+              width={140}
+              height={36}
+              decoding="async"
+              className="block h-8 w-auto max-h-8 object-contain"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-ink whitespace-nowrap">{brandLabel || 'Home'}</span>
+          )}
         </Link>
 
         <div className="relative z-10 flex items-center -mr-1.5">
@@ -146,15 +154,19 @@ const Navbar = () => {
       {/* —— Desktop: unchanged —— */}
       <div className="page-pad page-shell hidden sm:flex items-center justify-between gap-4 py-3.5 sm:py-4">
         <Link to={homePath} className="relative z-10 shrink-0 flex items-center">
-          <Motion.img
-            whileHover={{ scale: 1.03 }}
-            src={brandLogo}
-            alt={brandLabel}
-            width={160}
-            height={40}
-            decoding="async"
-            className="block h-8 sm:h-9 lg:h-10 w-auto max-h-9 lg:max-h-10 object-contain"
-          />
+          {brandLogo ? (
+            <Motion.img
+              whileHover={{ scale: 1.03 }}
+              src={brandLogo}
+              alt={brandLabel || 'Logo'}
+              width={160}
+              height={40}
+              decoding="async"
+              className="block h-8 sm:h-9 lg:h-10 w-auto max-h-9 lg:max-h-10 object-contain"
+            />
+          ) : (
+            <span className="text-base font-semibold text-ink">{brandLabel || 'Home'}</span>
+          )}
         </Link>
 
         <nav className="flex items-center gap-5 lg:gap-7 shrink-0">

@@ -85,6 +85,8 @@ export const initiateBookingCompletion = async (bookingId, { resend = false } = 
   };
 
   try {
+    const { resolveBrandForContext } = await import('./agencyBrand.js');
+    const brand = await resolveBrandForContext({ booking, owner: booking.owner });
     emailResult = await sendCompletionInviteEmail({
       to: booking.customerEmail,
       customerName: booking.customerName,
@@ -95,6 +97,7 @@ export const initiateBookingCompletion = async (bookingId, { resend = false } = 
       returnDate: formatDt(booking.returnDate),
       total: booking.price,
       currency,
+      brand,
     });
   } catch (emailErr) {
     console.error('[email] Completion invite threw:', emailErr.message);
@@ -314,7 +317,11 @@ export const tryFinalizeBookingCompletion = async (bookingId) => {
     reservationId: booking.reservationId,
     vehicle,
     detailsHtml,
-    contractPath,
+    contractPath: contractResult?.filePath,
+    brand: await (await import('./agencyBrand.js')).resolveBrandForContext({
+      booking,
+      owner: booking.owner,
+    }),
   });
 
   booking.completion.lastEmail = {

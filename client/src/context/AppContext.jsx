@@ -155,28 +155,26 @@ export const AppProvider = ({ children })=>{
     }, [])
 
     const fetchStorefrontProfile = useCallback(async (slug) => {
-      if (!slug) {
-        setStorefrontProfile(null)
-        setStorefrontError('')
-        setStorefrontReady(true)
-        return
-      }
       setStorefrontReady(false)
       setStorefrontError('')
       try {
         const { data } = await axios.get('/api/public/storefront', {
-          params: { agency: slug },
-          headers: { 'X-Agency-Slug': slug },
+          ...(slug
+            ? {
+                params: { agency: slug },
+                headers: { 'X-Agency-Slug': slug },
+              }
+            : {}),
         })
         if (data.success) {
           setStorefrontProfile(data.storefront || null)
         } else {
           setStorefrontProfile(null)
-          setStorefrontError(data.message || 'Storefront not found')
+          if (slug) setStorefrontError(data.message || 'Storefront not found')
         }
       } catch (error) {
         setStorefrontProfile(null)
-        setStorefrontError(getErrorMessage(error, 'Storefront not found'))
+        if (slug) setStorefrontError(getErrorMessage(error, 'Storefront not found'))
       } finally {
         setStorefrontReady(true)
       }
@@ -254,14 +252,7 @@ export const AppProvider = ({ children })=>{
     // Scope every public API call to the current agency storefront slug
     useEffect(() => {
       applyAgencySlugHeader(storefrontSlug)
-      if (storefrontSlug) {
-        fetchStorefrontProfile(storefrontSlug)
-      } else {
-        setStorefrontProfile(null)
-        setStorefrontError('')
-        setStorefrontReady(true)
-        document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
-      }
+      fetchStorefrontProfile(storefrontSlug || null)
       fetchCars()
       fetchPickupLocations()
     }, [storefrontSlug, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
@@ -270,10 +261,24 @@ export const AppProvider = ({ children })=>{
       const color = storefrontProfile?.primaryBrandColor
       if (color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
         document.documentElement.style.setProperty('--color-primary', color)
-      } else if (!storefrontSlug) {
+      } else if (!storefrontProfile?.agencyId) {
         document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
       }
     }, [storefrontProfile, storefrontSlug])
+
+    useEffect(() => {
+      if (!storefrontProfile) return
+      const favicon = storefrontProfile.faviconUrl || storefrontProfile.logoUrl
+      if (!favicon) return
+      let link = document.querySelector("link[rel='icon'][data-agency-favicon='1']")
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'icon'
+        link.setAttribute('data-agency-favicon', '1')
+        document.head.appendChild(link)
+      }
+      link.href = favicon
+    }, [storefrontProfile])
 
     useEffect(()=>{
         const storedToken = localStorage.getItem('token')

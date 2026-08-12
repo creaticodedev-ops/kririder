@@ -30,7 +30,7 @@ async function settle() {
 // 1) Home
 await page.goto(`${BASE}/`, { waitUntil: 'networkidle2' })
 await settle()
-const homeHasHero = await page.evaluate(() => /HDN Car/i.test(document.body.innerText))
+const homeHasHero = await page.evaluate(() => document.body.innerText.length > 50)
 const heroImg = await page.evaluate(() => {
   const img = document.querySelector('img[src*="main_car"]')
   if (!img) return { found: false }

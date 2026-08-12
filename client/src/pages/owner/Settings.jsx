@@ -8,6 +8,7 @@ import BookingSettingsPanel from './settings/BookingSettingsPanel'
 import PromotionsPanel from './settings/PromotionsPanel'
 import WhatsAppSettingsPanel from './settings/WhatsAppSettingsPanel'
 import GeneralSettingsPanel from './settings/GeneralSettingsPanel'
+import BrandingSettingsPanel from './settings/BrandingSettingsPanel'
 import ComingSoonPanel from './settings/ComingSoonPanel'
 import { LoadingBlock, settingsUi } from './settings/settingsUi'
 
@@ -31,6 +32,7 @@ const Settings = () => {
     { id: 'booking', label: t('admin.settings.tabBooking'), blurb: t('admin.settings.navBookingBlurb') },
     { id: 'promotions', label: t('admin.settings.tabPromotions'), blurb: t('admin.settings.navPromotionsBlurb') },
     { id: 'whatsapp', label: t('admin.settings.tabWhatsApp'), blurb: t('admin.settings.navWhatsAppBlurb') },
+    { id: 'branding', label: t('admin.settings.tabBranding') || 'Branding', blurb: t('admin.settings.navBrandingBlurb') || 'Logo, colors, SEO, contracts' },
     { id: 'general', label: t('admin.settings.tabGeneral'), blurb: t('admin.settings.navGeneralBlurb') },
     { id: 'future', label: t('admin.settings.tabFuture'), blurb: t('admin.settings.navFutureBlurb') },
   ]), [t])
@@ -164,6 +166,14 @@ const Settings = () => {
                   effective={effective}
                   onReload={load}
                   t={t}
+                />
+              )}
+              {tab === 'branding' && (
+                <BrandingSettingsPanel
+                  agency={agency}
+                  axios={axios}
+                  t={t}
+                  onSaved={(saved) => setAgency(saved)}
                 />
               )}
               {tab === 'general' && (

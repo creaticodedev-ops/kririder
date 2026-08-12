@@ -1,9 +1,11 @@
 import Agency from '../models/Agency.js';
 import {
   requirePublicAgency,
-  buildStorefrontPath,
-  buildStorefrontUrl,
 } from '../services/publicTenant.js';
+import {
+  resolveAgencyBrand,
+  toPublicStorefrontProfile,
+} from '../services/agencyBrand.js';
 import {
   getOrCreateAgencySettings,
   serializeAgencySettings,
@@ -12,6 +14,7 @@ import {
 /**
  * Public agency profile for a slug storefront (or default public tenant).
  * Safe fields only — never exposes owner password, invite tokens, or internals.
+ * Never falls back to another agency's branding.
  */
 export const getPublicStorefront = async (req, res) => {
   try {
@@ -21,28 +24,35 @@ export const getPublicStorefront = async (req, res) => {
     if (!agency.agencyId) {
       return res.json({
         success: true,
-        storefront: {
+        storefront: toPublicStorefrontProfile({
           agencyId: null,
           name: agency.name || '',
-          slug: agency.slug || null,
+          slug: agency.slug || '',
           logoUrl: '',
+          faviconUrl: '',
           phone: '',
           whatsapp: '',
+          email: '',
           address: '',
           city: '',
           country: '',
+          postalCode: '',
+          addressRegion: '',
           primaryBrandColor: '',
-          storefrontPath: agency.slug ? buildStorefrontPath(agency.slug) : '/',
-          storefrontUrl: agency.slug ? buildStorefrontUrl(agency.slug) : buildStorefrontUrl(''),
-        },
+          secondaryBrandColor: '',
+          socials: {},
+          seo: {},
+          hero: {},
+          currency: 'MAD',
+          locale: 'fr-MA',
+          timezone: 'Africa/Casablanca',
+          storefrontPath: agency.slug ? `/s/${agency.slug}` : '/',
+          storefrontUrl: '',
+        }),
       });
     }
 
-    const doc = await Agency.findById(agency.agencyId)
-      .select(
-        'name slug logoUrl phone whatsapp address city country primaryBrandColor status',
-      )
-      .lean();
+    const doc = await Agency.findById(agency.agencyId).lean();
     if (!doc || doc.status !== 'active') {
       return res.status(404).json({
         success: false,
@@ -51,36 +61,26 @@ export const getPublicStorefront = async (req, res) => {
       });
     }
 
-    let whatsapp = doc.whatsapp || '';
+    let settings = null;
     try {
-      const settings = await serializeAgencySettings(
+      settings = await serializeAgencySettings(
         agency.legacyOwnerId,
         await getOrCreateAgencySettings(agency.legacyOwnerId, agency.agencyId),
         agency.agencyId,
       );
-      if (!whatsapp) {
-        whatsapp = settings.whatsappReservationNumber || '';
-      }
     } catch {
-      /* settings optional for public profile */
+      /* settings optional */
+    }
+
+    const brand = await resolveAgencyBrand(doc, { settings });
+    if (!brand.whatsapp && settings?.whatsappReservationNumber) {
+      brand.whatsapp = settings.whatsappReservationNumber;
+      brand.whatsappDial = settings.effective?.reservationDial || brand.whatsappDial;
     }
 
     res.json({
       success: true,
-      storefront: {
-        agencyId: String(doc._id),
-        name: doc.name || '',
-        slug: doc.slug || '',
-        logoUrl: doc.logoUrl || '',
-        phone: doc.phone || '',
-        whatsapp,
-        address: doc.address || '',
-        city: doc.city || '',
-        country: doc.country || '',
-        primaryBrandColor: doc.primaryBrandColor || '',
-        storefrontPath: buildStorefrontPath(doc.slug),
-        storefrontUrl: buildStorefrontUrl(doc.slug),
-      },
+      storefront: toPublicStorefrontProfile(brand),
     });
   } catch (error) {
     console.error('[getPublicStorefront]', error.message);

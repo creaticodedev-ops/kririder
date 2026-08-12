@@ -2,9 +2,9 @@ import React from 'react'
 import { useAppContext } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nContext'
 
-const CONTACT_PHONE = '+212665330116'
-const CONTACT_EMAIL = 'haddanecar@gmail.com'
-const CONTACT_WHATSAPP = '212665330116'
+const CONTACT_PHONE = import.meta.env.VITE_PLATFORM_SUPPORT_PHONE || ''
+const CONTACT_EMAIL = import.meta.env.VITE_PLATFORM_SUPPORT_EMAIL || ''
+const CONTACT_WHATSAPP = String(import.meta.env.VITE_PLATFORM_SUPPORT_WHATSAPP || '').replace(/\D/g, '')
 
 /**
  * Shown when the agency trial has expired.
@@ -18,9 +18,11 @@ const TrialExpired = () => {
     ? new Date(license.trialEndsAt).toLocaleString()
     : null
 
-  const whatsappUrl = `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(
-    t('admin.trial.whatsappMessage')
-  )}`
+  const whatsappUrl = CONTACT_WHATSAPP
+    ? `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(
+        t('admin.trial.whatsappMessage')
+      )}`
+    : ''
 
   return (
     <div className="min-h-[calc(100svh-57px)] flex items-center justify-center px-4 py-12 bg-light">
@@ -54,27 +56,33 @@ const TrialExpired = () => {
 
         <div className="mt-6 space-y-2 text-sm text-gray-700">
           <p className="font-medium text-ink">{t('admin.trial.contactTitle')}</p>
-          <p>
-            <a href={`tel:${CONTACT_PHONE}`} className="text-primary hover:underline">
-              {CONTACT_PHONE}
-            </a>
-          </p>
-          <p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
-              {CONTACT_EMAIL}
-            </a>
-          </p>
+          {CONTACT_PHONE ? (
+            <p>
+              <a href={`tel:${CONTACT_PHONE}`} className="text-primary hover:underline">
+                {CONTACT_PHONE}
+              </a>
+            </p>
+          ) : null}
+          {CONTACT_EMAIL ? (
+            <p>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                {CONTACT_EMAIL}
+              </a>
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dull text-white text-sm font-medium transition-colors"
-          >
-            {t('admin.trial.contactWhatsapp')}
-          </a>
+          {whatsappUrl ? (
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dull text-white text-sm font-medium transition-colors"
+            >
+              {t('admin.trial.contactWhatsapp')}
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={logout}

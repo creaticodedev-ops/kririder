@@ -7,7 +7,6 @@ import {
   buildGuestToAgencyWhatsAppUrl,
   buildCompletionToAgencyWhatsAppUrl,
   normalizeWhatsAppDial,
-  DEFAULT_AGENCY_WHATSAPP,
 } from '../services/whatsappNotify.js';
 
 assert.equal(normalizeWhatsAppDial('+212 665-330-116'), '212665330116');
@@ -27,11 +26,14 @@ const reservationUrl = buildGuestToAgencyWhatsAppUrl(
     pickupDate: new Date('2026-08-10T10:00:00Z'),
     returnDate: new Date('2026-08-12T10:00:00Z'),
     price: 1000,
+    agencyName: 'Atlas Drift',
   },
   reservationDial,
+  'Atlas Drift',
 );
 assert.ok(reservationUrl.startsWith(`https://wa.me/${reservationDial}?text=`));
 assert.ok(!reservationUrl.includes(confirmationDial));
+assert.ok(reservationUrl.includes(encodeURIComponent('Atlas Drift')));
 
 const confirmationUrl = buildCompletionToAgencyWhatsAppUrl({
   reservationId: 'RES-TEST',
@@ -45,11 +47,14 @@ const confirmationUrl = buildCompletionToAgencyWhatsAppUrl({
   price: 1000,
   completionUrl: 'https://example.com/complete-booking/token',
   dial: confirmationDial,
+  agencyName: 'Sahara Pulse',
 });
 assert.ok(confirmationUrl.startsWith(`https://wa.me/${confirmationDial}?text=`));
 assert.ok(confirmationUrl.includes(encodeURIComponent('https://example.com/complete-booking/token')));
+assert.ok(confirmationUrl.includes(encodeURIComponent('Sahara Pulse')));
 
+// No dial → empty URL (never invent another agency's WhatsApp number)
 const fallbackUrl = buildGuestToAgencyWhatsAppUrl({ reservationId: 'X' });
-assert.ok(fallbackUrl.startsWith(`https://wa.me/${DEFAULT_AGENCY_WHATSAPP}?text=`) || fallbackUrl.includes('wa.me/'));
+assert.equal(fallbackUrl, '');
 
 console.log('verify-whatsapp-settings: all assertions passed');

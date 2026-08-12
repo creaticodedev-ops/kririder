@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { defaultAgencyName } from "../utils/brand.js";
+import { PLATFORM_NAME } from "../utils/brand.js";
 
 let transporter = null;
 let verifiedOk = false;
@@ -41,21 +41,25 @@ export const getSmtpConfigSummary = () => {
 };
 
 /**
- * Build From header. For providers like Gmail the envelope address should
- * match the authenticated mailbox (or a verified alias).
+ * Build From header.
+ * @param {{ displayName?: string, name?: string, replyTo?: string, email?: string }} [brand]
+ * Envelope stays SMTP mailbox; display name / reply-to come from agency when provided.
  */
-export const resolveFromAddress = () => {
-  const agency = defaultAgencyName();
+export const resolveFromAddress = (brand = {}) => {
+  const displayName =
+    String(brand.displayName || brand.name || "").trim() || PLATFORM_NAME;
   const user = stripQuotes(process.env.SMTP_USER);
   const rawFrom = stripQuotes(process.env.SMTP_FROM);
 
-  let name = agency;
+  let name = displayName;
   let email = user;
 
   if (rawFrom) {
     const angled = rawFrom.match(/^(.*?)\s*<([^>]+)>$/);
     if (angled) {
-      name = angled[1].trim().replace(/^["']|["']$/g, "") || agency;
+      if (!brand.displayName && !brand.name) {
+        name = angled[1].trim().replace(/^["']|["']$/g, "") || displayName;
+      }
       email = angled[2].trim();
     } else if (rawFrom.includes("@")) {
       email = rawFrom;
@@ -82,7 +86,8 @@ export const resolveFromAddress = () => {
     email = "noreply@localhost";
   }
 
-  return { name, email, formatted: `"${name}" <${email}>` };
+  const replyTo = String(brand.replyTo || brand.email || "").trim() || undefined;
+  return { name, email, replyTo, formatted: `"${name}" <${email}>` };
 };
 
 export const getTransporter = async ({ forceNew = false } = {}) => {
@@ -141,7 +146,7 @@ export const getTransporter = async ({ forceNew = false } = {}) => {
  * Send email with real delivery checks.
  * success=true only when the SMTP server accepted the recipient.
  */
-export const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
+export const sendEmail = async ({ to, subject, html, text, attachments = [], brand = null } = {}) => {
   const recipient = String(to || "").trim().toLowerCase();
   if (!recipient || !recipient.includes("@")) {
     log("error", "Refusing send: invalid recipient", { to });
@@ -158,7 +163,7 @@ export const sendEmail = async ({ to, subject, html, text, attachments = [] }) =
     };
   }
 
-  const from = resolveFromAddress();
+  const from = resolveFromAddress(brand || {});
   const mail = {
     from: from.formatted,
     to: recipient,
@@ -166,6 +171,7 @@ export const sendEmail = async ({ to, subject, html, text, attachments = [] }) =
     html,
     text: text || String(html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
     attachments,
+    ...(from.replyTo ? { replyTo: from.replyTo } : {}),
     // Envelope helps some providers
     envelope: {
       from: from.email,
@@ -258,12 +264,14 @@ export const sendCompletionInviteEmail = async ({
   returnDate,
   total,
   currency = "MAD",
+  brand = null,
 }) => {
-  const agency = defaultAgencyName();
+  const agency = String(brand?.name || brand?.displayName || "").trim() || "Your reservation";
+  const accent = String(brand?.primaryBrandColor || "").trim() || "#333333";
   const subject = `${agency} — Complete your reservation ${reservationId}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#161210">
-      <h1 style="font-size:22px;color:#8F1F1F">${agency}</h1>
+      <h1 style="font-size:22px;color:${accent}">${agency}</h1>
       <p>Hello ${customerName || "Customer"},</p>
       <p>Your reservation <strong>${reservationId}</strong> has been confirmed.</p>
       <p>Please complete the following to finalize your booking:</p>
@@ -278,7 +286,7 @@ export const sendCompletionInviteEmail = async ({
       <strong>Return:</strong> ${returnDate || "—"}<br/>
       <strong>Total:</strong> ${currency}${total ?? "—"}</p>
       <p style="margin:28px 0">
-        <a href="${completionUrl}" style="background:#8F1F1F;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;display:inline-block">
+        <a href="${completionUrl}" style="background:${accent};color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;display:inline-block">
           Complete your booking securely
         </a>
       </p>
@@ -286,7 +294,14 @@ export const sendCompletionInviteEmail = async ({
       <p style="font-size:11px;color:#999">If the button does not work, copy this link:<br/>${completionUrl}</p>
     </div>
   `;
-  return sendEmail({ to, subject, html });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    brand: brand
+      ? { name: agency, email: brand.email, replyTo: brand.email }
+      : null,
+  });
 };
 
 export const sendFinalConfirmationEmail = async ({
@@ -297,12 +312,14 @@ export const sendFinalConfirmationEmail = async ({
   detailsHtml,
   contractPath,
   invoicePath,
+  brand = null,
 }) => {
-  const agency = defaultAgencyName();
+  const agency = String(brand?.name || brand?.displayName || "").trim() || "Your reservation";
+  const accent = String(brand?.primaryBrandColor || "").trim() || "#333333";
   const subject = `${agency} — Ready for pickup · ${reservationId}`;
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#161210">
-      <h1 style="font-size:22px;color:#8F1F1F">${agency}</h1>
+      <h1 style="font-size:22px;color:${accent}">${agency}</h1>
       <p>Hello ${customerName || "Customer"},</p>
       <p>Thank you. Your reservation <strong>${reservationId}</strong> is now <strong>Ready for Pickup</strong>.</p>
       <p><strong>Vehicle:</strong> ${vehicle || "—"}</p>
@@ -317,7 +334,15 @@ export const sendFinalConfirmationEmail = async ({
     attachments.push({ filename: `contract-${reservationId}.pdf`, path: contractPath });
   }
 
-  return sendEmail({ to, subject, html, attachments });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    attachments,
+    brand: brand
+      ? { name: agency, email: brand.email, replyTo: brand.email }
+      : null,
+  });
 };
 
 /** Admin diagnostics — verify SMTP without sending. */

@@ -84,22 +84,32 @@ export const buildTemplateSnapshot = (template = {}) => ({
   templateVersion: Number(template.templateVersion || 0),
 });
 
-export const buildContractSourceData = ({
+export const buildContractSourceData = async ({
   booking,
   owner,
   template,
   contractNumber,
   includeCompanyStamp = true,
+  agency = null,
 }) => {
+  const { withAgencyForDocuments } = await import('./documentBrandContext.js');
+  const resolvedAgency = agency || (await withAgencyForDocuments({ booking, owner }));
   const variables = buildTemplateVariables(booking, {
     contractNumber,
     owner,
-    template,
+    agency: resolvedAgency,
+    template: {
+      ...template,
+      logoUrl:
+        template?.logoUrl ||
+        (resolvedAgency?.logoUrl || ''),
+    },
     includeCompanyStamp,
   });
   return {
     ...variables,
     _meta: {
+      ...(variables._meta || {}),
       contractNumber,
       includeCompanyStamp: Boolean(includeCompanyStamp),
       bookingId: booking?._id ? String(booking._id) : null,
@@ -108,12 +118,13 @@ export const buildContractSourceData = ({
   };
 };
 
-export const buildInvoiceSourceData = ({
+export const buildInvoiceSourceData = async ({
   invoiceFields = {},
   booking = null,
   owner,
   template,
   includeCompanyStamp = true,
+  agency = null,
 }) => {
   const invoiceNumber = invoiceFields.invoiceNumber || booking?.reservationId || 'INV';
   const bookingLike = {
@@ -152,10 +163,16 @@ export const buildInvoiceSourceData = ({
     },
   };
 
+  const { withAgencyForDocuments } = await import('./documentBrandContext.js');
+  const resolvedAgency = agency || (await withAgencyForDocuments({ booking, owner }));
   const variables = buildTemplateVariables(bookingLike, {
     contractNumber: invoiceNumber,
     owner,
-    template,
+    agency: resolvedAgency,
+    template: {
+      ...template,
+      logoUrl: template?.logoUrl || resolvedAgency?.logoUrl || '',
+    },
     includeCompanyStamp,
   });
 

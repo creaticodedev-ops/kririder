@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import PDFDocument from "pdfkit";
 import { fileURLToPath } from "url";
-import { defaultAgencyName } from "../utils/brand.js";
+import { resolveBrandForContext } from "./agencyBrand.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const UPLOAD_ROOT = path.join(__dirname, "..", "uploads", "documents");
@@ -78,11 +78,13 @@ export const generateRentalContractPdf = async (booking, { signaturePath, signat
   const token = Math.random().toString(36).slice(2, 10);
   const filePath = path.join(dir, `contract-${token}.pdf`);
   const car = booking.car || {};
-  const currency = process.env.CURRENCY || "MAD";
-  const agency = defaultAgencyName();
+  const brand = await resolveBrandForContext({ booking, owner: booking.owner });
+  const currency = brand.currency || process.env.CURRENCY || "MAD";
+  const agency = brand.contractBranding?.companyName || brand.name || "—";
+  const accent = brand.primaryBrandColor || "#333333";
 
   await writePdfToFile(filePath, async (doc) => {
-    doc.fillColor("#8F1F1F").fontSize(22).text(agency, { align: "left" });
+    doc.fillColor(accent).fontSize(22).text(agency, { align: "left" });
     doc.moveDown(0.3);
     doc.fillColor("#161210").fontSize(16).text("Vehicle Rental Agreement", { align: "left" });
     doc.moveDown();
@@ -164,13 +166,15 @@ export const generateInvoicePdf = async (booking, { includeCompanyStamp = true }
   const token = Math.random().toString(36).slice(2, 10);
   const filePath = path.join(dir, `invoice-${token}.pdf`);
   const car = booking.car || {};
-  const currency = process.env.CURRENCY || "MAD";
-  const agency = defaultAgencyName();
+  const brand = await resolveBrandForContext({ booking, owner: booking.owner });
+  const currency = brand.currency || process.env.CURRENCY || "MAD";
+  const agency = brand.contractBranding?.companyName || brand.name || "—";
+  const accent = brand.primaryBrandColor || "#333333";
   const b = booking.priceBreakdown || {};
   const invoiceNo = `INV-${reservationId.replace(/^RES-/, "")}`;
 
   await writePdfToFile(filePath, (doc) => {
-    doc.fillColor("#8F1F1F").fontSize(22).text(agency);
+    doc.fillColor(accent).fontSize(22).text(agency);
     doc.moveDown(0.2);
     doc.fillColor("#161210").fontSize(16).text("Invoice");
     doc.moveDown();
@@ -217,7 +221,7 @@ export const generateInvoicePdf = async (booking, { includeCompanyStamp = true }
       doc.fontSize(10).fillColor("#6B6560").text("Stamp and signature: included");
     }
     doc.moveDown(1);
-    doc.fontSize(9).fillColor("#6B6560").text("Thank you for choosing us.");
+    doc.fontSize(9).fillColor("#6B6560").text(agency !== "—" ? `Thank you for choosing ${agency}.` : "Thank you.");
   });
 
   return filePath;

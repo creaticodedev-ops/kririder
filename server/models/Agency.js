@@ -20,6 +20,36 @@ const contractBrandingSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const socialsSchema = new mongoose.Schema(
+  {
+    instagram: { type: String, default: '', trim: true },
+    facebook: { type: String, default: '', trim: true },
+    tiktok: { type: String, default: '', trim: true },
+    youtube: { type: String, default: '', trim: true },
+    website: { type: String, default: '', trim: true },
+  },
+  { _id: false },
+);
+
+const seoSchema = new mongoose.Schema(
+  {
+    title: { type: String, default: '', trim: true, maxlength: 120 },
+    description: { type: String, default: '', trim: true, maxlength: 320 },
+    ogImageUrl: { type: String, default: '' },
+  },
+  { _id: false },
+);
+
+const heroSchema = new mongoose.Schema(
+  {
+    headline: { type: String, default: '', trim: true, maxlength: 160 },
+    subheadline: { type: String, default: '', trim: true, maxlength: 320 },
+    badgeText: { type: String, default: '', trim: true, maxlength: 80 },
+    imageUrl: { type: String, default: '' },
+  },
+  { _id: false },
+);
+
 /**
  * Tenant root for KRI RIDER multi-tenant SaaS.
  * Business data is scoped by Agency._id (agencyId).
@@ -41,18 +71,12 @@ const agencySchema = new mongoose.Schema(
       default: 'active',
       index: true,
     },
-    /** Founding owner account (P1: one owner per agency). */
     primaryOwnerUserId: {
       type: ObjectId,
       ref: 'User',
       required: true,
       index: true,
     },
-    /**
-     * Former User._id that was the tenant root before P1.
-     * Equals primaryOwnerUserId for migrated agencies; used for PUBLIC_OWNER_ID compat
-     * and owner-namespaced upload paths.
-     */
     legacyOwnerId: {
       type: ObjectId,
       ref: 'User',
@@ -60,15 +84,24 @@ const agencySchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    /** At most one public storefront agency (enforced in app + partial unique index). */
     isPublicStorefront: { type: Boolean, default: false },
     logoUrl: { type: String, default: '' },
+    faviconUrl: { type: String, default: '' },
     phone: { type: String, default: '', trim: true },
     whatsapp: { type: String, default: '', trim: true },
+    email: { type: String, default: '', trim: true, lowercase: true },
     address: { type: String, default: '', trim: true },
     city: { type: String, default: '', trim: true },
     country: { type: String, default: '', trim: true },
+    postalCode: { type: String, default: '', trim: true },
+    addressRegion: { type: String, default: '', trim: true },
+    legalName: { type: String, default: '', trim: true },
+    taxId: { type: String, default: '', trim: true },
     primaryBrandColor: { type: String, default: '', trim: true },
+    secondaryBrandColor: { type: String, default: '', trim: true },
+    socials: { type: socialsSchema, default: () => ({}) },
+    seo: { type: seoSchema, default: () => ({}) },
+    hero: { type: heroSchema, default: () => ({}) },
     contractBranding: { type: contractBrandingSchema, default: () => ({}) },
     onboardingCompletedAt: { type: Date, default: null },
     timezone: { type: String, default: 'Africa/Casablanca' },

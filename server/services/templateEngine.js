@@ -1,4 +1,4 @@
-import { defaultAgencyName } from '../utils/brand.js';
+/** Tenant branding must come from `agency` — never platform HDN/Safi defaults. */
 import { logoToDataUri } from '../utils/uploadPaths.js';
 import { appendSignedQuery } from '../middleware/uploadAccess.js';
 import { isSyntheticWalkInEmail } from '../utils/applyCompletionDetails.js';
@@ -154,11 +154,13 @@ export const buildImageHtml = (imageUrl, alt, style = 'max-height:48px;max-width
 };
 
 /** Full signature row for PDF: agency + renter (+ 2nd driver when enabled). */
-export const buildSignaturesRowHtml = (booking, { template, includeCompanyStamp = true } = {}) => {
+export const buildSignaturesRowHtml = (booking, { template, includeCompanyStamp = true, agency = {} } = {}) => {
   const agencyName =
     template?.agencyName ||
-    process.env.AGENCY_NAME ||
-    defaultAgencyName();
+    agency?.contractBranding?.companyName ||
+    agency?.legalName ||
+    agency?.name ||
+    '—';
   const customerName = val(firstNonEmpty(booking, ['customerName']) || '—');
   const sd = booking?.secondDriver;
   const secondEnabled = Boolean(sd?.enabled);
@@ -277,8 +279,8 @@ export const buildTemplateVariables = (booking, { contractNumber, owner, agency 
       mergedBooking?.fleetId,
       mergedBooking?.vin,
     ].find((value) => value !== undefined && value !== null && String(value).trim() !== '') || '—',
-    delivered_by: firstNonEmpty(mergedBooking, ['deliveredBy']) || booking?.owner?.agencyName || owner?.agencyName || agency?.name || defaultAgencyName(),
-    received_by: firstNonEmpty(mergedBooking, ['receivedBy']) || booking?.owner?.agencyName || owner?.agencyName || agency?.name || defaultAgencyName(),
+    delivered_by: firstNonEmpty(mergedBooking, ['deliveredBy']) || agency?.contractBranding?.companyName || agency?.name || owner?.agencyName || '—',
+    received_by: firstNonEmpty(mergedBooking, ['receivedBy']) || agency?.contractBranding?.companyName || agency?.name || owner?.agencyName || '—',
     fuel_level_start: firstNonEmpty(mergedBooking, ['fuelLevelStart']) || '—',
     km_depart: mergedBooking?.kmDepart != null && mergedBooking?.kmDepart !== '' ? String(mergedBooking.kmDepart) : (car.mileage != null ? String(car.mileage) : '—'),
     km_retour: mergedBooking?.kmRetour != null && mergedBooking?.kmRetour !== '' ? String(mergedBooking.kmRetour) : '—',
@@ -311,18 +313,19 @@ export const buildTemplateVariables = (booking, { contractNumber, owner, agency 
     second_driver_license_expiry: sd.enabled ? val(sd.driverLicenseExpiry) : '—',
     second_driver_passport: sd.enabled ? val(sd.passportNumber) : '—',
     second_driver_phone: sd.enabled ? val(sd.phone) : '—',
-    agency_name: agency.name || owner?.agencyName || defaultAgencyName(),
-    agency_phone: agency.phone || process.env.AGENCY_PHONE || process.env.WHATSAPP_BUSINESS_NUMBER || '—',
-    agency_email: agency.email || owner?.email || process.env.AGENCY_EMAIL || '—',
-    agency_address: agency.address || process.env.AGENCY_ADDRESS || '—',
-    agency_tax_id: agency.taxId || process.env.AGENCY_TAX_ID || '—',
+    agency_name: agency.contractBranding?.companyName || agency.name || agency.legalName || owner?.agencyName || '—',
+    agency_phone: agency.phone || '—',
+    agency_email: agency.email || '—',
+    agency_address: agency.address || '—',
+    agency_tax_id: agency.taxId || '—',
+    agency_brand_color: agency.primaryBrandColor || '',
     company_signature_html: includeCompanyStamp ? buildImageHtml(template?.companySignatureUrl || template?.signatureUrl || '', 'Company signature') : '',
     customer_signature_html: buildImageHtml(booking?.completion?.signatureUrl || '', 'Customer signature', 'max-height:80px;max-width:220px;margin-top:6px;'),
     second_driver_signature_html: sd.enabled
       ? buildImageHtml(booking?.completion?.secondDriverSignatureUrl || '', 'Second driver signature', 'max-height:80px;max-width:220px;margin-top:6px;')
       : '',
     second_driver_signature_section: buildSecondDriverSignatureSection(booking),
-    signatures_row_html: buildSignaturesRowHtml(booking, { template, includeCompanyStamp }),
+    signatures_row_html: buildSignaturesRowHtml(booking, { template, includeCompanyStamp, agency }),
     generated_date: formatDate(new Date()),
     generated_datetime: formatDateTime(new Date()),
   };
@@ -373,6 +376,16 @@ export const buildTemplateVariables = (booking, { contractNumber, owner, agency 
     secondDriverLicenseExpiry: values.second_driver_license_expiry,
     secondDriverPassport: values.second_driver_passport,
     secondDriverPhone: values.second_driver_phone,
+    _meta: {
+      agencyLogoUrl:
+        agency.contractBranding?.showLogoOnPdf === false
+          ? ''
+          : String(agency.logoUrl || agency.contractBranding?.logoUrl || '').trim(),
+      logoUrl:
+        agency.contractBranding?.showLogoOnPdf === false
+          ? ''
+          : String(agency.logoUrl || agency.contractBranding?.logoUrl || '').trim(),
+    },
   };
 };
 
@@ -425,24 +438,35 @@ export const buildDocumentHtml = (template, variables) => {
   const footerPage2 = twoPages
     ? `${footer}<p class="page-indicator muted">Page 2 / 2</p>`
     : '';
-  const logoUrl = safeTemplate.logoUrl || '';
-  const logoDataUri = logoToDataUri(logoUrl);
+  const brandColor =
+    String(variables?.agency_brand_color || '').trim() ||
+    '#333333';
+  const resolvedLogoUrl = String(
+    safeTemplate.logoUrl ||
+      variables?._meta?.logoUrl ||
+      variables?._meta?.agencyLogoUrl ||
+      '',
+  ).trim();
+  const logoDataUri = logoToDataUri(resolvedLogoUrl);
   const logoSrc = logoDataUri
-    || (logoUrl
-      ? (String(logoUrl).includes('/uploads/')
-        ? appendSignedQuery(logoUrl)
-        : logoUrl)
+    || (resolvedLogoUrl
+      ? (String(resolvedLogoUrl).includes('/uploads/')
+        ? appendSignedQuery(resolvedLogoUrl)
+        : resolvedLogoUrl)
       : '');
   const logo = logoSrc
     ? `<img src="${logoSrc}" alt="Logo" style="max-height:48px;margin-bottom:8px;" />`
     : '';
+  const docTitle = escapeHtml(
+    String(safeTemplate.name || variables?.agency_name || 'Document'),
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${safeTemplate.name || 'Document'}</title>
+  <title>${docTitle}</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -458,7 +482,7 @@ export const buildDocumentHtml = (template, variables) => {
       margin: 0 auto;
       padding: 16mm 14mm;
     }
-    .doc-header { border-bottom: 2px solid #8F1F1F; padding-bottom: 12px; margin-bottom: 20px; }
+    .doc-header { border-bottom: 2px solid ${brandColor}; padding-bottom: 12px; margin-bottom: 20px; }
     .doc-footer {
       border-top: 1px solid #ccc;
       margin-top: 32px;
@@ -466,7 +490,7 @@ export const buildDocumentHtml = (template, variables) => {
       font-size: 9pt;
       color: #666;
     }
-    h1 { font-size: 18pt; color: #8F1F1F; margin: 0 0 8px; }
+    h1 { font-size: 18pt; color: ${brandColor}; margin: 0 0 8px; }
     h2 { font-size: 13pt; margin: 16px 0 8px; color: #333; }
     h3 { font-size: 11pt; margin: 12px 0 6px; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
