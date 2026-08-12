@@ -8,7 +8,12 @@ const emptyForm = {
   slug: '',
   ownerName: '',
   ownerEmail: '',
-  ownerPassword: '',
+  phone: '',
+  whatsapp: '',
+  address: '',
+  city: '',
+  country: '',
+  logoUrl: '',
   notes: '',
   startTrial: true,
   isPublicStorefront: false,
@@ -16,6 +21,7 @@ const emptyForm = {
 
 const tone = (s) => {
   if (s === 'active') return 'text-emerald-400'
+  if (s === 'pending') return 'text-amber-400'
   if (s === 'suspended' || s === 'disabled') return 'text-rose-400'
   return 'text-slate-400'
 }
@@ -32,6 +38,7 @@ const SuperAdminAgencies = () => {
   const [showCreate, setShowCreate] = useState(searchParams.get('create') === '1')
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [createdInvite, setCreatedInvite] = useState(null)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 300)
@@ -75,10 +82,15 @@ const SuperAdminAgencies = () => {
     try {
       const { data } = await axios.post('/api/super-admin/agencies', form)
       if (data.success) {
-        toast.success('Agency created')
+        toast.success('Agency created — share the onboarding link')
         setForm(emptyForm)
         setShowCreate(false)
         setSearchParams({})
+        setCreatedInvite({
+          url: data.onboardingUrl,
+          expiresAt: data.inviteExpiresAt,
+          agency: data.agency,
+        })
         load(1)
       } else {
         toast.error(data.message)
@@ -90,23 +102,73 @@ const SuperAdminAgencies = () => {
     }
   }
 
+  const copyInvite = async () => {
+    if (!createdInvite?.url) return
+    try {
+      await navigator.clipboard.writeText(createdInvite.url)
+      toast.success('Onboarding link copied')
+    } catch {
+      toast.error('Could not copy — select the URL manually')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl sm:text-4xl text-white">Agencies</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Tenant roots for every rental agency — isolation, storefront, and owner account.
+            Create agencies and invite owners — they set their own password via a secure link.
           </p>
         </div>
         <button
           type="button"
-          onClick={() => setShowCreate((v) => !v)}
+          onClick={() => {
+            setShowCreate((v) => !v)
+            setCreatedInvite(null)
+          }}
           className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2.5 transition-colors"
         >
           {showCreate ? 'Close form' : 'Create agency'}
         </button>
       </div>
+
+      {createdInvite?.url && (
+        <div className="border border-cyan-700/40 bg-cyan-950/30 p-4 sm:p-5 space-y-3">
+          <p className="text-sm text-cyan-300 font-medium">
+            Agency created{createdInvite.agency?.name ? `: ${createdInvite.agency.name}` : ''}
+          </p>
+          <p className="text-xs text-slate-400">
+            Send this single-use onboarding link to the owner. It expires
+            {createdInvite.expiresAt
+              ? ` on ${new Date(createdInvite.expiresAt).toLocaleString()}`
+              : ' after a few days'}
+            . The owner chooses their own password — no password was created for you.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              readOnly
+              value={createdInvite.url}
+              className="flex-1 bg-[#0a0f14] border border-white/10 px-3 py-2 text-xs sm:text-sm text-slate-200 font-mono"
+            />
+            <button
+              type="button"
+              onClick={copyInvite}
+              className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2 shrink-0"
+            >
+              Copy link
+            </button>
+          </div>
+          {createdInvite.agency?._id && (
+            <Link
+              to={`/superadmin/agencies/${createdInvite.agency._id}`}
+              className="inline-block text-xs text-cyan-500 hover:text-cyan-400"
+            >
+              Open agency details →
+            </Link>
+          )}
+        </div>
+      )}
 
       {showCreate && (
         <form
@@ -124,7 +186,7 @@ const SuperAdminAgencies = () => {
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Slug (optional)</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Agency slug</label>
             <input
               value={form.slug}
               onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
@@ -133,7 +195,7 @@ const SuperAdminAgencies = () => {
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Owner full name</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Primary owner name</label>
             <input
               required
               value={form.ownerName}
@@ -142,7 +204,7 @@ const SuperAdminAgencies = () => {
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Owner email</label>
+            <label className="block text-xs text-slate-500 mb-1.5">Primary owner email</label>
             <input
               required
               type="email"
@@ -151,14 +213,52 @@ const SuperAdminAgencies = () => {
               className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
             />
           </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1.5">Temporary owner password</label>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1.5">Phone</label>
             <input
-              required
-              type="password"
-              minLength={8}
-              value={form.ownerPassword}
-              onChange={(e) => setForm((f) => ({ ...f, ownerPassword: e.target.value }))}
+              value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1.5">WhatsApp</label>
+            <input
+              value={form.whatsapp}
+              onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))}
+              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs text-slate-500 mb-1.5">Address</label>
+            <input
+              value={form.address}
+              onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1.5">City</label>
+            <input
+              value={form.city}
+              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-500 mb-1.5">Country</label>
+            <input
+              value={form.country}
+              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs text-slate-500 mb-1.5">Logo URL (optional)</label>
+            <input
+              value={form.logoUrl}
+              onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
+              placeholder="https://…"
               className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
             />
           </div>
@@ -171,6 +271,9 @@ const SuperAdminAgencies = () => {
               className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
             />
           </div>
+          <p className="sm:col-span-2 text-xs text-slate-500">
+            The owner will receive an activation link and create their own password. You never set or see their permanent password.
+          </p>
           <label className="flex items-center gap-2 text-sm text-slate-300">
             <input
               type="checkbox"
@@ -195,7 +298,7 @@ const SuperAdminAgencies = () => {
               disabled={saving}
               className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-white text-sm px-5 py-2.5"
             >
-              {saving ? 'Creating…' : 'Create agency'}
+              {saving ? 'Creating…' : 'Create agency & generate invite'}
             </button>
           </div>
         </form>
@@ -214,6 +317,7 @@ const SuperAdminAgencies = () => {
           className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm"
         >
           <option value="">All statuses</option>
+          <option value="pending">Pending</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
           <option value="disabled">Disabled</option>
@@ -247,6 +351,9 @@ const SuperAdminAgencies = () => {
                   </td>
                   <td className={`px-4 py-3 capitalize ${tone(agency.status)}`}>
                     {agency.status || 'active'}
+                    {agency.invitePending ? (
+                      <span className="block text-[10px] text-amber-500/80 normal-case">Invite pending</span>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3">
                     {agency.isPublicStorefront ? (

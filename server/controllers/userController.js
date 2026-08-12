@@ -85,7 +85,7 @@ export const loginUser = async (req, res) => {
         if (user.role !== 'owner') {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
-        if (user.accountStatus && user.accountStatus !== 'active') {
+        if (user.accountStatus === 'suspended' || user.accountStatus === 'disabled') {
             return res.status(403).json({
                 success: false,
                 code: 'ACCOUNT_LOCKED',
@@ -93,9 +93,32 @@ export const loginUser = async (req, res) => {
             });
         }
 
+        // Pending invite: must use activation link until password is chosen
+        if (user.accountStatus === 'pending' && !user.passwordSetAt) {
+            return res.status(403).json({
+                success: false,
+                code: 'ONBOARDING_REQUIRED',
+                message: 'Complete account activation using the invitation link from your platform admin.',
+            });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        // Pending + password set: issue session for setup wizard only (dashboard still gated)
+        if (user.accountStatus === 'pending') {
+            user.lastLoginAt = new Date();
+            await user.save();
+            const token = generateToken(user);
+            return res.json({
+                success: true,
+                token,
+                onboardingRequired: true,
+                redirectTo: '/agency-setup',
+                license: serializeLicense(user),
+            });
         }
 
         // Ensure trial fields exist; auto-mark expired if needed (login still allowed)
@@ -116,6 +139,7 @@ export const loginUser = async (req, res) => {
         res.json({
             success: true,
             token,
+            onboardingRequired: false,
             license,
             // Login always succeeds for valid admins so the Trial Expired screen can show
         });
@@ -138,11 +162,34 @@ export const getUserData = async (req, res) => {
         if (user.role !== 'owner') {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
-        if (user.accountStatus && user.accountStatus !== 'active') {
+        if (user.accountStatus === 'suspended' || user.accountStatus === 'disabled') {
             return res.status(403).json({
                 success: false,
                 code: 'ACCOUNT_LOCKED',
                 message: 'This admin account has been suspended or disabled.',
+            });
+        }
+
+        // Pending owners with a password may resume the setup wizard (not the dashboard)
+        if (user.accountStatus === 'pending') {
+            if (!user.passwordSetAt) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'ONBOARDING_REQUIRED',
+                    message: 'Complete account activation using the invitation link.',
+                });
+            }
+            const safePending = user.toObject ? user.toObject() : { ...user };
+            delete safePending.password;
+            delete safePending.inviteTokenHash;
+            return res.json({
+                success: true,
+                onboardingRequired: true,
+                user: {
+                    ...safePending,
+                    permissions: [],
+                },
+                license: serializeLicense(user),
             });
         }
 
@@ -153,11 +200,13 @@ export const getUserData = async (req, res) => {
         // Strip password already done by protect; return user + explicit license snapshot
         const safeUser = user.toObject ? user.toObject() : { ...user };
         delete safeUser.password;
+        delete safeUser.inviteTokenHash;
         const resolvedPermissions = resolveOwnerPermissions(safeUser.permissions);
         safeUser.permissions = Array.isArray(resolvedPermissions) ? resolvedPermissions : [];
 
         res.json({
             success: true,
+            onboardingRequired: false,
             user: {
                 ...safeUser,
                 license,

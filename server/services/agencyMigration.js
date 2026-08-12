@@ -45,6 +45,7 @@ const missingAgencyFilter = {
 };
 
 const mapAccountStatusToAgencyStatus = (accountStatus) => {
+  if (accountStatus === 'pending') return 'pending';
   if (accountStatus === 'suspended') return 'suspended';
   if (accountStatus === 'disabled') return 'disabled';
   return 'active';

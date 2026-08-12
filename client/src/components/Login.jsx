@@ -14,6 +14,7 @@ const Login = () => {
     navigate,
     setUser,
     setIsOwner,
+    setOnboardingRequired,
     applyLicense,
   } = useAppContext()
   const { t } = useI18n()
@@ -44,14 +45,34 @@ const Login = () => {
         localStorage.setItem('token', token)
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
+        if (data.onboardingRequired) {
+          setToken(token)
+          setIsOwner(false)
+          setOnboardingRequired?.(true)
+          setShowLogin(false)
+          toast.success('Continue agency setup')
+          navigate('/agency-setup', { replace: true })
+          return
+        }
+
         const profile = await axios.get('/api/user/data')
         if (profile.data.success && profile.data.user?.role === 'owner') {
+          if (profile.data.onboardingRequired) {
+            setUser(profile.data.user)
+            setIsOwner(false)
+            setOnboardingRequired?.(true)
+            setToken(token)
+            setShowLogin(false)
+            navigate('/agency-setup', { replace: true })
+            return
+          }
           const normalizedUser = {
             ...profile.data.user,
             permissions: resolveOwnerPermissions(profile.data.user.permissions || []),
           }
           setUser(normalizedUser)
           setIsOwner(true)
+          setOnboardingRequired?.(false)
           applyLicense?.(profile.data.license || data.license, normalizedUser)
           setToken(token)
           setShowLogin(false)
@@ -67,7 +88,12 @@ const Login = () => {
         toast.error(data.message)
       }
     } catch (error) {
-      toast.error(getErrorMessage(error))
+      const code = error.response?.data?.code
+      if (code === 'ONBOARDING_REQUIRED') {
+        toast.error(error.response?.data?.message || 'Use your invitation link to activate')
+      } else {
+        toast.error(getErrorMessage(error))
+      }
     } finally {
       setLoading(false)
     }

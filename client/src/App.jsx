@@ -49,6 +49,8 @@ const SuperAdminAgencyDetail = lazy(() => import('./pages/superadmin/AgencyDetai
 const SuperAdminPermissions = lazy(() => import('./pages/superadmin/Permissions'))
 const SuperAdminActivity = lazy(() => import('./pages/superadmin/Activity'))
 const SuperAdminAudit = lazy(() => import('./pages/superadmin/AuditLogs'))
+const ActivateAccount = lazy(() => import('./pages/ActivateAccount'))
+const AgencySetup = lazy(() => import('./pages/AgencySetup'))
 
 const MoroccoPillarPage = lazy(() => import('./pages/seo/MoroccoPillarPage'))
 const CityPage = lazy(() => import('./pages/seo/CityPage'))
@@ -68,7 +70,9 @@ const App = () => {
   const { pathname } = useLocation()
   const isOwnerPath = pathname.startsWith('/owner')
   const isSuperAdminPath = pathname.startsWith('/superadmin')
-  const hidePublicChrome = isOwnerPath || isSuperAdminPath
+  const isOnboardingPath =
+    pathname.startsWith('/activate-account') || pathname.startsWith('/agency-setup')
+  const hidePublicChrome = isOwnerPath || isSuperAdminPath || isOnboardingPath
   const needsNavOffset = !hidePublicChrome && pathname !== '/'
 
   // Remove build-time SEO body after hydration (crawlers still see it in raw HTML).
@@ -97,7 +101,7 @@ const App = () => {
           style: { wordBreak: 'break-word' },
         }}
       />
-      {showLogin && !isSuperAdminPath && (
+      {showLogin && !isSuperAdminPath && !isOnboardingPath && (
         <Suspense fallback={null}>
           <Login />
         </Suspense>
@@ -123,6 +127,8 @@ const App = () => {
             <Route path="/cars/:slug" element={<CarsSlugPage />} />
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/complete-booking/:token" element={<CompleteBooking />} />
+            <Route path="/activate-account/:token" element={<ActivateAccount />} />
+            <Route path="/agency-setup" element={<AgencySetup />} />
             <Route path="/admin" element={<Navigate to="/owner" replace />} />
             <Route path="/owner" element={<Layout />}>
               <Route index element={withPerm('dashboard', Dashboard)} />

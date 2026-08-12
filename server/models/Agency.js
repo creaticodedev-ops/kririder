@@ -10,6 +10,16 @@ const slugify = (value) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
 
+const contractBrandingSchema = new mongoose.Schema(
+  {
+    companyName: { type: String, default: '', trim: true },
+    logoUrl: { type: String, default: '' },
+    showLogoOnPdf: { type: Boolean, default: true },
+    footerNote: { type: String, default: '', trim: true, maxlength: 500 },
+  },
+  { _id: false },
+);
+
 /**
  * Tenant root for KRI RIDER multi-tenant SaaS.
  * Business data is scoped by Agency._id (agencyId).
@@ -27,7 +37,7 @@ const agencySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['active', 'suspended', 'disabled'],
+      enum: ['pending', 'active', 'suspended', 'disabled'],
       default: 'active',
       index: true,
     },
@@ -52,8 +62,15 @@ const agencySchema = new mongoose.Schema(
     },
     /** At most one public storefront agency (enforced in app + partial unique index). */
     isPublicStorefront: { type: Boolean, default: false },
-    /** Minimal branding stub — full NAP/theme is P2. */
     logoUrl: { type: String, default: '' },
+    phone: { type: String, default: '', trim: true },
+    whatsapp: { type: String, default: '', trim: true },
+    address: { type: String, default: '', trim: true },
+    city: { type: String, default: '', trim: true },
+    country: { type: String, default: '', trim: true },
+    primaryBrandColor: { type: String, default: '', trim: true },
+    contractBranding: { type: contractBrandingSchema, default: () => ({}) },
+    onboardingCompletedAt: { type: Date, default: null },
     timezone: { type: String, default: 'Africa/Casablanca' },
     currency: { type: String, default: 'MAD' },
     locale: { type: String, default: 'fr-MA' },

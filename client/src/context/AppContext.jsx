@@ -31,6 +31,7 @@ export const AppProvider = ({ children })=>{
     const [token, setToken] = useState(null)
     const [user, setUser] = useState(null)
     const [isOwner, setIsOwner] = useState(false)
+    const [onboardingRequired, setOnboardingRequired] = useState(false)
     const [license, setLicense] = useState(null)
     const [authReady, setAuthReady] = useState(false)
     const [showLogin, setShowLogin] = useState(false)
@@ -52,6 +53,7 @@ export const AppProvider = ({ children })=>{
       setToken(null)
       setUser(null)
       setIsOwner(false)
+      setOnboardingRequired(false)
       setLicense(null)
     }, [])
 
@@ -69,17 +71,29 @@ export const AppProvider = ({ children })=>{
         try {
            const {data} = await axios.get('/api/user/data')
            if (data.success && data.user?.role === 'owner') {
+            const needsOnboarding = Boolean(data.onboardingRequired)
             const normalizedUser = {
               ...data.user,
-              permissions: resolveOwnerPermissions(data.user.permissions || []),
+              permissions: needsOnboarding
+                ? []
+                : resolveOwnerPermissions(data.user.permissions || []),
             }
             setUser(normalizedUser)
-            setIsOwner(true)
+            setOnboardingRequired(needsOnboarding)
+            // Pending owners are not full dashboard owners until onboarding completes
+            setIsOwner(!needsOnboarding)
             applyLicense(data.license, data.user)
            } else {
             resetOwnerAuth()
            }
         } catch (error) {
+            const code = error.response?.data?.code
+            if (code === 'ONBOARDING_REQUIRED') {
+              setOnboardingRequired(true)
+              setIsOwner(false)
+              setAuthReady(true)
+              return
+            }
             // Auth / lock failures clear session; network errors keep token for retry
             if (error.response?.status === 401 || error.response?.status === 403) {
               resetOwnerAuth()
@@ -121,6 +135,24 @@ export const AppProvider = ({ children })=>{
             if (status === 403 && code === 'ACCOUNT_LOCKED') {
               resetOwnerAuth()
               toast.error(error.response?.data?.message || 'Account locked')
+              if (window.location.pathname.startsWith('/owner')) {
+                navigate('/')
+              }
+              return Promise.reject(error)
+            }
+
+            if (status === 403 && (code === 'ONBOARDING_REQUIRED' || code === 'PASSWORD_NOT_SET')) {
+              setOnboardingRequired(true)
+              setIsOwner(false)
+              if (window.location.pathname.startsWith('/owner')) {
+                navigate('/agency-setup', { replace: true })
+              }
+              return Promise.reject(error)
+            }
+
+            if (status === 403 && code === 'AGENCY_LOCKED') {
+              resetOwnerAuth()
+              toast.error(error.response?.data?.message || 'Agency suspended')
               if (window.location.pathname.startsWith('/owner')) {
                 navigate('/')
               }
@@ -170,12 +202,13 @@ export const AppProvider = ({ children })=>{
 
     const value = useMemo(() => ({
         navigate, currency, axios, user, setUser,
-        token, setToken, isOwner, setIsOwner, authReady, fetchUser, showLogin, setShowLogin, logout, fetchCars, cars, setCars, carsLoading,
+        token, setToken, isOwner, setIsOwner, onboardingRequired, setOnboardingRequired,
+        authReady, fetchUser, showLogin, setShowLogin, logout, fetchCars, cars, setCars, carsLoading,
         pickupDate, setPickupDate, returnDate, setReturnDate,
         pickupLocations, fetchPickupLocations,
         license, setLicense, licenseLocked, applyLicense, hasPermission,
     }), [
-      navigate, currency, user, token, isOwner, authReady, fetchUser, showLogin, logout, fetchCars, cars, carsLoading,
+      navigate, currency, user, token, isOwner, onboardingRequired, authReady, fetchUser, showLogin, logout, fetchCars, cars, carsLoading,
       pickupDate, returnDate, pickupLocations, fetchPickupLocations, license, licenseLocked, applyLicense, hasPermission,
     ])
 

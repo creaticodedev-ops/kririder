@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import User, { OWNER_PERMISSIONS } from '../models/User.js';
@@ -22,6 +23,38 @@ import { normalizeEmail, findUserByEmail } from '../utils/emailUtils.js';
 import { clearPublicTenantCache } from '../services/publicTenant.js';
 import Agency from '../models/Agency.js';
 import { ensureAgencyForOwner } from '../services/agencyMigration.js';
+import {
+  generateInviteToken,
+  buildOnboardingUrl,
+} from '../services/agencyInviteToken.js';
+import { getOrCreateAgencySettings, updateWhatsAppSettings } from '../services/agencySettingsService.js';
+
+const AGENCY_STATUSES = ['pending', 'active', 'suspended', 'disabled'];
+const OWNER_ACCOUNT_STATUSES = ['pending', 'active', 'suspended', 'disabled'];
+
+const mapAgencyStatusToOwnerStatus = (status) => {
+  if (status === 'pending') return 'pending';
+  if (status === 'active') return 'active';
+  if (status === 'suspended') return 'suspended';
+  if (status === 'disabled') return 'disabled';
+  return 'active';
+};
+
+const inviteMetaForOwner = (owner) => {
+  if (!owner) return { invitePending: false, inviteExpiresAt: null };
+  const invitePending =
+    owner.accountStatus === 'pending' &&
+    Boolean(owner.inviteTokenHash) &&
+    !owner.inviteUsedAt &&
+    owner.inviteExpiresAt &&
+    new Date(owner.inviteExpiresAt).getTime() > Date.now();
+  return {
+    invitePending,
+    inviteExpiresAt: owner.inviteExpiresAt || null,
+    passwordSetAt: owner.passwordSetAt || null,
+    onboardingCompletedAt: owner.onboardingCompletedAt || null,
+  };
+};
 
 const generateToken = (user) =>
   jwt.sign(
@@ -33,6 +66,7 @@ const generateToken = (user) =>
 const sanitizeAdmin = (user) => {
   const obj = user.toObject ? user.toObject() : { ...user };
   delete obj.password;
+  delete obj.inviteTokenHash;
   return {
     ...obj,
     license: serializeLicense(user),
@@ -281,9 +315,10 @@ export const createAdmin = async (req, res) => {
       password: hashed,
       role: 'owner',
       agencyName: agencyName.trim(),
-      accountStatus: ['active', 'suspended', 'disabled'].includes(accountStatus) ? accountStatus : 'active',
+      accountStatus: OWNER_ACCOUNT_STATUSES.includes(accountStatus) ? accountStatus : 'active',
       permissions: perms,
       notes: String(notes || ''),
+      passwordSetAt: new Date(),
       ...trial,
     });
 
@@ -314,6 +349,7 @@ export const createAdmin = async (req, res) => {
 
 const sanitizeAgency = (agency, owner = null) => {
   const obj = agency.toObject ? agency.toObject() : { ...agency };
+  const invite = inviteMetaForOwner(owner);
   return {
     ...obj,
     primaryOwner: owner
@@ -324,8 +360,12 @@ const sanitizeAgency = (agency, owner = null) => {
           accountStatus: owner.accountStatus,
           licenseStatus: owner.licenseStatus,
           agencyName: owner.agencyName,
+          passwordSetAt: owner.passwordSetAt || null,
+          onboardingCompletedAt: owner.onboardingCompletedAt || null,
         }
       : null,
+    invitePending: invite.invitePending,
+    inviteExpiresAt: invite.inviteExpiresAt,
   };
 };
 
@@ -343,7 +383,7 @@ export const listAgencies = async (req, res) => {
         { slug: new RegExp(escapeRegex(q), 'i') },
       ];
     }
-    if (['active', 'suspended', 'disabled'].includes(status)) {
+    if (AGENCY_STATUSES.includes(status)) {
       filter.status = status;
     }
 
@@ -354,7 +394,9 @@ export const listAgencies = async (req, res) => {
 
     const ownerIds = agencies.map((a) => a.primaryOwnerUserId).filter(Boolean);
     const owners = await User.find({ _id: { $in: ownerIds } })
-      .select('name email accountStatus licenseStatus agencyName')
+      .select(
+        'name email accountStatus licenseStatus agencyName inviteTokenHash inviteExpiresAt inviteUsedAt passwordSetAt onboardingCompletedAt',
+      )
       .lean();
     const ownerMap = new Map(owners.map((o) => [String(o._id), o]));
 
@@ -378,8 +420,10 @@ export const listAgencies = async (req, res) => {
 };
 
 /**
- * Create Agency + primary owner account in one step.
- * Body: name, slug?, ownerName, ownerEmail, ownerPassword, startTrial?, notes?, isPublicStorefront?
+ * Create Agency + pending primary owner with single-use onboarding invite.
+ * Body: name, slug?, ownerName, ownerEmail, phone?, whatsapp?, address?, city?, country?,
+ *       logoUrl?, startTrial?, notes?, isPublicStorefront?
+ * Never accepts or returns an owner password.
  */
 export const createAgency = async (req, res) => {
   try {
@@ -388,7 +432,12 @@ export const createAgency = async (req, res) => {
       slug: requestedSlug = '',
       ownerName,
       ownerEmail,
-      ownerPassword,
+      phone = '',
+      whatsapp = '',
+      address = '',
+      city = '',
+      country = '',
+      logoUrl = '',
       startTrial: shouldStartTrial = true,
       notes = '',
       isPublicStorefront = false,
@@ -397,14 +446,11 @@ export const createAgency = async (req, res) => {
     if (!String(name || '').trim()) {
       return res.status(400).json({ success: false, message: 'Agency name is required' });
     }
-    if (!String(ownerName || '').trim() || !String(ownerEmail || '').trim() || !ownerPassword) {
+    if (!String(ownerName || '').trim() || !String(ownerEmail || '').trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Owner name, email and password are required',
+        message: 'Owner name and email are required',
       });
-    }
-    if (String(ownerPassword).length < 8) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
     const normalizedEmail = String(ownerEmail).trim().toLowerCase();
@@ -414,7 +460,9 @@ export const createAgency = async (req, res) => {
     }
 
     const agencyName = String(name).trim();
-    const hashed = await bcrypt.hash(ownerPassword, 10);
+    // Unusable random secret — owner sets their own password via invite link
+    const hashed = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+    const invite = generateInviteToken();
     const trial = shouldStartTrial
       ? createTrialDefaults()
       : {
@@ -430,21 +478,44 @@ export const createAgency = async (req, res) => {
       password: hashed,
       role: 'owner',
       agencyName,
-      accountStatus: 'active',
+      accountStatus: 'pending',
       permissions: [],
       notes: String(notes || ''),
+      inviteTokenHash: invite.tokenHash,
+      inviteExpiresAt: invite.expiresAt,
+      inviteUsedAt: null,
+      passwordSetAt: null,
+      onboardingCompletedAt: null,
       ...trial,
     });
 
-    let agencyDoc = await ensureAgencyForOwner(admin);
-    const agency = await Agency.findById(agencyDoc._id);
-    if (!agency) {
-      return res.status(500).json({ success: false, message: 'Agency provisioning failed' });
-    }
-
-    agency.name = agencyName;
     const slugBase = String(requestedSlug || '').trim() || agencyName;
-    agency.slug = await Agency.ensureUniqueSlug(slugBase, agency._id);
+    const slug = await Agency.ensureUniqueSlug(slugBase);
+
+    const agency = await Agency.create({
+      name: agencyName,
+      slug,
+      status: 'pending',
+      primaryOwnerUserId: admin._id,
+      legacyOwnerId: admin._id,
+      isPublicStorefront: false,
+      logoUrl: String(logoUrl || '').trim(),
+      phone: String(phone || '').trim(),
+      whatsapp: String(whatsapp || '').trim(),
+      address: String(address || '').trim(),
+      city: String(city || '').trim(),
+      country: String(country || '').trim(),
+      onboardingCompletedAt: null,
+      contractBranding: {
+        companyName: agencyName,
+        logoUrl: String(logoUrl || '').trim(),
+        showLogoOnPdf: true,
+        footerNote: '',
+      },
+    });
+
+    admin.agencyId = agency._id;
+    await admin.save();
 
     if (isPublicStorefront) {
       await Agency.updateMany(
@@ -452,27 +523,116 @@ export const createAgency = async (req, res) => {
         { $set: { isPublicStorefront: false } },
       );
       agency.isPublicStorefront = true;
+      await agency.save();
     }
 
-    await agency.save();
+    try {
+      await getOrCreateAgencySettings(admin._id, agency._id);
+      if (agency.whatsapp || agency.phone) {
+        const wa = agency.whatsapp || agency.phone;
+        await updateWhatsAppSettings(
+          admin._id,
+          {
+            whatsappReservationNumber: wa,
+            whatsappConfirmationNumber: wa,
+          },
+          agency._id,
+        );
+      }
+    } catch (settingsErr) {
+      console.error('[createAgency] settings seed', settingsErr.message);
+    }
+
     clearPublicTenantCache();
     await audit(
       req.user,
       admin,
       'superadmin.agency.create',
-      `Created agency ${agency.slug} with owner ${admin.email}`,
+      `Created pending agency ${agency.slug} with owner ${admin.email}`,
       { agencyId: agency._id },
     );
 
-    const owner = await User.findById(admin._id).select('-password').lean();
+    const owner = await User.findById(admin._id)
+      .select(
+        '-password name email accountStatus licenseStatus agencyName inviteTokenHash inviteExpiresAt inviteUsedAt passwordSetAt onboardingCompletedAt',
+      )
+      .lean();
+    const onboardingUrl = buildOnboardingUrl(invite.token);
+
     res.status(201).json({
       success: true,
-      message: 'Agency created',
+      message: 'Agency created. Share the onboarding link with the owner.',
       agency: sanitizeAgency(agency, owner),
+      onboardingUrl,
+      inviteExpiresAt: invite.expiresAt,
     });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, message: 'Failed to create agency' });
+  }
+};
+
+/**
+ * Regenerate a single-use onboarding invite for a pending agency owner.
+ */
+export const resendAgencyInvite = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const agency = await Agency.findById(req.params.id);
+    if (!agency) {
+      return res.status(404).json({ success: false, message: 'Agency not found' });
+    }
+    if (agency.onboardingCompletedAt || agency.status === 'active') {
+      return res.status(400).json({
+        success: false,
+        message: 'Agency onboarding is already complete',
+      });
+    }
+    if (agency.status === 'suspended' || agency.status === 'disabled') {
+      return res.status(403).json({
+        success: false,
+        code: 'AGENCY_LOCKED',
+        message: 'Cannot invite owners for a suspended or disabled agency',
+      });
+    }
+
+    const owner = await User.findById(agency.primaryOwnerUserId);
+    if (!owner || owner.role !== 'owner') {
+      return res.status(404).json({ success: false, message: 'Primary owner not found' });
+    }
+
+    const invite = generateInviteToken();
+    owner.inviteTokenHash = invite.tokenHash;
+    owner.inviteExpiresAt = invite.expiresAt;
+    owner.inviteUsedAt = null;
+    owner.accountStatus = 'pending';
+    // Keep passwordSetAt if they already chose a password — they can still use a fresh invite to reset entry
+    owner.tokenVersion = (owner.tokenVersion || 0) + 1;
+    agency.status = 'pending';
+    await owner.save();
+    await agency.save();
+
+    await audit(
+      req.user,
+      owner,
+      'superadmin.agency.invite_resend',
+      `Resent onboarding invite for ${agency.slug}`,
+      { agencyId: agency._id },
+    );
+
+    const onboardingUrl = buildOnboardingUrl(invite.token);
+    res.json({
+      success: true,
+      message: 'Onboarding invite regenerated',
+      onboardingUrl,
+      inviteExpiresAt: invite.expiresAt,
+      agency: sanitizeAgency(agency, owner),
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to resend invite' });
   }
 };
 
@@ -489,7 +649,22 @@ export const updateAgency = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Agency not found' });
     }
 
-    const { name, slug, isPublicStorefront, timezone, currency, locale, status } = req.body || {};
+    const {
+      name,
+      slug,
+      isPublicStorefront,
+      timezone,
+      currency,
+      locale,
+      status,
+      phone,
+      whatsapp,
+      address,
+      city,
+      country,
+      logoUrl,
+      primaryBrandColor,
+    } = req.body || {};
 
     if (name !== undefined) {
       agency.name = String(name).trim() || agency.name;
@@ -508,19 +683,28 @@ export const updateAgency = async (req, res) => {
     if (timezone !== undefined) agency.timezone = String(timezone || '').trim() || agency.timezone;
     if (currency !== undefined) agency.currency = String(currency || '').trim() || agency.currency;
     if (locale !== undefined) agency.locale = String(locale || '').trim() || agency.locale;
+    if (phone !== undefined) agency.phone = String(phone || '').trim();
+    if (whatsapp !== undefined) agency.whatsapp = String(whatsapp || '').trim();
+    if (address !== undefined) agency.address = String(address || '').trim();
+    if (city !== undefined) agency.city = String(city || '').trim();
+    if (country !== undefined) agency.country = String(country || '').trim();
+    if (logoUrl !== undefined) agency.logoUrl = String(logoUrl || '').trim();
+    if (primaryBrandColor !== undefined) {
+      agency.primaryBrandColor = String(primaryBrandColor || '').trim();
+    }
 
     if (status !== undefined) {
-      if (!['active', 'suspended', 'disabled'].includes(status)) {
+      if (!AGENCY_STATUSES.includes(status)) {
         return res.status(400).json({ success: false, message: 'Invalid agency status' });
       }
       agency.status = status;
       if (agency.primaryOwnerUserId) {
-        const ownerStatus = status === 'active' ? 'active' : status;
+        const ownerStatus = mapAgencyStatusToOwnerStatus(status);
         await User.updateOne(
           { _id: agency.primaryOwnerUserId, role: 'owner' },
           {
             $set: { accountStatus: ownerStatus },
-            ...(status !== 'active' ? { $inc: { tokenVersion: 1 } } : {}),
+            ...(status === 'active' ? {} : { $inc: { tokenVersion: 1 } }),
           },
         );
       }
@@ -548,7 +732,9 @@ export const updateAgency = async (req, res) => {
     );
 
     const owner = await User.findById(agency.primaryOwnerUserId)
-      .select('name email accountStatus licenseStatus agencyName')
+      .select(
+        'name email accountStatus licenseStatus agencyName inviteTokenHash inviteExpiresAt inviteUsedAt passwordSetAt onboardingCompletedAt',
+      )
       .lean();
 
     res.json({
@@ -596,7 +782,7 @@ export const setAgencyStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid agency id' });
     }
     const { status } = req.body;
-    if (!['active', 'suspended', 'disabled'].includes(status)) {
+    if (!['active', 'suspended', 'disabled', 'pending'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid agency status' });
     }
     const agency = await Agency.findById(req.params.id);
@@ -606,14 +792,14 @@ export const setAgencyStatus = async (req, res) => {
     agency.status = status;
     await agency.save();
 
-    // Mirror onto primary owner account lock for dashboard access
+    // Mirror onto primary owner account lock for dashboard access (never deletes data)
     if (agency.primaryOwnerUserId) {
-      const ownerStatus = status === 'active' ? 'active' : status;
+      const ownerStatus = mapAgencyStatusToOwnerStatus(status);
       await User.updateOne(
         { _id: agency.primaryOwnerUserId, role: 'owner' },
         {
           $set: { accountStatus: ownerStatus },
-          ...(status !== 'active' ? { $inc: { tokenVersion: 1 } } : {}),
+          ...(status === 'active' ? {} : { $inc: { tokenVersion: 1 } }),
         },
       );
     }
@@ -695,7 +881,7 @@ export const setAccountStatus = async (req, res) => {
     if (!admin) return res.status(404).json({ success: false, message: 'Admin not found' });
 
     const { status } = req.body;
-    if (!['active', 'suspended', 'disabled'].includes(status)) {
+    if (!OWNER_ACCOUNT_STATUSES.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid account status' });
     }
 
@@ -708,7 +894,7 @@ export const setAccountStatus = async (req, res) => {
     if (admin.agencyId) {
       await Agency.updateOne(
         { _id: admin.agencyId },
-        { $set: { status: status === 'active' ? 'active' : status } },
+        { $set: { status: mapAgencyStatusToOwnerStatus(status) } },
       );
     }
     clearPublicTenantCache();

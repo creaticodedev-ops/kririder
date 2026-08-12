@@ -7,18 +7,23 @@ import { useAppContext } from '../../context/AppContext'
 import { useI18n } from '../../i18n/I18nContext'
 
 const Layout = () => {
-  const { isOwner, navigate, authReady, setShowLogin, licenseLocked } = useAppContext()
+  const { isOwner, navigate, authReady, setShowLogin, licenseLocked, onboardingRequired } =
+    useAppContext()
   const { t } = useI18n()
   const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
-    if (authReady && !isOwner) {
+    if (authReady && onboardingRequired) {
+      navigate('/agency-setup', { replace: true })
+      return
+    }
+    if (authReady && !isOwner && !onboardingRequired) {
       sessionStorage.setItem('ownerReturnTo', window.location.pathname)
       setShowLogin(true)
       navigate('/')
     }
-  }, [isOwner, authReady, navigate, setShowLogin])
+  }, [isOwner, authReady, navigate, setShowLogin, onboardingRequired])
 
   // Close drawer on route change
   useEffect(() => {
@@ -32,6 +37,8 @@ const Layout = () => {
       </div>
     )
   }
+
+  if (onboardingRequired) return null
 
   if (!isOwner) return null
 
