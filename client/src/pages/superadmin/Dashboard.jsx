@@ -1,152 +1,198 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
-
-const Stat = ({ label, value, hint }) => (
-  <div className="border border-white/10 bg-white/[0.03] p-4 sm:p-5">
-    <p className="text-[11px] uppercase tracking-wider text-slate-500">{label}</p>
-    <p className="mt-2 text-2xl sm:text-3xl font-medium text-white tabular-nums">{value ?? '—'}</p>
-    {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
-  </div>
-)
-
-const statusTone = (status) => {
-  if (status === 'active') return 'text-emerald-400'
-  if (status === 'trial') return 'text-cyan-400'
-  if (status === 'expired') return 'text-amber-400'
-  if (status === 'suspended' || status === 'disabled') return 'text-rose-400'
-  return 'text-slate-400'
-}
+import { SaBadge, SaBarChart, SaCard, SaEmpty, SaLink, SaPageHeader, SaSkeleton, SaStat, sa, statusBadgeTone } from './saUi'
 
 const SuperAdminDashboard = () => {
   const { axios } = useSuperAdmin()
   const [data, setData] = useState(null)
+  const [billing, setBilling] = useState(null)
+  const [recentAgencies, setRecentAgencies] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const { data: res } = await axios.get('/api/super-admin/overview')
-        if (!cancelled && res.success) setData(res)
+        const [ov, bill, agencies] = await Promise.all([
+          axios.get('/api/super-admin/overview'),
+          axios.get('/api/super-admin/billing/overview').catch(() => ({ data: null })),
+          axios.get('/api/super-admin/agencies', { params: { limit: 6, page: 1 } }),
+        ])
+        if (cancelled) return
+        if (ov.data?.success) setData(ov.data)
+        if (bill.data?.success) setBilling(bill.data.byStatus || {})
+        if (agencies.data?.success) setRecentAgencies(agencies.data.agencies || [])
       } catch (error) {
         toast.error(saError(error, 'Failed to load overview'))
       } finally {
         if (!cancelled) setLoading(false)
       }
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [axios])
 
+  const o = data?.overview || {}
+  const pendingAgencies = Math.max(0, (o.totalAgencies || 0) - (o.activeAgencies || 0))
+
+  const agencyChart = useMemo(
+    () => [
+      { label: 'Active agencies', value: o.activeAgencies || 0, color: 'var(--sa-chart-1)' },
+      { label: 'Other / pending', value: pendingAgencies, color: 'var(--sa-chart-4)' },
+      { label: 'Trial licenses', value: o.trialAdmins || 0, color: 'var(--sa-chart-2)' },
+      { label: 'Licensed owners', value: o.licensedAdmins || 0, color: 'var(--sa-chart-3)' },
+    ],
+    [o, pendingAgencies],
+  )
+
+  const billingChart = useMemo(() => {
+    const entries = Object.entries(billing || {})
+    if (!entries.length) return []
+    const colors = ['var(--sa-chart-1)', 'var(--sa-chart-2)', 'var(--sa-chart-3)', 'var(--sa-chart-4)', 'var(--sa-danger)']
+    return entries.map(([label, value], i) => ({
+      label: String(label).replace(/_/g, ' '),
+      value,
+      color: colors[i % colors.length],
+    }))
+  }, [billing])
+
   if (loading) {
-    return <p className="text-slate-500 text-sm">Loading platform overview…</p>
+    return (
+      <div className={sa.page}>
+        <SaSkeleton className="h-10 w-64" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <SaSkeleton key={i} className="h-24" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
-  const o = data?.overview || {}
-
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl text-white">Platform overview</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Manage every agency admin, license, and audit trail from one place.
-        </p>
+    <div className={sa.page}>
+      <SaPageHeader
+        title="Dashboard"
+        subtitle="Platform health across agencies, subscriptions, and operators."
+        action={
+          <>
+            <Link to="/superadmin/agencies?create=1" className={sa.btnPrimary}>
+              Create agency
+            </Link>
+            <Link to="/superadmin/agencies" className={sa.btnSecondary}>
+              View agencies
+            </Link>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <SaStat label="Total agencies" value={o.totalAgencies} />
+        <SaStat label="Active agencies" value={o.activeAgencies} accent="var(--sa-success)" />
+        <SaStat label="Pending / other" value={pendingAgencies} accent="var(--sa-warn)" />
+        <SaStat label="Suspended admins" value={o.suspendedAdmins} accent="var(--sa-danger)" />
+        <SaStat label="Active subscriptions*" value={billing?.active ?? o.licensedAdmins} hint="* From billing when available" />
+        <SaStat label="Trialing" value={billing?.trialing ?? o.trialAdmins} />
+        <SaStat label="Expired" value={billing?.expired ?? o.expiredAdmins} />
+        <SaStat label="Staff / owners" value={o.totalAdmins} hint={`${o.activeAdmins || 0} active accounts`} />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <Stat label="Agencies" value={o.totalAgencies} hint={`${o.activeAgencies || 0} active`} />
-        <Stat label="Admin accounts" value={o.totalAdmins} />
-        <Stat label="On trial" value={o.trialAdmins} hint={`${o.licensedAdmins || 0} licensed`} />
-        <Stat label="Expired / locked" value={(o.expiredAdmins || 0) + (o.suspendedAdmins || 0)} />
+      <div className="grid lg:grid-cols-2 gap-4">
+        <SaCard title="Agency & license mix" description="Snapshot of tenant and license distribution.">
+          <SaBarChart items={agencyChart} />
+        </SaCard>
+        <SaCard
+          title="Billing by status"
+          description="AgencySubscription counts (P4)."
+          action={<SaLink to="/superadmin/billing">Open billing →</SaLink>}
+        >
+          {billingChart.length ? (
+            <SaBarChart items={billingChart} />
+          ) : (
+            <SaEmpty title="No billing data yet" description="Subscriptions appear after P4 migration." />
+          )}
+        </SaCard>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <Stat label="Fleet vehicles" value={o.totalCars} />
-        <Stat label="Bookings" value={o.totalBookings} />
-        <Stat label="Customers" value={o.totalCustomers} />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <SaStat label="Fleet vehicles" value={o.totalCars} />
+        <SaStat label="Bookings" value={o.totalBookings} />
+        <SaStat label="Customers" value={o.totalCustomers} />
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Link
-          to="/superadmin/agencies"
-          className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2.5 transition-colors"
+      <div className="grid lg:grid-cols-2 gap-4">
+        <SaCard
+          title="Recent agencies"
+          action={<SaLink to="/superadmin/agencies">View all →</SaLink>}
         >
-          Manage agencies
-        </Link>
-        <Link
-          to="/superadmin/agencies?create=1"
-          className="border border-white/15 hover:border-white/30 text-sm px-4 py-2.5 text-slate-200 transition-colors"
-        >
-          Create agency
-        </Link>
-        <Link
-          to="/superadmin/admins"
-          className="border border-white/15 hover:border-white/30 text-sm px-4 py-2.5 text-slate-200 transition-colors"
-        >
-          Manage admins
-        </Link>
-        <Link
-          to="/superadmin/audit"
-          className="border border-white/15 hover:border-white/30 text-sm px-4 py-2.5 text-slate-200 transition-colors"
-        >
-          View audit logs
-        </Link>
-      </div>
+          <ul className="divide-y divide-[var(--sa-border)]">
+            {recentAgencies.map((a) => (
+              <li key={a._id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-[var(--sa-text)] truncate">{a.name}</p>
+                  <p className="text-xs text-[var(--sa-text-muted)] font-mono truncate">{a.slug}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <SaBadge tone={statusBadgeTone(a.status)}>{a.status}</SaBadge>
+                  <Link to={`/superadmin/agencies/${a._id}`} className={sa.btnGhost}>
+                    Open
+                  </Link>
+                </div>
+              </li>
+            ))}
+            {!recentAgencies.length ? (
+              <SaEmpty title="No agencies yet" description="Create your first agency to get started." />
+            ) : null}
+          </ul>
+        </SaCard>
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm uppercase tracking-wider text-slate-400">Recent admins</h2>
-          <Link to="/superadmin/admins" className="text-xs text-cyan-500 hover:text-cyan-400">
-            View all
-          </Link>
-        </div>
-        <div className="border border-white/10 overflow-x-auto table-scroll">
-          <table className="w-full text-sm text-left min-w-[640px]">
-            <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-white/10">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Agency</th>
-                <th className="px-4 py-3 font-medium">Account</th>
-                <th className="px-4 py-3 font-medium">License</th>
-                <th className="px-4 py-3 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {(data?.recentAdmins || []).map((admin) => (
-                <tr key={admin._id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">
-                    <p className="text-white">{admin.name}</p>
-                    <p className="text-xs text-slate-500">{admin.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-300">{admin.agencyName || '—'}</td>
-                  <td className={`px-4 py-3 capitalize ${statusTone(admin.accountStatus)}`}>
-                    {admin.accountStatus || 'active'}
-                  </td>
-                  <td className={`px-4 py-3 capitalize ${statusTone(admin.license?.licenseStatus || admin.licenseStatus)}`}>
-                    {admin.license?.licenseStatus || admin.licenseStatus}
-                    {admin.license?.daysRemaining != null && admin.license?.licenseStatus === 'trial' && (
-                      <span className="text-slate-500"> · {admin.license.daysRemaining}d</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link to={`/superadmin/admins/${admin._id}`} className="text-cyan-500 hover:text-cyan-400 text-xs">
-                      Manage
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {!data?.recentAdmins?.length && (
+        <SaCard
+          title="Recent activity"
+          action={<SaLink to="/superadmin/activity">View activity →</SaLink>}
+        >
+          <div className={sa.tableWrap}>
+            <table className="w-full min-w-[480px]">
+              <thead>
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    No admin accounts yet. Create one to get started.
-                  </td>
+                  <th className={sa.th}>Owner</th>
+                  <th className={sa.th}>License</th>
+                  <th className={sa.th} />
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {(data?.recentAdmins || []).map((admin) => (
+                  <tr key={admin._id} className={sa.row}>
+                    <td className={sa.td}>
+                      <p className="font-medium text-[var(--sa-text)]">{admin.name}</p>
+                      <p className="text-xs text-[var(--sa-text-muted)]">{admin.email}</p>
+                    </td>
+                    <td className={sa.td}>
+                      <SaBadge tone={statusBadgeTone(admin.license?.licenseStatus || admin.licenseStatus)}>
+                        {admin.license?.licenseStatus || admin.licenseStatus}
+                      </SaBadge>
+                    </td>
+                    <td className={`${sa.td} text-right`}>
+                      <Link to={`/superadmin/admins/${admin._id}`} className={sa.link}>
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {!data?.recentAdmins?.length ? (
+                  <tr>
+                    <td colSpan={3}>
+                      <SaEmpty title="No recent admins" />
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </SaCard>
+      </div>
     </div>
   )
 }

@@ -45,6 +45,7 @@ const SuperAdminDashboard = lazy(() => import('./pages/superadmin/Dashboard'))
 const SuperAdminAdmins = lazy(() => import('./pages/superadmin/Admins'))
 const SuperAdminAdminDetail = lazy(() => import('./pages/superadmin/AdminDetail'))
 const SuperAdminAgencies = lazy(() => import('./pages/superadmin/Agencies'))
+const SuperAdminBilling = lazy(() => import('./pages/superadmin/Billing'))
 const SuperAdminAgencyDetail = lazy(() => import('./pages/superadmin/AgencyDetail'))
 const SuperAdminPermissions = lazy(() => import('./pages/superadmin/Permissions'))
 const SuperAdminActivity = lazy(() => import('./pages/superadmin/Activity'))
@@ -171,6 +172,7 @@ const App = () => {
               <Route index element={<SuperAdminDashboard />} />
               <Route path="agencies" element={<SuperAdminAgencies />} />
               <Route path="agencies/:id" element={<SuperAdminAgencyDetail />} />
+              <Route path="billing" element={<SuperAdminBilling />} />
               <Route path="admins" element={<SuperAdminAdmins />} />
               <Route path="admins/:id" element={<SuperAdminAdminDetail />} />
               <Route path="permissions" element={<SuperAdminPermissions />} />

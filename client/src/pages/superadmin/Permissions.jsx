@@ -10,6 +10,7 @@ import {
   resolveCatalog,
   summarizeAccess,
 } from '../../utils/permissionMeta'
+import { SaEmpty, SaPageHeader, SaSkeleton, sa } from './saUi'
 
 const SuperAdminPermissions = () => {
   const { axios } = useSuperAdmin()
@@ -108,25 +109,21 @@ const SuperAdminPermissions = () => {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <h1 className="font-display text-3xl text-white sm:text-4xl">{t('superadmin.perms.hubTitle')}</h1>
-        <p className="text-sm text-slate-500">{t('superadmin.perms.loading')}</p>
+      <div className={sa.page}>
+        <SaPageHeader title={t('superadmin.perms.hubTitle')} subtitle={t('superadmin.perms.loading')} />
+        <SaSkeleton className="h-64 w-full" />
       </div>
     )
   }
 
   if (error && !admins.length) {
     return (
-      <div className="space-y-4">
-        <h1 className="font-display text-3xl text-white sm:text-4xl">{t('superadmin.perms.hubTitle')}</h1>
-        <div className="border border-rose-500/30 bg-rose-500/5 p-4 text-sm text-rose-200">
+      <div className={sa.page}>
+        <SaPageHeader title={t('superadmin.perms.hubTitle')} />
+        <div className={`${sa.card} ${sa.cardPad} border-[var(--sa-danger)]/30 text-sm text-[var(--sa-danger)]`}>
           {error}
         </div>
-        <button
-          type="button"
-          onClick={load}
-          className="bg-cyan-700 px-4 py-2 text-sm text-white hover:bg-cyan-600"
-        >
+        <button type="button" onClick={load} className={sa.btnPrimary}>
           {t('superadmin.perms.retry')}
         </button>
       </div>
@@ -134,27 +131,23 @@ const SuperAdminPermissions = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-white sm:text-4xl">{t('superadmin.perms.hubTitle')}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t('superadmin.perms.hubSubtitle')}</p>
-      </div>
+    <div className={sa.page}>
+      <SaPageHeader title={t('superadmin.perms.hubTitle')} subtitle={t('superadmin.perms.hubSubtitle')} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-        {/* Admin list */}
-        <aside className="border border-white/10 bg-white/[0.02]">
-          <div className="space-y-2 border-b border-white/10 p-3">
+        <aside className={`${sa.card} overflow-hidden`}>
+          <div className="space-y-2 border-b border-[var(--sa-border)] p-3">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('superadmin.perms.searchAdmins')}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={accessFilter}
                 onChange={(e) => setAccessFilter(e.target.value)}
-                className="bg-[#0a0f14] border border-white/10 px-2 py-2 text-xs outline-none focus:border-cyan-600/60"
+                className={`${sa.select} text-xs w-full`}
               >
                 <option value="all">{t('superadmin.perms.filterAccessAll')}</option>
                 <option value="full">{t('superadmin.perms.filterAccessFull')}</option>
@@ -163,7 +156,7 @@ const SuperAdminPermissions = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-[#0a0f14] border border-white/10 px-2 py-2 text-xs outline-none focus:border-cyan-600/60"
+                className={`${sa.select} text-xs w-full`}
               >
                 <option value="all">{t('superadmin.perms.filterStatusAll')}</option>
                 <option value="active">{t('superadmin.perms.filterStatusActive')}</option>
@@ -172,9 +165,9 @@ const SuperAdminPermissions = () => {
               </select>
             </div>
           </div>
-          <ul className="max-h-[28rem] overflow-y-auto divide-y divide-white/5">
+          <ul className="max-h-[28rem] overflow-y-auto sa-scrollbar divide-y divide-[var(--sa-border)]">
             {filtered.length === 0 && (
-              <li className="px-3 py-6 text-center text-xs text-slate-500">
+              <li className="px-3 py-6 text-center text-xs text-[var(--sa-text-muted)]">
                 {t('superadmin.perms.noAdmins')}
               </li>
             )}
@@ -187,15 +180,15 @@ const SuperAdminPermissions = () => {
                     type="button"
                     onClick={() => setSelectedId(admin._id)}
                     className={`w-full px-3 py-3 text-left transition-colors ${
-                      active ? 'bg-cyan-500/10' : 'hover:bg-white/[0.03]'
+                      active ? 'bg-[var(--sa-accent-soft)]' : 'hover:bg-[var(--sa-surface-2)]'
                     }`}
                   >
-                    <p className="truncate text-sm font-medium text-white">{admin.name}</p>
-                    <p className="truncate text-xs text-slate-500">{admin.email}</p>
+                    <p className="truncate text-sm font-medium text-[var(--sa-text)]">{admin.name}</p>
+                    <p className="truncate text-xs text-[var(--sa-text-muted)]">{admin.email}</p>
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       <span
                         className={`text-[10px] uppercase tracking-wide ${
-                          summary.mode === 'full' ? 'text-emerald-400' : 'text-cyan-400'
+                          summary.mode === 'full' ? 'text-[var(--sa-success)]' : 'text-[var(--sa-accent)]'
                         }`}
                       >
                         {summary.mode === 'full'
@@ -205,7 +198,7 @@ const SuperAdminPermissions = () => {
                               total: summary.total,
                             })}
                       </span>
-                      <span className="text-[10px] capitalize text-slate-600">
+                      <span className="text-[10px] capitalize text-[var(--sa-text-muted)]">
                         {admin.accountStatus}
                       </span>
                     </div>
@@ -214,20 +207,16 @@ const SuperAdminPermissions = () => {
               )
             })}
           </ul>
-          <div className="border-t border-white/10 px-3 py-2 text-[10px] text-slate-600">
+          <div className="border-t border-[var(--sa-border)] px-3 py-2 text-[10px] text-[var(--sa-text-muted)]">
             {t('superadmin.perms.adminCount', { count: filtered.length, total: admins.length })}
           </div>
         </aside>
 
-        {/* Matrix */}
         <div className="min-w-0 space-y-3">
           {selected ? (
             <>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                <Link
-                  to={`/superadmin/admins/${selected._id}`}
-                  className="text-cyan-400 hover:text-cyan-300"
-                >
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--sa-text-muted)]">
+                <Link to={`/superadmin/admins/${selected._id}`} className={sa.btnGhost}>
                   {t('superadmin.perms.openProfile')}
                 </Link>
                 <span>
@@ -253,9 +242,7 @@ const SuperAdminPermissions = () => {
               />
             </>
           ) : (
-            <div className="border border-white/10 px-4 py-12 text-center text-sm text-slate-500">
-              {t('superadmin.perms.selectAdmin')}
-            </div>
+            <SaEmpty title={t('superadmin.perms.selectAdmin')} />
           )}
         </div>
       </div>

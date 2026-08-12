@@ -4,6 +4,18 @@ import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
 import { useI18n } from '../../i18n/I18nContext'
 import { summarizeAccess } from '../../utils/permissionMeta'
+import {
+  SaBadge,
+  SaEmpty,
+  SaField,
+  SaModal,
+  SaPageHeader,
+  SaPagination,
+  SaFilterBar,
+  SaSkeleton,
+  sa,
+  statusBadgeTone,
+} from './saUi'
 
 const emptyForm = {
   name: '',
@@ -12,14 +24,6 @@ const emptyForm = {
   agencyName: '',
   notes: '',
   startTrial: true,
-}
-
-const tone = (s) => {
-  if (s === 'active') return 'text-emerald-400'
-  if (s === 'trial') return 'text-cyan-400'
-  if (s === 'expired') return 'text-amber-400'
-  if (s === 'suspended' || s === 'disabled') return 'text-rose-400'
-  return 'text-slate-400'
 }
 
 const SuperAdminAdmins = () => {
@@ -39,27 +43,30 @@ const SuperAdminAdmins = () => {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300)
+    return () => clearTimeout(timer)
   }, [search])
 
-  const load = useCallback(async (page = 1) => {
-    setLoading(true)
-    try {
-      const { data } = await axios.get('/api/super-admin/admins', {
-        params: { search: debouncedSearch, status, license, page, limit: 20 },
-      })
-      if (data.success) {
-        setAdmins(data.admins)
-        setPagination(data.pagination)
-        if (data.permissionCatalog) setCatalog(data.permissionCatalog)
+  const load = useCallback(
+    async (page = 1) => {
+      setLoading(true)
+      try {
+        const { data } = await axios.get('/api/super-admin/admins', {
+          params: { search: debouncedSearch, status, license, page, limit: 20 },
+        })
+        if (data.success) {
+          setAdmins(data.admins)
+          setPagination(data.pagination)
+          if (data.permissionCatalog) setCatalog(data.permissionCatalog)
+        }
+      } catch (error) {
+        toast.error(saError(error))
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      toast.error(saError(error))
-    } finally {
-      setLoading(false)
-    }
-  }, [axios, debouncedSearch, status, license])
+    },
+    [axios, debouncedSearch, status, license],
+  )
 
   useEffect(() => {
     load(1)
@@ -91,202 +98,161 @@ const SuperAdminAdmins = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl sm:text-4xl text-white">Admin accounts</h1>
-          <p className="mt-1 text-sm text-slate-500">Create, lock, and license every agency admin.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowCreate((v) => !v)}
-          className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2.5 transition-colors"
-        >
-          {showCreate ? 'Close form' : 'Create admin'}
-        </button>
-      </div>
+    <div className={sa.page}>
+      <SaPageHeader
+        title="Staff & admin accounts"
+        subtitle="Manage agency owners and legacy admin accounts across the platform."
+        action={
+          <button type="button" onClick={() => setShowCreate(true)} className={sa.btnPrimary}>
+            Create admin
+          </button>
+        }
+      />
 
-      {showCreate && (
-        <form
-          onSubmit={createAdmin}
-          className="border border-white/10 bg-white/[0.03] p-4 sm:p-6 grid sm:grid-cols-2 gap-4"
-        >
-          <h2 className="sm:col-span-2 text-sm uppercase tracking-wider text-slate-400">New admin</h2>
+      <SaModal open={showCreate} onClose={() => { setShowCreate(false); setSearchParams({}) }} title="Create admin account" wide>
+        <form onSubmit={createAdmin} className="grid sm:grid-cols-2 gap-4">
           {[
-            ['name', 'Full name', 'text'],
-            ['email', 'Email', 'email'],
-            ['password', 'Temporary password', 'password'],
-            ['agencyName', 'Agency name', 'text'],
-          ].map(([key, label, type]) => (
-            <div key={key}>
-              <label className="block text-xs text-slate-500 mb-1.5">{label}</label>
+            ['name', 'Full name', 'text', true],
+            ['email', 'Email', 'email', true],
+            ['password', 'Temporary password', 'password', true],
+            ['agencyName', 'Agency name', 'text', false],
+          ].map(([key, label, type, required]) => (
+            <SaField key={key} label={label}>
               <input
-                required={key !== 'agencyName'}
+                required={required}
                 type={type}
                 minLength={key === 'password' ? 8 : undefined}
                 value={form[key]}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+                className={sa.input}
               />
-            </div>
+            </SaField>
           ))}
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1.5">Internal notes</label>
+          <SaField label="Internal notes" className="sm:col-span-2">
             <textarea
               rows={2}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <label className="flex items-center gap-2 text-sm text-slate-300 sm:col-span-2">
+          </SaField>
+          <label className="flex items-center gap-2 text-sm text-[var(--sa-text-secondary)] sm:col-span-2">
             <input
               type="checkbox"
               checked={form.startTrial}
               onChange={(e) => setForm((f) => ({ ...f, startTrial: e.target.checked }))}
-              className="accent-cyan-600"
+              className="accent-[var(--sa-accent)]"
             />
             Start 7-day trial immediately
           </label>
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-white text-sm px-5 py-2.5"
-            >
+          <div className="sm:col-span-2 flex gap-2">
+            <button type="submit" disabled={saving} className={sa.btnPrimary}>
               {saving ? 'Creating…' : 'Create account'}
+            </button>
+            <button type="button" onClick={() => setShowCreate(false)} className={sa.btnSecondary}>
+              Cancel
             </button>
           </div>
         </form>
-      )}
+      </SaModal>
 
-      <div className="flex flex-wrap gap-2">
+      <SaFilterBar>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, email, agency…"
-          className="flex-1 min-w-[12rem] bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+          className={`${sa.input} flex-1 min-w-[12rem]`}
         />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm"
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={sa.select}>
           <option value="">All statuses</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
           <option value="disabled">Disabled</option>
         </select>
-        <select
-          value={license}
-          onChange={(e) => setLicense(e.target.value)}
-          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm"
-        >
+        <select value={license} onChange={(e) => setLicense(e.target.value)} className={sa.select}>
           <option value="">All licenses</option>
           <option value="trial">Trial</option>
           <option value="active">Licensed</option>
           <option value="expired">Expired</option>
         </select>
-      </div>
+      </SaFilterBar>
 
-      <div className="border border-white/10 overflow-x-auto table-scroll">
+      <div className={sa.tableWrap}>
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading…</p>
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <SaSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : admins.length === 0 ? (
+          <SaEmpty title="No admins found" description="Adjust filters or create a new admin account." />
         ) : (
-          <table className="w-full text-sm text-left min-w-[720px]">
-            <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-white/10">
+          <table className="w-full text-left min-w-[720px]">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Admin</th>
-                <th className="px-4 py-3 font-medium">Agency</th>
-                <th className="px-4 py-3 font-medium">Account</th>
-                <th className="px-4 py-3 font-medium">License</th>
-                <th className="px-4 py-3 font-medium">{t('superadmin.perms.nav')}</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium" />
+                <th className={sa.th}>Admin</th>
+                <th className={sa.th}>Agency</th>
+                <th className={sa.th}>Account</th>
+                <th className={sa.th}>License</th>
+                <th className={sa.th}>{t('superadmin.perms.nav')}</th>
+                <th className={sa.th}>Created</th>
+                <th className={sa.th} />
               </tr>
             </thead>
             <tbody>
               {admins.map((admin) => {
                 const access = summarizeAccess(admin.permissions, catalog)
                 return (
-                <tr key={admin._id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3">
-                    <p className="text-white">{admin.name}</p>
-                    <p className="text-xs text-slate-500">{admin.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-slate-300">{admin.agencyName || '—'}</td>
-                  <td className={`px-4 py-3 capitalize ${tone(admin.accountStatus)}`}>
-                    {admin.accountStatus || 'active'}
-                  </td>
-                  <td className={`px-4 py-3 capitalize ${tone(admin.license?.licenseStatus)}`}>
-                    {admin.license?.licenseStatus}
-                    {admin.license?.licenseStatus === 'trial' && admin.license?.daysRemaining != null && (
-                      <span className="text-slate-500"> · {admin.license.daysRemaining}d left</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      to="/superadmin/permissions"
-                      className={`text-xs ${access.mode === 'full' ? 'text-emerald-400' : 'text-cyan-400'} hover:underline`}
-                      title={t('superadmin.perms.nav')}
-                    >
-                      {access.mode === 'full'
-                        ? t('superadmin.perms.badgeFull')
-                        : t('superadmin.perms.badgeCount', {
-                            granted: access.granted,
-                            total: access.total,
-                          })}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 text-xs">
-                    {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      to={`/superadmin/admins/${admin._id}`}
-                      className="text-cyan-500 hover:text-cyan-400 text-xs"
-                    >
-                      Manage
-                    </Link>
-                  </td>
-                </tr>
+                  <tr key={admin._id} className={sa.row}>
+                    <td className={sa.td}>
+                      <p className="font-medium text-[var(--sa-text)]">{admin.name}</p>
+                      <p className="text-xs text-[var(--sa-text-muted)]">{admin.email}</p>
+                    </td>
+                    <td className={sa.td}>{admin.agencyName || '—'}</td>
+                    <td className={sa.td}>
+                      <SaBadge tone={statusBadgeTone(admin.accountStatus)}>{admin.accountStatus || 'active'}</SaBadge>
+                    </td>
+                    <td className={sa.td}>
+                      <SaBadge tone={statusBadgeTone(admin.license?.licenseStatus)}>
+                        {admin.license?.licenseStatus}
+                      </SaBadge>
+                      {admin.license?.licenseStatus === 'trial' && admin.license?.daysRemaining != null ? (
+                        <span className="text-xs text-[var(--sa-text-muted)] ml-1">
+                          · {admin.license.daysRemaining}d left
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className={sa.td}>
+                      <Link
+                        to="/superadmin/permissions"
+                        className={sa.btnGhost}
+                        title={t('superadmin.perms.nav')}
+                      >
+                        {access.mode === 'full'
+                          ? t('superadmin.perms.badgeFull')
+                          : t('superadmin.perms.badgeCount', {
+                              granted: access.granted,
+                              total: access.total,
+                            })}
+                      </Link>
+                    </td>
+                    <td className={`${sa.td} text-xs text-[var(--sa-text-muted)]`}>
+                      {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : '—'}
+                    </td>
+                    <td className={`${sa.td} text-right`}>
+                      <Link to={`/superadmin/admins/${admin._id}`} className={sa.btnGhost}>
+                        Manage →
+                      </Link>
+                    </td>
+                  </tr>
                 )
               })}
-              {!admins.length && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
-                    No admins match these filters.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         )}
       </div>
 
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center gap-3 text-sm text-slate-400">
-          <button
-            type="button"
-            disabled={pagination.page <= 1}
-            onClick={() => load(pagination.page - 1)}
-            className="disabled:opacity-40 hover:text-white"
-          >
-            Previous
-          </button>
-          <span>
-            Page {pagination.page} / {pagination.totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => load(pagination.page + 1)}
-            className="disabled:opacity-40 hover:text-white"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <SaPagination page={pagination.page} totalPages={pagination.totalPages} onPage={load} />
     </div>
   )
 }

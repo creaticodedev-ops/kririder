@@ -1,7 +1,21 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
+import {
+  SaAvatar,
+  SaBadge,
+  SaEmpty,
+  SaField,
+  SaModal,
+  SaPageHeader,
+  SaPagination,
+  SaFilterBar,
+  SaSkeleton,
+  copyToClipboard,
+  sa,
+  statusBadgeTone,
+} from './saUi'
 
 const emptyForm = {
   name: '',
@@ -19,11 +33,13 @@ const emptyForm = {
   isPublicStorefront: false,
 }
 
-const tone = (s) => {
-  if (s === 'active') return 'text-emerald-400'
-  if (s === 'pending') return 'text-amber-400'
-  if (s === 'suspended' || s === 'disabled') return 'text-rose-400'
-  return 'text-slate-400'
+const SORT_KEYS = {
+  name: (a) => a.name?.toLowerCase() || '',
+  slug: (a) => a.slug?.toLowerCase() || '',
+  owner: (a) => a.primaryOwner?.name?.toLowerCase() || '',
+  status: (a) => a.status || '',
+  license: (a) => a.primaryOwner?.licenseStatus || '',
+  created: (a) => new Date(a.createdAt || 0).getTime(),
 }
 
 const SuperAdminAgencies = () => {
@@ -34,6 +50,9 @@ const SuperAdminAgencies = () => {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [status, setStatus] = useState('')
+  const [licenseFilter, setLicenseFilter] = useState('')
+  const [sortKey, setSortKey] = useState('created')
+  const [sortDir, setSortDir] = useState('desc')
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(searchParams.get('create') === '1')
   const [form, setForm] = useState(emptyForm)
@@ -45,28 +64,31 @@ const SuperAdminAgencies = () => {
     return () => clearTimeout(t)
   }, [search])
 
-  const load = useCallback(async (page = 1) => {
-    setLoading(true)
-    try {
-      const { data } = await axios.get('/api/super-admin/agencies', {
-        params: { q: debouncedSearch, status, page, limit: 20 },
-      })
-      if (data.success) {
-        setAgencies(data.agencies || [])
-        setPagination(
-          data.pagination || {
-            page: data.page || 1,
-            totalPages: data.pages || 1,
-            total: data.total || 0,
-          },
-        )
+  const load = useCallback(
+    async (page = 1) => {
+      setLoading(true)
+      try {
+        const { data } = await axios.get('/api/super-admin/agencies', {
+          params: { q: debouncedSearch, status, page, limit: 20 },
+        })
+        if (data.success) {
+          setAgencies(data.agencies || [])
+          setPagination(
+            data.pagination || {
+              page: data.page || 1,
+              totalPages: data.pages || 1,
+              total: data.total || 0,
+            },
+          )
+        }
+      } catch (error) {
+        toast.error(saError(error))
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      toast.error(saError(error))
-    } finally {
-      setLoading(false)
-    }
-  }, [axios, debouncedSearch, status])
+    },
+    [axios, debouncedSearch, status],
+  )
 
   useEffect(() => {
     load(1)
@@ -75,6 +97,35 @@ const SuperAdminAgencies = () => {
   useEffect(() => {
     if (searchParams.get('create') === '1') setShowCreate(true)
   }, [searchParams])
+
+  const displayed = useMemo(() => {
+    let rows = [...agencies]
+    if (licenseFilter) {
+      rows = rows.filter((a) => (a.primaryOwner?.licenseStatus || '') === licenseFilter)
+    }
+    const getter = SORT_KEYS[sortKey] || SORT_KEYS.created
+    rows.sort((a, b) => {
+      const av = getter(a)
+      const bv = getter(b)
+      if (av < bv) return sortDir === 'asc' ? -1 : 1
+      if (av > bv) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+    return rows
+  }, [agencies, licenseFilter, sortKey, sortDir])
+
+  const toggleSort = (key) => {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir(key === 'created' ? 'desc' : 'asc')
+    }
+  }
+
+  const sortIndicator = (key) => {
+    if (sortKey !== key) return ''
+    return sortDir === 'asc' ? ' ↑' : ' ↓'
+  }
 
   const createAgency = async (e) => {
     e.preventDefault()
@@ -104,312 +155,306 @@ const SuperAdminAgencies = () => {
 
   const copyInvite = async () => {
     if (!createdInvite?.url) return
-    try {
-      await navigator.clipboard.writeText(createdInvite.url)
-      toast.success('Onboarding link copied')
-    } catch {
-      toast.error('Could not copy — select the URL manually')
-    }
+    const result = await copyToClipboard(createdInvite.url, 'Onboarding link copied')
+    toast[result.ok ? 'success' : 'error'](result.message)
+  }
+
+  const openCreate = () => {
+    setShowCreate(true)
+    setCreatedInvite(null)
+  }
+
+  const closeCreate = () => {
+    setShowCreate(false)
+    setSearchParams({})
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl sm:text-4xl text-white">Agencies</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Create agencies and invite owners — they set their own password via a secure link.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setShowCreate((v) => !v)
-            setCreatedInvite(null)
-          }}
-          className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2.5 transition-colors"
-        >
-          {showCreate ? 'Close form' : 'Create agency'}
-        </button>
-      </div>
+    <div className={sa.page}>
+      <SaPageHeader
+        title="Agencies"
+        subtitle="Create agencies and invite owners. Owners set their own password via a secure onboarding link."
+        action={
+          <button type="button" onClick={openCreate} className={sa.btnPrimary}>
+            Create agency
+          </button>
+        }
+      />
 
-      {createdInvite?.url && (
-        <div className="border border-cyan-700/40 bg-cyan-950/30 p-4 sm:p-5 space-y-3">
-          <p className="text-sm text-cyan-300 font-medium">
+      {createdInvite?.url ? (
+        <div className={`${sa.card} ${sa.cardPad} border-[var(--sa-accent)]/30 bg-[var(--sa-accent-soft)]`}>
+          <p className="text-sm font-semibold text-[var(--sa-text)]">
             Agency created{createdInvite.agency?.name ? `: ${createdInvite.agency.name}` : ''}
           </p>
-          <p className="text-xs text-slate-400">
-            Send this single-use onboarding link to the owner. It expires
+          <p className="mt-1 text-xs text-[var(--sa-text-muted)]">
+            Send this single-use onboarding link to the owner.
             {createdInvite.expiresAt
-              ? ` on ${new Date(createdInvite.expiresAt).toLocaleString()}`
-              : ' after a few days'}
-            . The owner chooses their own password — no password was created for you.
+              ? ` Expires ${new Date(createdInvite.expiresAt).toLocaleString()}.`
+              : ' It expires after a few days.'}
           </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              readOnly
-              value={createdInvite.url}
-              className="flex-1 bg-[#0a0f14] border border-white/10 px-3 py-2 text-xs sm:text-sm text-slate-200 font-mono"
-            />
-            <button
-              type="button"
-              onClick={copyInvite}
-              className="bg-cyan-700 hover:bg-cyan-600 text-white text-sm px-4 py-2 shrink-0"
-            >
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+            <input readOnly value={createdInvite.url} className={`${sa.input} font-mono text-xs`} />
+            <button type="button" onClick={copyInvite} className={sa.btnSecondary}>
               Copy link
             </button>
           </div>
-          {createdInvite.agency?._id && (
-            <Link
-              to={`/superadmin/agencies/${createdInvite.agency._id}`}
-              className="inline-block text-xs text-cyan-500 hover:text-cyan-400"
-            >
+          {createdInvite.agency?._id ? (
+            <Link to={`/superadmin/agencies/${createdInvite.agency._id}`} className={`${sa.btnGhost} mt-3 inline-flex`}>
               Open agency details →
             </Link>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
 
-      {showCreate && (
-        <form
-          onSubmit={createAgency}
-          className="border border-white/10 bg-white/[0.03] p-4 sm:p-6 grid sm:grid-cols-2 gap-4"
-        >
-          <h2 className="sm:col-span-2 text-sm uppercase tracking-wider text-slate-400">New agency</h2>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Agency name</label>
+      <SaModal open={showCreate} onClose={closeCreate} title="Create agency" wide>
+        <form onSubmit={createAgency} className="grid sm:grid-cols-2 gap-4">
+          <SaField label="Agency name *" className="sm:col-span-2">
             <input
               required
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Agency slug</label>
+          </SaField>
+          <SaField label="Agency slug" hint="Auto-generated from name if empty">
             <input
               value={form.slug}
               onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
               placeholder="auto-from-name"
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={`${sa.input} font-mono`}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Primary owner name</label>
+          </SaField>
+          <SaField label="Primary owner name *">
             <input
               required
               value={form.ownerName}
               onChange={(e) => setForm((f) => ({ ...f, ownerName: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Primary owner email</label>
+          </SaField>
+          <SaField label="Primary owner email *">
             <input
               required
               type="email"
               value={form.ownerEmail}
               onChange={(e) => setForm((f) => ({ ...f, ownerEmail: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Phone</label>
-            <input
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">WhatsApp</label>
+          </SaField>
+          <SaField label="Phone">
+            <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className={sa.input} />
+          </SaField>
+          <SaField label="WhatsApp">
             <input
               value={form.whatsapp}
               onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1.5">Address</label>
+          </SaField>
+          <SaField label="Address" className="sm:col-span-2">
             <input
               value={form.address}
               onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">City</label>
-            <input
-              value={form.city}
-              onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 mb-1.5">Country</label>
+          </SaField>
+          <SaField label="City">
+            <input value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} className={sa.input} />
+          </SaField>
+          <SaField label="Country">
             <input
               value={form.country}
               onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1.5">Logo URL (optional)</label>
+          </SaField>
+          <SaField label="Logo URL (optional)" className="sm:col-span-2">
             <input
               value={form.logoUrl}
               onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
               placeholder="https://…"
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1.5">Internal notes</label>
+          </SaField>
+          <SaField label="Internal notes" className="sm:col-span-2">
             <textarea
               rows={2}
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
-          <p className="sm:col-span-2 text-xs text-slate-500">
-            The owner will receive an activation link and create their own password. You never set or see their permanent password.
-          </p>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          </SaField>
+          <label className="flex items-center gap-2 text-sm text-[var(--sa-text-secondary)] sm:col-span-2">
             <input
               type="checkbox"
               checked={form.startTrial}
               onChange={(e) => setForm((f) => ({ ...f, startTrial: e.target.checked }))}
-              className="accent-cyan-600"
+              className="accent-[var(--sa-accent)]"
             />
             Start 7-day trial for owner
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-[var(--sa-text-secondary)] sm:col-span-2">
             <input
               type="checkbox"
               checked={form.isPublicStorefront}
               onChange={(e) => setForm((f) => ({ ...f, isPublicStorefront: e.target.checked }))}
-              className="accent-cyan-600"
+              className="accent-[var(--sa-accent)]"
             />
             Public storefront agency
           </label>
-          <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-white text-sm px-5 py-2.5"
-            >
-              {saving ? 'Creating…' : 'Create agency & generate invite'}
+          <p className="sm:col-span-2 text-xs text-[var(--sa-text-muted)]">
+            The owner creates their own password via the activation link. You never set or see their password.
+          </p>
+          <div className="sm:col-span-2 flex gap-2 pt-2">
+            <button type="submit" disabled={saving} className={sa.btnPrimary}>
+              {saving ? 'Creating…' : 'Create & generate invite'}
+            </button>
+            <button type="button" onClick={closeCreate} className={sa.btnSecondary}>
+              Cancel
             </button>
           </div>
         </form>
-      )}
+      </SaModal>
 
-      <div className="flex flex-wrap gap-2">
+      <SaFilterBar>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name or slug…"
-          className="flex-1 min-w-[12rem] bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+          className={`${sa.input} flex-1 min-w-[12rem]`}
+          aria-label="Search agencies"
         />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm"
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className={sa.select} aria-label="Filter by status">
           <option value="">All statuses</option>
           <option value="pending">Pending</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
           <option value="disabled">Disabled</option>
         </select>
-      </div>
+        <select
+          value={licenseFilter}
+          onChange={(e) => setLicenseFilter(e.target.value)}
+          className={sa.select}
+          aria-label="Filter by license"
+          title="Filters current page results"
+        >
+          <option value="">All licenses</option>
+          <option value="active">Active</option>
+          <option value="trial">Trial</option>
+          <option value="expired">Expired</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </SaFilterBar>
 
-      <div className="border border-white/10 overflow-x-auto table-scroll">
+      <div className={sa.tableWrap}>
         {loading ? (
-          <p className="p-6 text-sm text-slate-500">Loading…</p>
+          <div className="p-6 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <SaSkeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        ) : displayed.length === 0 ? (
+          <SaEmpty
+            title="No agencies found"
+            description="Try adjusting your search or filters, or create a new agency."
+            action={
+              <button type="button" onClick={openCreate} className={sa.btnPrimary}>
+                Create agency
+              </button>
+            }
+          />
         ) : (
-          <table className="w-full text-sm text-left min-w-[800px]">
-            <thead className="text-xs uppercase tracking-wider text-slate-500 border-b border-white/10">
+          <table className="w-full text-left min-w-[900px]">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Agency name</th>
-                <th className="px-4 py-3 font-medium">Slug</th>
-                <th className="px-4 py-3 font-medium">Owner</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Public storefront</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium" />
+                <th className={sa.th}>
+                  <button type="button" onClick={() => toggleSort('name')} className="hover:text-[var(--sa-text)]">
+                    Agency{sortIndicator('name')}
+                  </button>
+                </th>
+                <th className={sa.th}>
+                  <button type="button" onClick={() => toggleSort('owner')} className="hover:text-[var(--sa-text)]">
+                    Owner{sortIndicator('owner')}
+                  </button>
+                </th>
+                <th className={sa.th}>
+                  <button type="button" onClick={() => toggleSort('status')} className="hover:text-[var(--sa-text)]">
+                    Status{sortIndicator('status')}
+                  </button>
+                </th>
+                <th className={sa.th}>
+                  <button type="button" onClick={() => toggleSort('license')} className="hover:text-[var(--sa-text)]">
+                    License{sortIndicator('license')}
+                  </button>
+                </th>
+                <th className={sa.th}>Storefront</th>
+                <th className={sa.th}>
+                  <button type="button" onClick={() => toggleSort('created')} className="hover:text-[var(--sa-text)]">
+                    Created{sortIndicator('created')}
+                  </button>
+                </th>
+                <th className={sa.th} />
               </tr>
             </thead>
             <tbody>
-              {agencies.map((agency) => (
-                <tr key={agency._id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 text-white">{agency.name}</td>
-                  <td className="px-4 py-3 text-slate-400 font-mono text-xs">{agency.slug}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-slate-200">{agency.primaryOwner?.name || '—'}</p>
-                    <p className="text-xs text-slate-500">{agency.primaryOwner?.email || ''}</p>
+              {displayed.map((agency) => (
+                <tr key={agency._id} className={sa.row}>
+                  <td className={sa.td}>
+                    <div className="flex items-center gap-3">
+                      <SaAvatar name={agency.name} src={agency.logoUrl} size={32} />
+                      <div className="min-w-0">
+                        <p className="font-medium text-[var(--sa-text)] truncate">{agency.name}</p>
+                        <p className="text-xs font-mono text-[var(--sa-text-muted)]">{agency.slug}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className={`px-4 py-3 capitalize ${tone(agency.status)}`}>
-                    {agency.status || 'active'}
+                  <td className={sa.td}>
+                    <p className="text-[var(--sa-text)]">{agency.primaryOwner?.name || '—'}</p>
+                    <p className="text-xs text-[var(--sa-text-muted)]">{agency.primaryOwner?.email || ''}</p>
+                  </td>
+                  <td className={sa.td}>
+                    <SaBadge tone={statusBadgeTone(agency.status)}>{agency.status || 'active'}</SaBadge>
                     {agency.invitePending ? (
-                      <span className="block text-[10px] text-amber-500/80 normal-case">Invite pending</span>
+                      <span className="mt-1 block text-[10px] text-[var(--sa-warn)]">Invite pending</span>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3">
-                    {agency.isPublicStorefront ? (
-                      <span className="text-cyan-400 text-xs">Yes</span>
+                  <td className={sa.td}>
+                    {agency.primaryOwner?.licenseStatus ? (
+                      <SaBadge tone={statusBadgeTone(agency.primaryOwner.licenseStatus)}>
+                        {agency.primaryOwner.licenseStatus}
+                      </SaBadge>
                     ) : (
-                      <span className="text-slate-600 text-xs">No</span>
+                      '—'
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-500 text-xs">
+                  <td className={sa.td}>
+                    {agency.isPublicStorefront ? (
+                      <SaBadge tone="info">Public</SaBadge>
+                    ) : (
+                      <span className="text-xs text-[var(--sa-text-muted)]">Private</span>
+                    )}
+                  </td>
+                  <td className={`${sa.td} text-xs text-[var(--sa-text-muted)]`}>
                     {agency.createdAt ? new Date(agency.createdAt).toLocaleDateString() : '—'}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      to={`/superadmin/agencies/${agency._id}`}
-                      className="text-cyan-500 hover:text-cyan-400 text-xs"
-                    >
-                      Manage
+                  <td className={`${sa.td} text-right`}>
+                    <Link to={`/superadmin/agencies/${agency._id}`} className={sa.btnGhost}>
+                      Manage →
                     </Link>
                   </td>
                 </tr>
               ))}
-              {!agencies.length && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
-                    No agencies match these filters.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         )}
       </div>
 
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center gap-3 text-sm text-slate-400">
-          <button
-            type="button"
-            disabled={pagination.page <= 1}
-            onClick={() => load(pagination.page - 1)}
-            className="disabled:opacity-40 hover:text-white"
-          >
-            Previous
-          </button>
-          <span>
-            Page {pagination.page} / {pagination.totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={pagination.page >= pagination.totalPages}
-            onClick={() => load(pagination.page + 1)}
-            className="disabled:opacity-40 hover:text-white"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <SaPagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        onPage={load}
+      />
     </div>
   )
 }

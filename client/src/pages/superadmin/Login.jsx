@@ -3,8 +3,24 @@ import { Link, Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
 import { BRAND_NAME } from '../../constants/brand'
+import { SaThemeProvider, useSaTheme } from './SaThemeContext'
+import { sa } from './saUi'
 
-const SuperAdminLogin = () => {
+const ThemeToggle = () => {
+  const { theme, toggleTheme } = useSaTheme()
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className={sa.btnGhost}
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {theme === 'dark' ? '☀ Light' : '☾ Dark'}
+    </button>
+  )
+}
+
+const LoginForm = () => {
   const { login, isSuperAdmin, authReady } = useSuperAdmin()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,44 +44,28 @@ const SuperAdminLogin = () => {
   }
 
   return (
-    <div className="min-h-svh flex flex-col bg-[#0c1219] text-slate-100 relative overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14,116,144,0.45), transparent 55%), radial-gradient(ellipse 60% 40% at 90% 100%, rgba(15,118,110,0.25), transparent 50%)',
-        }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
-
-      <header className="relative z-10 page-pad py-6 flex items-center justify-between">
-        <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">
+    <div className="min-h-svh flex flex-col bg-[var(--sa-bg)] text-[var(--sa-text)]">
+      <header className="page-pad py-6 flex items-center justify-between border-b border-[var(--sa-border)]">
+        <Link to="/" className={`${sa.btnGhost} -ml-2`}>
           ← Public site
         </Link>
-        <span className="text-[11px] uppercase tracking-[0.2em] text-cyan-500/80">Restricted access</span>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <span className="text-[11px] uppercase tracking-[0.2em] text-[var(--sa-text-muted)]">Restricted</span>
+        </div>
       </header>
 
-      <main className="relative z-10 flex-1 flex items-center justify-center page-pad pb-16">
+      <main className="flex-1 flex items-center justify-center page-pad py-12">
         <div className="w-full max-w-md">
-          <p className="font-display text-4xl sm:text-5xl text-white mb-2">{BRAND_NAME}</p>
-          <h1 className="text-lg sm:text-xl text-slate-300 font-medium mb-1">Super Admin</h1>
-          <p className="text-sm text-slate-500 mb-8 max-w-sm">
-            Platform control for licenses, admin accounts, and system activity. Agency admins cannot access this area.
+          <p className="text-2xl font-semibold tracking-tight text-[var(--sa-text)]">{BRAND_NAME}</p>
+          <h1 className="mt-1 text-lg text-[var(--sa-text-secondary)] font-medium">Super Admin</h1>
+          <p className="text-sm text-[var(--sa-text-muted)] mb-8 max-w-sm mt-2 leading-relaxed">
+            Platform control for agencies, billing, and system activity. Agency admins cannot access this area.
           </p>
 
-          <form
-            onSubmit={onSubmit}
-            className="space-y-4 border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 sm:p-8"
-          >
+          <form onSubmit={onSubmit} className={`${sa.card} ${sa.cardPad} space-y-4`}>
             <div>
-              <label htmlFor="sa-email" className="block text-xs uppercase tracking-wider text-slate-400 mb-2">
+              <label htmlFor="sa-email" className={sa.label}>
                 Email
               </label>
               <input
@@ -75,11 +75,11 @@ const SuperAdminLogin = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-600/60"
+                className={sa.input}
               />
             </div>
             <div>
-              <label htmlFor="sa-password" className="block text-xs uppercase tracking-wider text-slate-400 mb-2">
+              <label htmlFor="sa-password" className={sa.label}>
                 Password
               </label>
               <input
@@ -89,14 +89,10 @@ const SuperAdminLogin = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-600/60"
+                className={sa.input}
               />
             </div>
-            <button
-              type="submit"
-              disabled={loading || !authReady}
-              className="w-full mt-2 bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-white text-sm font-medium py-3 transition-colors"
-            >
+            <button type="submit" disabled={loading || !authReady} className={`${sa.btnPrimary} w-full mt-2`}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
@@ -105,5 +101,11 @@ const SuperAdminLogin = () => {
     </div>
   )
 }
+
+const SuperAdminLogin = () => (
+  <SaThemeProvider>
+    <LoginForm />
+  </SaThemeProvider>
+)
 
 export default SuperAdminLogin

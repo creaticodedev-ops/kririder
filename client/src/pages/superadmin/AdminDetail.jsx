@@ -4,6 +4,15 @@ import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
 import { useI18n } from '../../i18n/I18nContext'
 import PermissionMatrix from '../../components/superadmin/PermissionMatrix'
+import {
+  SaCard,
+  SaField,
+  SaPageHeader,
+  SaSkeleton,
+  SaStat,
+  confirmDestructive,
+  sa,
+} from './saUi'
 
 const SuperAdminAdminDetail = () => {
   const { id } = useParams()
@@ -70,64 +79,65 @@ const SuperAdminAdminDetail = () => {
   }
 
   if (loading || !admin) {
-    return <p className="text-slate-500 text-sm">Loading admin…</p>
+    return (
+      <div className={sa.page}>
+        <SaSkeleton className="h-8 w-48" />
+        <SaSkeleton className="h-24 w-full mt-6" />
+      </div>
+    )
   }
 
   const lic = admin.license || {}
 
   return (
-    <div className="space-y-8">
-      <div>
-        <Link to="/superadmin/admins" className="text-xs text-slate-500 hover:text-cyan-400">
-          ← All admins
-        </Link>
-        <h1 className="font-display text-3xl sm:text-4xl text-white mt-2">{admin.name}</h1>
-        <p className="text-sm text-slate-500 mt-1">{admin.email}</p>
-      </div>
+    <div className={sa.page}>
+      <SaPageHeader
+        breadcrumb={
+          <Link to="/superadmin/admins" className={`${sa.btnGhost} -ml-2`}>
+            ← All admins
+          </Link>
+        }
+        title={admin.name}
+        subtitle={admin.email}
+      />
 
       <div className="grid sm:grid-cols-3 gap-3">
-        <div className="border border-white/10 p-4">
-          <p className="text-[11px] uppercase text-slate-500">Account</p>
-          <p className="mt-1 capitalize text-lg text-white">{admin.accountStatus}</p>
-        </div>
-        <div className="border border-white/10 p-4">
-          <p className="text-[11px] uppercase text-slate-500">License</p>
-          <p className="mt-1 capitalize text-lg text-white">{lic.licenseStatus}</p>
-          {lic.licenseStatus === 'trial' && (
-            <p className="text-xs text-slate-500 mt-1">{lic.daysRemaining} days remaining</p>
-          )}
-        </div>
-        <div className="border border-white/10 p-4">
-          <p className="text-[11px] uppercase text-slate-500">Usage</p>
-          <p className="mt-1 text-sm text-slate-300">
-            {stats?.cars ?? 0} cars · {stats?.bookings ?? 0} bookings · {stats?.customers ?? 0} customers
-          </p>
-        </div>
+        <SaStat label="Account" value={admin.accountStatus} />
+        <SaStat
+          label="License"
+          value={lic.licenseStatus}
+          hint={
+            lic.licenseStatus === 'trial' && lic.daysRemaining != null
+              ? `${lic.daysRemaining} days remaining`
+              : undefined
+          }
+        />
+        <SaStat
+          label="Usage"
+          value={`${stats?.cars ?? 0} cars`}
+          hint={`${stats?.bookings ?? 0} bookings · ${stats?.customers ?? 0} customers`}
+        />
       </div>
 
-      {/* Profile */}
-      <section className="border border-white/10 p-4 sm:p-6 space-y-4">
-        <h2 className="text-sm uppercase tracking-wider text-slate-400">Profile</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
+      <SaCard title="Profile">
+        <div className="grid sm:grid-cols-2 gap-4">
           {['name', 'email', 'agencyName'].map((key) => (
-            <div key={key}>
-              <label className="block text-xs text-slate-500 mb-1">{key === 'agencyName' ? 'Agency' : key}</label>
+            <SaField key={key} label={key === 'agencyName' ? 'Agency' : key}>
               <input
                 value={edit[key]}
                 onChange={(e) => setEdit((f) => ({ ...f, [key]: e.target.value }))}
-                className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+                className={sa.input}
               />
-            </div>
+            </SaField>
           ))}
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-slate-500 mb-1">Notes</label>
+          <SaField label="Notes" className="sm:col-span-2">
             <textarea
               rows={2}
               value={edit.notes}
               onChange={(e) => setEdit((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+              className={sa.input}
             />
-          </div>
+          </SaField>
         </div>
         <button
           type="button"
@@ -139,47 +149,37 @@ const SuperAdminAdminDetail = () => {
               toast.success('Profile updated')
             })
           }
-          className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-sm px-4 py-2 text-white"
+          className={`${sa.btnPrimary} mt-4`}
         >
           Save profile
         </button>
-      </section>
+      </SaCard>
 
-      {/* Account status */}
-      <section className="border border-white/10 p-4 sm:p-6 space-y-3">
-        <h2 className="text-sm uppercase tracking-wider text-slate-400">Lock / unlock</h2>
-        <p className="text-sm text-slate-500">
-          Suspend temporarily, disable permanently, or restore access. Does not delete business data.
-        </p>
+      <SaCard title="Lock / unlock" description="Suspend, disable, or restore access. Business data is never deleted.">
         <div className="flex flex-wrap gap-2">
           {['active', 'suspended', 'disabled'].map((status) => (
             <button
               key={status}
               type="button"
               disabled={busy === `status-${status}` || admin.accountStatus === status}
-              onClick={() =>
+              onClick={() => {
+                if (status !== 'active' && !confirmDestructive(`Set account to ${status}?`)) return
                 run(`status-${status}`, async () => {
                   const { data } = await axios.patch(`/api/super-admin/admins/${id}/status`, { status })
                   if (!data.success) throw new Error(data.message)
                   toast.success(`Account ${status}`)
                 })
-              }
-              className={`text-sm px-4 py-2 border capitalize transition-colors disabled:opacity-40 ${
-                admin.accountStatus === status
-                  ? 'border-cyan-600/50 text-cyan-400'
-                  : 'border-white/15 hover:border-white/30 text-slate-200'
-              }`}
+              }}
+              className={admin.accountStatus === status ? `${sa.btnPrimary} capitalize` : `${sa.btnSecondary} capitalize`}
             >
               {status}
             </button>
           ))}
         </div>
-      </section>
+      </SaCard>
 
-      {/* License */}
-      <section className="border border-white/10 p-4 sm:p-6 space-y-4">
-        <h2 className="text-sm uppercase tracking-wider text-slate-400">License & trial</h2>
-        <p className="text-xs text-slate-500">
+      <SaCard title="License & trial">
+        <p className="text-xs text-[var(--sa-text-muted)] mb-4">
           Trial ends: {lic.trialEndsAt ? new Date(lic.trialEndsAt).toLocaleString() : '—'}
           {lic.licensedAt ? ` · Licensed: ${new Date(lic.licensedAt).toLocaleString()}` : ''}
         </p>
@@ -194,7 +194,7 @@ const SuperAdminAdminDetail = () => {
                 toast.success('Full license activated')
               })
             }
-            className="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-60 text-sm px-4 py-2 text-white"
+            className={sa.btnPrimary}
           >
             Activate full license
           </button>
@@ -211,53 +211,52 @@ const SuperAdminAdminDetail = () => {
                 toast.success('Fresh trial started')
               })
             }
-            className="border border-white/15 hover:border-white/30 text-sm px-4 py-2"
+            className={sa.btnSecondary}
           >
             Start / renew trial
           </button>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              max={365}
-              value={extendDays}
-              onChange={(e) => setExtendDays(Number(e.target.value) || 7)}
-              className="w-16 bg-[#0a0f14] border border-white/10 px-2 py-2 text-sm"
-            />
-            <button
-              type="button"
-              disabled={!!busy}
-              onClick={() =>
-                run('extend', async () => {
-                  const { data } = await axios.post(`/api/super-admin/admins/${id}/license`, {
-                    action: 'extend',
-                    days: extendDays,
-                  })
-                  if (!data.success) throw new Error(data.message)
-                  toast.success(`Extended by ${extendDays} days`)
-                })
-              }
-              className="border border-white/15 hover:border-white/30 text-sm px-4 py-2"
-            >
-              Extend
-            </button>
-          </div>
+          <input
+            type="number"
+            min={1}
+            max={365}
+            value={extendDays}
+            onChange={(e) => setExtendDays(Number(e.target.value) || 7)}
+            className={`${sa.input} w-20`}
+          />
           <button
             type="button"
             disabled={!!busy}
             onClick={() =>
+              run('extend', async () => {
+                const { data } = await axios.post(`/api/super-admin/admins/${id}/license`, {
+                  action: 'extend',
+                  days: extendDays,
+                })
+                if (!data.success) throw new Error(data.message)
+                toast.success(`Extended by ${extendDays} days`)
+              })
+            }
+            className={sa.btnSecondary}
+          >
+            Extend
+          </button>
+          <button
+            type="button"
+            disabled={!!busy}
+            onClick={() => {
+              if (!confirmDestructive('Expire license now? Dashboard will be locked.')) return
               run('expire', async () => {
                 const { data } = await axios.post(`/api/super-admin/admins/${id}/license`, { action: 'expire' })
                 if (!data.success) throw new Error(data.message)
-                toast.success('License expired — dashboard locked')
+                toast.success('License expired')
               })
-            }
-            className="border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 text-sm px-4 py-2"
+            }}
+            className={sa.btnDanger}
           >
             Expire now
           </button>
         </div>
-      </section>
+      </SaCard>
 
       {/* Permissions — enterprise matrix (same API / permission keys) */}
       <PermissionMatrix
@@ -285,8 +284,7 @@ const SuperAdminAdminDetail = () => {
       />
 
       {/* Password */}
-      <section className="border border-white/10 p-4 sm:p-6 space-y-3">
-        <h2 className="text-sm uppercase tracking-wider text-slate-400">Reset password</h2>
+      <SaCard title="Reset password">
         <div className="flex flex-wrap gap-2">
           <input
             type="password"
@@ -294,7 +292,7 @@ const SuperAdminAdminDetail = () => {
             placeholder="New password (min 8)"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="flex-1 min-w-[12rem] bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm outline-none focus:border-cyan-600/60"
+            className={`${sa.input} flex-1 min-w-[12rem]`}
           />
           <button
             type="button"
@@ -309,24 +307,23 @@ const SuperAdminAdminDetail = () => {
                 setNewPassword('')
               })
             }
-            className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-sm px-4 py-2 text-white"
+            className={sa.btnPrimary}
           >
             Reset
           </button>
         </div>
-      </section>
+      </SaCard>
 
-      {/* Delete / disable */}
-      <section className="border border-rose-500/20 p-4 sm:p-6 space-y-3">
-        <h2 className="text-sm uppercase tracking-wider text-rose-400/80">Danger zone</h2>
-        <p className="text-sm text-slate-500">
-          If the admin has cars or bookings, the account is disabled instead of deleted so data stays intact.
-        </p>
+      <SaCard
+        title="Danger zone"
+        description="If the admin has cars or bookings, the account is disabled instead of deleted."
+        className="border-[var(--sa-danger)]/30"
+      >
         <button
           type="button"
           disabled={busy === 'delete'}
           onClick={() => {
-            if (!window.confirm(`Delete or disable ${admin.email}?`)) return
+            if (!confirmDestructive(`Delete or disable ${admin.email}?`)) return
             run('delete', async () => {
               const { data } = await axios.delete(`/api/super-admin/admins/${id}`)
               if (!data.success) throw new Error(data.message)
@@ -334,11 +331,11 @@ const SuperAdminAdminDetail = () => {
               if (!data.softDeleted) navigate('/superadmin/admins')
             })
           }}
-          className="border border-rose-500/50 text-rose-300 hover:bg-rose-500/10 text-sm px-4 py-2"
+          className={sa.btnDanger}
         >
           Delete / disable account
         </button>
-      </section>
+      </SaCard>
     </div>
   )
 }
