@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
 
 export const sa = {
@@ -297,5 +298,124 @@ export const SaLink = ({ to, children, className = '', ...props }) => {
     <a className={`${sa.link} ${className}`} {...props}>
       {children}
     </a>
+  )
+}
+
+const LOGO_MAX_BYTES = 1.5 * 1024 * 1024
+
+export const readImageFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    if (!file?.type?.startsWith('image/')) {
+      reject(new Error('Only image files are allowed'))
+      return
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      reject(new Error('Logo must be under 1.5 MB'))
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('Could not read logo file'))
+    reader.readAsDataURL(file)
+  })
+
+/** Theme-aware logo picker — sets logoUrl (data URL or external URL) for existing API fields. */
+export const SaLogoUpload = ({
+  value = '',
+  onChange,
+  label = 'Agency logo',
+  hint = 'PNG, JPG, or WebP · max 1.5 MB. Or paste a URL below.',
+  disabled = false,
+  name = '',
+  className = '',
+}) => {
+  const inputId = useId()
+  const inputRef = useRef(null)
+  const [busy, setBusy] = useState(false)
+
+  const preview = value?.startsWith('data:') || value?.startsWith('http') ? value : ''
+
+  const pickFile = () => {
+    if (!disabled && !busy) inputRef.current?.click()
+  }
+
+  const onFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setBusy(true)
+    try {
+      const dataUrl = await readImageFileAsDataUrl(file)
+      onChange?.(dataUrl)
+      toast.success('Logo ready')
+    } catch (error) {
+      toast.error(error.message || 'Upload failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const clearLogo = () => {
+    onChange?.('')
+    if (inputRef.current) inputRef.current.value = ''
+  }
+
+  return (
+    <SaField label={label} hint={hint} className={className}>
+      <div
+        className={`rounded-[var(--sa-radius)] border border-dashed border-[var(--sa-border-strong)] bg-[var(--sa-surface-2)] p-4 transition ${
+          disabled ? 'opacity-60 pointer-events-none' : 'hover:border-[var(--sa-accent)]/40'
+        }`}
+      >
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+          <div
+            className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-[var(--sa-radius-sm)] border border-[var(--sa-border)] bg-[var(--sa-surface)]"
+            aria-hidden
+          >
+            {preview ? (
+              <img src={preview} alt="" className="max-h-full max-w-full object-contain p-1" />
+            ) : (
+              <svg className="h-8 w-8 text-[var(--sa-text-muted)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2 min-w-0">
+            <input
+              ref={inputRef}
+              id={inputId}
+              name={name}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              className="sr-only"
+              disabled={disabled || busy}
+              onChange={onFileChange}
+            />
+            <button type="button" onClick={pickFile} disabled={disabled || busy} className={sa.btnSecondary}>
+              {busy ? 'Processing…' : preview ? 'Replace logo' : 'Upload logo'}
+            </button>
+            {preview ? (
+              <button type="button" onClick={clearLogo} disabled={disabled || busy} className={sa.btnGhost}>
+                Remove
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <label htmlFor={`${inputId}-url`} className="text-[11px] font-medium text-[var(--sa-text-muted)]">
+          Or paste logo URL
+        </label>
+        <input
+          id={`${inputId}-url`}
+          type="url"
+          value={value?.startsWith('data:') ? '' : value}
+          placeholder="https://…"
+          disabled={disabled || busy}
+          onChange={(e) => onChange?.(e.target.value.trim())}
+          className={`${sa.input} mt-1.5`}
+        />
+      </div>
+    </SaField>
   )
 }

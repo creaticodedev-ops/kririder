@@ -7,6 +7,7 @@ import {
   SaBadge,
   SaEmpty,
   SaField,
+  SaLogoUpload,
   SaModal,
   SaPageHeader,
   SaPagination,
@@ -268,14 +269,12 @@ const SuperAdminAgencies = () => {
               className={sa.input}
             />
           </SaField>
-          <SaField label="Logo URL (optional)" className="sm:col-span-2">
-            <input
-              value={form.logoUrl}
-              onChange={(e) => setForm((f) => ({ ...f, logoUrl: e.target.value }))}
-              placeholder="https://…"
-              className={sa.input}
-            />
-          </SaField>
+          <SaLogoUpload
+            className="sm:col-span-2"
+            value={form.logoUrl}
+            onChange={(logoUrl) => setForm((f) => ({ ...f, logoUrl }))}
+            disabled={saving}
+          />
           <SaField label="Internal notes" className="sm:col-span-2">
             <textarea
               rows={2}
