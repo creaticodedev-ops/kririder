@@ -10,6 +10,8 @@ import WhatsAppSettingsPanel from './settings/WhatsAppSettingsPanel'
 import GeneralSettingsPanel from './settings/GeneralSettingsPanel'
 import BrandingSettingsPanel from './settings/BrandingSettingsPanel'
 import DomainSettingsPanel from './settings/DomainSettingsPanel'
+import BillingSettingsPanel from './settings/BillingSettingsPanel'
+import StaffSettingsPanel from './settings/StaffSettingsPanel'
 import ComingSoonPanel from './settings/ComingSoonPanel'
 import { LoadingBlock, settingsUi } from './settings/settingsUi'
 
@@ -19,7 +21,7 @@ const emptyWhatsApp = {
 }
 
 const Settings = () => {
-  const { axios, currency } = useAppContext()
+  const { axios, currency, user } = useAppContext()
   const { t } = useI18n()
   const [tab, setTab] = useState('booking')
   const [form, setForm] = useState(emptyWhatsApp)
@@ -29,15 +31,22 @@ const Settings = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const tabs = useMemo(() => ([
-    { id: 'booking', label: t('admin.settings.tabBooking'), blurb: t('admin.settings.navBookingBlurb') },
-    { id: 'promotions', label: t('admin.settings.tabPromotions'), blurb: t('admin.settings.navPromotionsBlurb') },
-    { id: 'whatsapp', label: t('admin.settings.tabWhatsApp'), blurb: t('admin.settings.navWhatsAppBlurb') },
-    { id: 'branding', label: t('admin.settings.tabBranding') || 'Branding', blurb: t('admin.settings.navBrandingBlurb') || 'Logo, colors, SEO, contracts' },
-    { id: 'domains', label: t('admin.settings.tabDomains') || 'Domains', blurb: t('admin.settings.navDomainsBlurb') || 'Subdomain & custom domain' },
-    { id: 'general', label: t('admin.settings.tabGeneral'), blurb: t('admin.settings.navGeneralBlurb') },
-    { id: 'future', label: t('admin.settings.tabFuture'), blurb: t('admin.settings.navFutureBlurb') },
-  ]), [t])
+  const isOwnerUser = user?.role === 'owner'
+
+  const tabs = useMemo(() => {
+    const all = [
+      { id: 'booking', label: t('admin.settings.tabBooking'), blurb: t('admin.settings.navBookingBlurb') },
+      { id: 'promotions', label: t('admin.settings.tabPromotions'), blurb: t('admin.settings.navPromotionsBlurb') },
+      { id: 'whatsapp', label: t('admin.settings.tabWhatsApp'), blurb: t('admin.settings.navWhatsAppBlurb') },
+      { id: 'branding', label: t('admin.settings.tabBranding') || 'Branding', blurb: t('admin.settings.navBrandingBlurb') || 'Logo, colors, SEO, contracts', ownerOnly: true },
+      { id: 'domains', label: t('admin.settings.tabDomains') || 'Domains', blurb: t('admin.settings.navDomainsBlurb') || 'Subdomain & custom domain', ownerOnly: true },
+      { id: 'billing', label: t('admin.settings.tabBilling') || 'Billing', blurb: t('admin.settings.navBillingBlurb') || 'Plan, trial & usage', ownerOnly: true },
+      { id: 'staff', label: t('admin.settings.tabStaff') || 'Staff', blurb: t('admin.settings.navStaffBlurb') || 'Invite team & roles', ownerOnly: true },
+      { id: 'general', label: t('admin.settings.tabGeneral'), blurb: t('admin.settings.navGeneralBlurb') },
+      { id: 'future', label: t('admin.settings.tabFuture'), blurb: t('admin.settings.navFutureBlurb') },
+    ]
+    return all.filter((item) => !item.ownerOnly || isOwnerUser)
+  }, [t, isOwnerUser])
 
   const load = async () => {
     setLoading(true)
@@ -170,7 +179,7 @@ const Settings = () => {
                   t={t}
                 />
               )}
-              {tab === 'branding' && (
+              {tab === 'branding' && isOwnerUser && (
                 <BrandingSettingsPanel
                   agency={agency}
                   axios={axios}
@@ -178,7 +187,7 @@ const Settings = () => {
                   onSaved={(saved) => setAgency(saved)}
                 />
               )}
-              {tab === 'domains' && (
+              {tab === 'domains' && isOwnerUser && (
                 <DomainSettingsPanel
                   agency={agency}
                   axios={axios}
@@ -186,6 +195,8 @@ const Settings = () => {
                   onSaved={(saved) => setAgency(saved)}
                 />
               )}
+              {tab === 'billing' && isOwnerUser && <BillingSettingsPanel axios={axios} t={t} />}
+              {tab === 'staff' && isOwnerUser && <StaffSettingsPanel axios={axios} t={t} />}
               {tab === 'general' && (
                 <GeneralSettingsPanel
                   bookingSettings={bookingSettings}

@@ -82,7 +82,7 @@ export const loginUser = async (req, res) => {
                 code: 'USE_SUPERADMIN_LOGIN',
             });
         }
-        if (user.role !== 'owner') {
+        if (user.role !== 'owner' && user.role !== 'staff') {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
         if (user.accountStatus === 'suspended' || user.accountStatus === 'disabled') {
@@ -98,7 +98,10 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 code: 'ONBOARDING_REQUIRED',
-                message: 'Complete account activation using the invitation link from your platform admin.',
+                message:
+                  user.role === 'staff'
+                    ? 'Complete staff activation using the invitation link from your agency owner.'
+                    : 'Complete account activation using the invitation link from your platform admin.',
             });
         }
 
@@ -107,8 +110,8 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        // Pending + password set: issue session for setup wizard only (dashboard still gated)
-        if (user.accountStatus === 'pending') {
+        // Pending owner + password set: agency setup wizard
+        if (user.role === 'owner' && user.accountStatus === 'pending') {
             user.lastLoginAt = new Date();
             await user.save();
             const token = generateToken(user);
@@ -121,27 +124,45 @@ export const loginUser = async (req, res) => {
             });
         }
 
-        // Ensure trial fields exist; auto-mark expired if needed (login still allowed)
-        if (!user.trialEndsAt && user.licenseStatus !== 'active') {
-            Object.assign(user, createTrialDefaults(user.createdAt || new Date()));
-            await user.save();
-        } else {
-            await syncLicenseStatus(user);
+        // Staff should never be pending after password set (activation flips to active)
+        if (user.role === 'staff' && user.accountStatus === 'pending') {
+            return res.status(403).json({
+                success: false,
+                code: 'ONBOARDING_REQUIRED',
+                message: 'Complete staff activation using the invitation link.',
+            });
+        }
+
+        if (user.role === 'owner') {
+            if (!user.trialEndsAt && user.licenseStatus !== 'active') {
+                Object.assign(user, createTrialDefaults(user.createdAt || new Date()));
+                await user.save();
+            } else {
+                await syncLicenseStatus(user);
+            }
+            await syncOwnerPermissions(user);
         }
 
         user.lastLoginAt = new Date();
-        await syncOwnerPermissions(user);
         await user.save();
 
         const token = generateToken(user);
-        const license = serializeLicense(user);
+        const license =
+          user.role === 'owner'
+            ? serializeLicense(user)
+            : {
+                licenseStatus: 'active',
+                allowed: true,
+                writeAllowed: true,
+                trialEndsAt: null,
+                daysRemaining: null,
+              };
 
         res.json({
             success: true,
             token,
             onboardingRequired: false,
             license,
-            // Login always succeeds for valid admins so the Trial Expired screen can show
         });
     } catch (error) {
         console.error(error.message);
@@ -159,7 +180,7 @@ export const getUserData = async (req, res) => {
                 code: 'USE_SUPERADMIN_LOGIN',
             });
         }
-        if (user.role !== 'owner') {
+        if (user.role !== 'owner' && user.role !== 'staff') {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
         if (user.accountStatus === 'suspended' || user.accountStatus === 'disabled') {
@@ -171,7 +192,7 @@ export const getUserData = async (req, res) => {
         }
 
         // Pending owners with a password may resume the setup wizard (not the dashboard)
-        if (user.accountStatus === 'pending') {
+        if (user.role === 'owner' && user.accountStatus === 'pending') {
             if (!user.passwordSetAt) {
                 return res.status(403).json({
                     success: false,
@@ -193,9 +214,84 @@ export const getUserData = async (req, res) => {
             });
         }
 
-        await syncLicenseStatus(user);
-        await syncOwnerPermissions(user);
-        const license = serializeLicense(user);
+        if (user.role === 'staff' && user.accountStatus === 'pending') {
+            return res.status(403).json({
+                success: false,
+                code: 'ONBOARDING_REQUIRED',
+                message: 'Complete staff activation using the invitation link.',
+            });
+        }
+
+        if (user.role === 'owner') {
+          await syncLicenseStatus(user);
+        }
+
+        if (user.role === 'owner' && user.agencyId) {
+          try {
+            const billing = await import('../services/billingService.js');
+            let sub = await billing.getCurrentSubscription(user.agencyId);
+            if (!sub) {
+              const Agency = (await import('../models/Agency.js')).default;
+              const agency = await Agency.findById(user.agencyId).lean();
+              if (agency) {
+                await billing.migrateAgencyBillingFromOwner(agency);
+                sub = await billing.getCurrentSubscription(user.agencyId);
+              }
+            }
+            if (sub) {
+              await billing.syncOwnerLicenseFromSubscription(user.agencyId, sub);
+              const mapped = billing.mapSubscriptionToUserLicense(sub);
+              Object.assign(user, mapped);
+            }
+          } catch (billingErr) {
+            console.warn('[getUserData] billing sync', billingErr.message);
+          }
+        }
+
+        if (user.role === 'owner') {
+          await syncOwnerPermissions(user);
+        }
+
+        let license;
+        if (user.role === 'owner') {
+          license = {
+            ...serializeLicense(user),
+            writeAllowed: user.licenseStatus === 'active' || user.licenseStatus === 'trial',
+          };
+          if (user.licenseStatus === 'trial' && user.trialEndsAt && new Date(user.trialEndsAt) < new Date()) {
+            license.writeAllowed = false;
+            license.allowed = false;
+          }
+        } else {
+          // Staff inherit agency billing at request time via requireOwner
+          license = {
+            licenseStatus: 'active',
+            allowed: true,
+            writeAllowed: true,
+            trialEndsAt: null,
+            daysRemaining: null,
+          };
+          if (user.agencyId) {
+            try {
+              const billing = await import('../services/billingService.js');
+              const sub = await billing.getCurrentSubscription(user.agencyId);
+              if (sub) {
+                const ok = billing.subscriptionAllowsWrite(sub);
+                license = {
+                  licenseStatus: ok ? 'active' : 'expired',
+                  allowed: ok,
+                  writeAllowed: ok,
+                  trialEndsAt: sub.trialEndsAt,
+                  subscriptionStatus: sub.status,
+                  planCode: sub.planCode,
+                  daysRemaining: null,
+                };
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+        }
 
         // Strip password already done by protect; return user + explicit license snapshot
         const safeUser = user.toObject ? user.toObject() : { ...user };

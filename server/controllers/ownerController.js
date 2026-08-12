@@ -112,6 +112,21 @@ export const addCar = async (req, res) => {
   try {
     const { _id } = req.user;
 
+    try {
+      const { assertCanAddVehicle } = await import('../services/entitlementsService.js');
+      await assertCanAddVehicle(req.agencyId);
+    } catch (entErr) {
+      if (entErr?.code === 'LIMIT_REACHED' || entErr?.code === 'BILLING_LOCKED' || entErr?.status === 403) {
+        return res.status(entErr.status || 403).json({
+          success: false,
+          code: entErr.code || 'ENTITLEMENT_DENIED',
+          message: entErr.message,
+          meta: entErr.meta,
+        });
+      }
+      throw entErr;
+    }
+
     if (!imageFile) {
       return res.status(400).json({ success: false, message: 'Car image is required' });
     }

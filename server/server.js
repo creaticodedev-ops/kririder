@@ -14,6 +14,7 @@ import pickupLocationRouter from "./routes/pickupLocationRoutes.js";
 import completionRouter from "./routes/bookingCompletionRoutes.js";
 import superAdminRouter from "./routes/superAdminRoutes.js";
 import agencyOnboardingRouter from "./routes/agencyOnboardingRoutes.js";
+import staffOnboardingRouter from "./routes/staffOnboardingRoutes.js";
 import publicStorefrontRouter from "./routes/publicStorefrontRoutes.js";
 import contractRouter from "./routes/contractRoutes.js";
 import invoiceRouter from "./routes/invoiceRoutes.js";
@@ -50,6 +51,13 @@ if (process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production")
 }
 
 await connectDB();
+
+try {
+  const { ensureDefaultPlans } = await import("./services/planCatalog.js");
+  await ensureDefaultPlans();
+} catch (planErr) {
+  console.warn("[startup] plan seed:", planErr.message);
+}
 
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(",").map((o) => o.trim()).filter(Boolean)
@@ -234,6 +242,7 @@ app.use("/api/pickup-locations", pickupLocationRouter);
 app.use("/api/booking-completion", completionRouter);
 app.use("/api/super-admin", superAdminRouter);
 app.use("/api/agency-onboarding", agencyOnboardingRouter);
+app.use("/api/staff-onboarding", staffOnboardingRouter);
 app.use("/api/public/storefront", publicStorefrontRouter);
 app.use("/api/contracts", contractRouter);
 app.use("/api/invoices", invoiceRouter);

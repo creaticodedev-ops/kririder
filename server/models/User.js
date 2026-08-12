@@ -22,8 +22,17 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: {
         type: String,
-        enum: ['user', 'owner', 'superadmin'],
+        enum: ['user', 'owner', 'staff', 'superadmin'],
         default: 'user',
+    },
+    /**
+     * Staff preset role (P5). Ignored for owners/superadmin.
+     * manager | agent | viewer — drives default permissions[].
+     */
+    staffRole: {
+        type: String,
+        enum: ['manager', 'agent', 'viewer', ''],
+        default: '',
     },
     image: { type: String, default: '' },
 
@@ -55,8 +64,9 @@ const userSchema = new mongoose.Schema({
     },
 
     /**
-     * Feature permissions for owner admins.
-     * Empty array = all permissions (default full access).
+     * Feature permissions for owner/staff admins.
+     * Owner: empty array = all permissions (default full access).
+     * Staff: empty array = no permissions (must be explicit).
      */
     permissions: {
         type: [String],

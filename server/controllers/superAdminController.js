@@ -543,6 +543,21 @@ export const createAgency = async (req, res) => {
       console.error('[createAgency] settings seed', settingsErr.message);
     }
 
+    try {
+      const { ensureAgencySubscription } = await import('../services/billingService.js');
+      await ensureAgencySubscription(agency._id, {
+        planCode: 'free_trial',
+        status: shouldStartTrial ? 'trialing' : 'expired',
+        trialStartedAt: trial.trialStartedAt || null,
+        trialEndsAt: trial.trialEndsAt || null,
+        actorType: 'superadmin',
+        actorId: req.user._id,
+        notes: 'Created with agency',
+      });
+    } catch (billingErr) {
+      console.error('[createAgency] billing seed', billingErr.message);
+    }
+
     clearPublicTenantCache();
     await audit(
       req.user,
@@ -1121,6 +1136,69 @@ export const manageLicense = async (req, res) => {
 
     const { action, days } = req.body;
     const n = Math.max(1, Number(days) || TRIAL_DAYS);
+
+    // Bridge to AgencySubscription when agency exists (P4 source of truth)
+    let agencyId = admin.agencyId;
+    if (!agencyId) {
+      try {
+        const ensured = await ensureAgencyForOwner(admin);
+        agencyId = ensured?._id || null;
+      } catch {
+        /* legacy owner without agency */
+      }
+    }
+
+    if (agencyId) {
+      const billing = await import('../services/billingService.js');
+      switch (action) {
+        case 'activate':
+          await billing.assignPlan(agencyId, 'legacy_grandfathered', {
+            actorType: 'superadmin',
+            actorId: req.user._id,
+            notes: 'Via admins/:id/license activate',
+          });
+          break;
+        case 'trial':
+          await billing.assignPlan(agencyId, 'free_trial', {
+            actorType: 'superadmin',
+            actorId: req.user._id,
+            trialDays: n,
+            notes: 'Via admins/:id/license trial',
+          });
+          break;
+        case 'extend':
+          await billing.extendTrial(agencyId, n, {
+            actorType: 'superadmin',
+            actorId: req.user._id,
+          });
+          break;
+        case 'expire':
+          await billing.expireSubscription(agencyId, {
+            actorType: 'superadmin',
+            actorId: req.user._id,
+            notes: 'Via admins/:id/license expire',
+          });
+          break;
+        default:
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid action. Use activate | trial | extend | expire',
+          });
+      }
+      const refreshed = await User.findById(admin._id);
+      await audit(
+        req.user,
+        refreshed,
+        `superadmin.license.${action}`,
+        `License ${action} for ${admin.email} (agency billing)`,
+        { days: n, licenseStatus: refreshed.licenseStatus, agencyId },
+      );
+      return res.json({
+        success: true,
+        message: `License ${action} applied`,
+        admin: sanitizeAdmin(refreshed),
+      });
+    }
 
     switch (action) {
       case 'activate':

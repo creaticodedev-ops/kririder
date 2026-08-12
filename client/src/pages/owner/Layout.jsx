@@ -42,22 +42,13 @@ const Layout = () => {
 
   if (!isOwner) return null
 
-  // Trial expired: keep session + top bar (logout), hide dashboard chrome
-  if (licenseLocked) {
-    return (
-      <div className="flex flex-col min-h-svh bg-light">
-        <NavbarOwner />
-        <TrialExpired />
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col min-h-svh bg-light">
       <NavbarOwner
         mobileNavOpen={mobileNavOpen}
         onToggleMobileNav={() => setMobileNavOpen((open) => !open)}
       />
+      {licenseLocked ? <TrialExpired variant="banner" /> : null}
       <div className="flex flex-1 min-w-0">
         <Sidebar mobileOpen={mobileNavOpen} onMobileClose={() => setMobileNavOpen(false)} />
         <main className="flex-1 min-w-0 admin-page pb-12">

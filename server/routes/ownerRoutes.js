@@ -1,6 +1,6 @@
 import express from "express";
 import { protect } from "../middleware/auth.js";
-import { requireOwner } from "../middleware/ownerAuth.js";
+import { requireOwner, requireAgencyOwnerRole } from "../middleware/ownerAuth.js";
 import { requirePermission } from "../middleware/requirePermission.js";
 import upload, { handleMulterError } from "../middleware/multer.js";
 import {
@@ -58,9 +58,23 @@ import {
   deletePromotion,
   previewPromotion,
 } from "../controllers/promotionController.js";
+import {
+  getOwnerBilling,
+  cancelOwnerBilling,
+  checkoutOwnerBilling,
+  listPublicPlans,
+} from "../controllers/billingController.js";
+import {
+  getOwnerStaff,
+  inviteOwnerStaff,
+  updateOwnerStaff,
+  removeOwnerStaff,
+  listStaffRoles,
+} from "../controllers/staffController.js";
 
 const ownerRouter = express.Router();
 const gate = (perm) => [protect, requireOwner, requirePermission(perm)];
+const ownerOnly = [protect, requireOwner, requireAgencyOwnerRole];
 
 ownerRouter.post("/add-car", ...gate('fleet'), upload.single("image"), handleMulterError, addCar);
 ownerRouter.get("/cars", ...gate('fleet'), getOwnerCars);
@@ -100,14 +114,25 @@ ownerRouter.get('/reports/export', ...gate('reports'), exportReport);
 ownerRouter.post('/update-image', protect, requireOwner, upload.single("image"), handleMulterError, updateUserImage);
 
 ownerRouter.get('/agency', protect, requireOwner, getOwnerAgency);
-ownerRouter.put('/agency/branding', protect, requireOwner, updateOwnerAgencyBranding);
+ownerRouter.put('/agency/branding', ...ownerOnly, updateOwnerAgencyBranding);
 ownerRouter.get('/agency/domains', protect, requireOwner, getOwnerAgencyDomains);
-ownerRouter.put('/agency/domains', protect, requireOwner, updateOwnerAgencyDomain);
-ownerRouter.post('/agency/domains/verify', protect, requireOwner, verifyOwnerAgencyDomain);
+ownerRouter.put('/agency/domains', ...ownerOnly, updateOwnerAgencyDomain);
+ownerRouter.post('/agency/domains/verify', ...ownerOnly, verifyOwnerAgencyDomain);
 ownerRouter.get('/settings', protect, requireOwner, getAgencySettings);
-ownerRouter.put('/settings', protect, requireOwner, updateAgencySettings);
+ownerRouter.put('/settings', ...ownerOnly, updateAgencySettings);
 ownerRouter.get('/settings/whatsapp', protect, requireOwner, getAgencySettings);
-ownerRouter.put('/settings/whatsapp', protect, requireOwner, updateAgencySettings);
+ownerRouter.put('/settings/whatsapp', ...ownerOnly, updateAgencySettings);
+
+ownerRouter.get('/billing', ...ownerOnly, getOwnerBilling);
+ownerRouter.get('/billing/plans', ...ownerOnly, listPublicPlans);
+ownerRouter.post('/billing/cancel', ...ownerOnly, cancelOwnerBilling);
+ownerRouter.post('/billing/checkout', ...ownerOnly, checkoutOwnerBilling);
+
+ownerRouter.get('/staff/roles', ...ownerOnly, listStaffRoles);
+ownerRouter.get('/staff', ...ownerOnly, getOwnerStaff);
+ownerRouter.post('/staff', ...ownerOnly, inviteOwnerStaff);
+ownerRouter.patch('/staff/:id', ...ownerOnly, updateOwnerStaff);
+ownerRouter.delete('/staff/:id', ...ownerOnly, removeOwnerStaff);
 
 ownerRouter.get('/promotions', protect, requireOwner, listPromotions);
 ownerRouter.post('/promotions/preview', protect, requireOwner, previewPromotion);

@@ -124,6 +124,20 @@ export const getPromotion = async (req, res) => {
 
 export const createPromotion = async (req, res) => {
   try {
+    try {
+      const { assertFeature } = await import('../services/entitlementsService.js');
+      await assertFeature(req.agencyId, 'promotions');
+    } catch (entErr) {
+      if (entErr?.status === 403 || entErr?.code) {
+        return res.status(entErr.status || 403).json({
+          success: false,
+          code: entErr.code || 'FEATURE_LOCKED',
+          message: entErr.message,
+          meta: entErr.meta,
+        });
+      }
+      throw entErr;
+    }
     const payload = sanitizePayload(req.body || {});
     if (!payload.name) {
       return res.status(400).json({ success: false, message: 'Promotion name is required' });

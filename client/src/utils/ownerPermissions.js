@@ -25,6 +25,16 @@ export const resolveOwnerPermissions = (permissions) => {
 export const ownerHasPermission = (user, permission) => {
   if (!permission) return true;
   const perms = resolveOwnerPermissions(user?.permissions);
+  if (user?.role === 'staff') {
+    if (!Array.isArray(perms) || perms.length === 0) return false;
+    return perms.includes(permission);
+  }
   if (!Array.isArray(perms) || perms.length === 0) return true;
   return perms.includes(permission);
 };
+
+/** Agency dashboard access (owner or staff). */
+export const isAgencyDashboardUser = (user) =>
+  user?.role === 'owner' || user?.role === 'staff';
+
+export const isAgencyOwnerUser = (user) => user?.role === 'owner';

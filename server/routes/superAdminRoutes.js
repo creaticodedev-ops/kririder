@@ -25,6 +25,23 @@ import {
   resendAgencyInvite,
   verifyAgencyDomain,
 } from '../controllers/superAdminController.js';
+import {
+  getSuperAdminAgencyBilling,
+  assignSuperAdminAgencyPlan,
+  extendSuperAdminAgencyTrial,
+  suspendSuperAdminAgencyBilling,
+  reactivateSuperAdminAgencyBilling,
+  cancelSuperAdminAgencyBilling,
+  expireSuperAdminAgencyBilling,
+  getBillingOverview,
+  listPublicPlans,
+} from '../controllers/billingController.js';
+import {
+  getSuperAdminAgencyStaff,
+  inviteSuperAdminAgencyStaff,
+  updateSuperAdminAgencyStaff,
+  removeSuperAdminAgencyStaff,
+} from '../controllers/staffController.js';
 
 const superAdminRouter = express.Router();
 
@@ -46,6 +63,21 @@ superAdminRouter.patch('/agencies/:id', ...gate, updateAgency);
 superAdminRouter.patch('/agencies/:id/status', ...gate, setAgencyStatus);
 superAdminRouter.post('/agencies/:id/resend-invite', ...gate, resendAgencyInvite);
 superAdminRouter.post('/agencies/:id/domains/verify', ...gate, verifyAgencyDomain);
+
+superAdminRouter.get('/billing/overview', ...gate, getBillingOverview);
+superAdminRouter.get('/billing/plans', ...gate, listPublicPlans);
+superAdminRouter.get('/agencies/:id/billing', ...gate, getSuperAdminAgencyBilling);
+superAdminRouter.post('/agencies/:id/billing/assign-plan', ...gate, assignSuperAdminAgencyPlan);
+superAdminRouter.post('/agencies/:id/billing/extend-trial', ...gate, extendSuperAdminAgencyTrial);
+superAdminRouter.post('/agencies/:id/billing/suspend', ...gate, suspendSuperAdminAgencyBilling);
+superAdminRouter.post('/agencies/:id/billing/reactivate', ...gate, reactivateSuperAdminAgencyBilling);
+superAdminRouter.post('/agencies/:id/billing/cancel', ...gate, cancelSuperAdminAgencyBilling);
+superAdminRouter.post('/agencies/:id/billing/expire', ...gate, expireSuperAdminAgencyBilling);
+
+superAdminRouter.get('/agencies/:id/staff', ...gate, getSuperAdminAgencyStaff);
+superAdminRouter.post('/agencies/:id/staff', ...gate, inviteSuperAdminAgencyStaff);
+superAdminRouter.patch('/agencies/:id/staff/:memberId', ...gate, updateSuperAdminAgencyStaff);
+superAdminRouter.delete('/agencies/:id/staff/:memberId', ...gate, removeSuperAdminAgencyStaff);
 
 superAdminRouter.get('/admins', ...gate, listAdmins);
 superAdminRouter.post('/admins', ...gate, createAdmin);

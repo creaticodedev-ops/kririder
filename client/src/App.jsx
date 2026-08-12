@@ -50,6 +50,7 @@ const SuperAdminPermissions = lazy(() => import('./pages/superadmin/Permissions'
 const SuperAdminActivity = lazy(() => import('./pages/superadmin/Activity'))
 const SuperAdminAudit = lazy(() => import('./pages/superadmin/AuditLogs'))
 const ActivateAccount = lazy(() => import('./pages/ActivateAccount'))
+const ActivateStaff = lazy(() => import('./pages/ActivateStaff'))
 const AgencySetup = lazy(() => import('./pages/AgencySetup'))
 const StorefrontShell = lazy(() => import('./components/StorefrontShell'))
 
@@ -72,7 +73,9 @@ const App = () => {
   const isOwnerPath = pathname.startsWith('/owner')
   const isSuperAdminPath = pathname.startsWith('/superadmin')
   const isOnboardingPath =
-    pathname.startsWith('/activate-account') || pathname.startsWith('/agency-setup')
+    pathname.startsWith('/activate-account') ||
+    pathname.startsWith('/activate-staff') ||
+    pathname.startsWith('/agency-setup')
   const hidePublicChrome = isOwnerPath || isSuperAdminPath || isOnboardingPath
   const isStorefrontHome = pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(pathname)
   const needsNavOffset = !hidePublicChrome && !isStorefrontHome
@@ -130,6 +133,7 @@ const App = () => {
             <Route path="/booking-confirmation" element={<BookingConfirmation />} />
             <Route path="/complete-booking/:token" element={<CompleteBooking />} />
             <Route path="/activate-account/:token" element={<ActivateAccount />} />
+            <Route path="/activate-staff/:token" element={<ActivateStaff />} />
             <Route path="/agency-setup" element={<AgencySetup />} />
             {/* Per-agency public storefront (slug resolver — no custom domains) */}
             <Route path="/s/:agencySlug" element={<StorefrontShell />}>

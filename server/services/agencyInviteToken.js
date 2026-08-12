@@ -24,6 +24,14 @@ export const buildOnboardingUrl = (token) => {
   return `${base}/activate-account/${token}`;
 };
 
+export const buildStaffInviteUrl = (token) => {
+  const base = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')[0]
+    .trim()
+    .replace(/\/$/, '');
+  return `${base}/activate-staff/${token}`;
+};
+
 export const isInviteExpired = (expiresAt) => {
   if (!expiresAt) return true;
   return new Date(expiresAt).getTime() < Date.now();
@@ -33,5 +41,6 @@ export default {
   hashInviteToken,
   generateInviteToken,
   buildOnboardingUrl,
+  buildStaffInviteUrl,
   isInviteExpired,
 };

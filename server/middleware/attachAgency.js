@@ -2,12 +2,13 @@ import Agency from '../models/Agency.js';
 import { ensureAgencyForOwner } from '../services/agencyMigration.js';
 
 /**
- * Attaches req.agencyId / req.agency / req.agencyLegacyOwnerId for owner routes.
- * Auto-provisions a missing Agency for legacy owners (idempotent, non-destructive).
+ * Attaches req.agencyId / req.agency / req.agencyLegacyOwnerId for owner & staff routes.
+ * Auto-provisions a missing Agency for legacy owners only (idempotent, non-destructive).
  */
 export const attachAgency = async (req, res, next) => {
   try {
-    if (!req.user || req.user.role !== 'owner') {
+    const role = req.user?.role;
+    if (!req.user || (role !== 'owner' && role !== 'staff')) {
       return next();
     }
 
@@ -15,7 +16,7 @@ export const attachAgency = async (req, res, next) => {
     if (req.user.agencyId) {
       agency = await Agency.findById(req.user.agencyId).lean();
     }
-    if (!agency) {
+    if (!agency && role === 'owner') {
       agency = await ensureAgencyForOwner(req.user);
       if (agency && !req.user.agencyId) {
         req.user.agencyId = agency._id;
@@ -23,11 +24,24 @@ export const attachAgency = async (req, res, next) => {
     }
 
     if (!agency) {
-      console.error(`[attachAgency] Failed to resolve agency for owner ${req.user._id}`);
+      console.error(`[attachAgency] Failed to resolve agency for ${role} ${req.user._id}`);
       return res.status(500).json({
         success: false,
         code: 'AGENCY_CONTEXT_MISSING',
         message: 'Agency context could not be established for this account',
+      });
+    }
+
+    // Staff must belong to this agency
+    if (
+      role === 'staff' &&
+      req.user.agencyId &&
+      String(req.user.agencyId) !== String(agency._id)
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 'AGENCY_MISMATCH',
+        message: 'Staff account is not linked to this agency',
       });
     }
 

@@ -61,6 +61,21 @@ export const getPublicStorefront = async (req, res) => {
       });
     }
 
+    // Billing suspended → storefront off (expired stays on for lead gen)
+    try {
+      const { getCurrentSubscription } = await import('../services/billingService.js');
+      const sub = await getCurrentSubscription(doc._id);
+      if (sub?.status === 'suspended') {
+        return res.status(404).json({
+          success: false,
+          code: 'STOREFRONT_SUSPENDED',
+          message: 'Agency storefront temporarily unavailable',
+        });
+      }
+    } catch {
+      /* billing optional for public */
+    }
+
     let settings = null;
     try {
       settings = await serializeAgencySettings(

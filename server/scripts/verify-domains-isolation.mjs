@@ -4,6 +4,8 @@
  *   npm run test:domains:e2e
  */
 import 'dotenv/config';
+// Isolation e2e defaults to memory DB (set E2E_USE_PROD=true to hit MONGODB_URI)
+if (process.env.E2E_USE_PROD !== 'true') delete process.env.MONGODB_URI;
 import assert from 'assert';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';

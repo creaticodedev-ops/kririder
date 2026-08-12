@@ -115,8 +115,8 @@ export const AppProvider = ({ children })=>{
     const fetchUser = useCallback(async ()=>{
         try {
            const {data} = await axios.get('/api/user/data')
-           if (data.success && data.user?.role === 'owner') {
-            const needsOnboarding = Boolean(data.onboardingRequired)
+           if (data.success && (data.user?.role === 'owner' || data.user?.role === 'staff')) {
+            const needsOnboarding = Boolean(data.onboardingRequired) && data.user?.role === 'owner'
             const normalizedUser = {
               ...data.user,
               permissions: needsOnboarding
@@ -245,7 +245,7 @@ export const AppProvider = ({ children })=>{
               return Promise.reject(error)
             }
 
-            if (status === 403 && code === 'LICENSE_EXPIRED') {
+            if (status === 403 && (code === 'LICENSE_EXPIRED' || code === 'BILLING_LOCKED')) {
               const next = error.response?.data?.license
               if (next) setLicense(next)
               else setLicense((prev) => ({ ...(prev || {}), licenseStatus: 'expired', allowed: false, daysRemaining: 0 }))

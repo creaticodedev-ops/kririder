@@ -5,9 +5,316 @@ import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
 
 const tone = (s) => {
   if (s === 'active') return 'text-emerald-400'
-  if (s === 'pending') return 'text-amber-400'
-  if (s === 'suspended' || s === 'disabled') return 'text-rose-400'
+  if (s === 'pending' || s === 'trialing' || s === 'past_due') return 'text-amber-400'
+  if (s === 'suspended' || s === 'disabled' || s === 'expired' || s === 'canceled') return 'text-rose-400'
   return 'text-slate-400'
+}
+
+const AgencyBillingPanel = ({ agencyId, axios, busy, run }) => {
+  const [billing, setBilling] = useState(null)
+  const [events, setEvents] = useState([])
+  const [plans, setPlans] = useState([])
+  const [planCode, setPlanCode] = useState('basic')
+  const [extendDays, setExtendDays] = useState(7)
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [billRes, plansRes] = await Promise.all([
+        axios.get(`/api/super-admin/agencies/${agencyId}/billing`),
+        axios.get('/api/super-admin/billing/plans'),
+      ])
+      if (billRes.data?.success) {
+        setBilling(billRes.data.billing)
+        setEvents(billRes.data.events || [])
+        if (billRes.data.billing?.subscription?.planCode) {
+          setPlanCode(billRes.data.billing.subscription.planCode)
+        }
+      }
+      if (plansRes.data?.success) setPlans(plansRes.data.plans || [])
+    } catch (error) {
+      toast.error(saError(error))
+    } finally {
+      setLoading(false)
+    }
+  }, [axios, agencyId])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  if (loading && !billing) {
+    return <p className="text-sm text-slate-500">Loading billing…</p>
+  }
+
+  const sub = billing?.subscription
+  const usage = billing?.usage || {}
+  const limits = billing?.limits || {}
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-white text-sm">
+            Plan:{' '}
+            <span className="font-mono text-cyan-400">{sub?.planCode || '—'}</span>
+            {' · '}
+            Status:{' '}
+            <span className={`capitalize ${tone(sub?.status)}`}>{sub?.status || '—'}</span>
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Trial ends:{' '}
+            {sub?.trialEndsAt ? new Date(sub.trialEndsAt).toLocaleString() : '—'}
+            {' · '}Vehicles: {usage.vehicles ?? 0}
+            {limits.maxVehicles != null ? ` / ${limits.maxVehicles}` : ' / ∞'}
+            {' · '}Custom domain: {limits.customDomain ? 'yes' : 'no'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={load}
+          className="text-xs text-slate-400 hover:text-cyan-400"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2 items-end">
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+            Assign plan
+          </label>
+          <select
+            value={planCode}
+            onChange={(e) => setPlanCode(e.target.value)}
+            className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm text-white outline-none"
+          >
+            {(plans.length
+              ? plans
+              : [
+                  { code: 'free_trial', name: 'Free Trial' },
+                  { code: 'basic', name: 'Basic' },
+                  { code: 'pro', name: 'Pro' },
+                  { code: 'enterprise', name: 'Enterprise' },
+                  { code: 'legacy_grandfathered', name: 'Legacy' },
+                ]
+            ).map((p) => (
+              <option key={p.code} value={p.code}>
+                {p.name || p.code}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          disabled={busy === 'bill-assign'}
+          onClick={() =>
+            run('bill-assign', async () => {
+              const { data } = await axios.post(
+                `/api/super-admin/agencies/${agencyId}/billing/assign-plan`,
+                { planCode },
+              )
+              if (!data.success) throw new Error(data.message || 'Assign failed')
+              toast.success(`Assigned ${planCode}`)
+              await load()
+            })
+          }
+          className="bg-cyan-700 hover:bg-cyan-600 disabled:opacity-60 text-white text-xs px-4 py-2"
+        >
+          Assign
+        </button>
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">
+            Extend trial (days)
+          </label>
+          <input
+            type="number"
+            min={1}
+            value={extendDays}
+            onChange={(e) => setExtendDays(Number(e.target.value) || 7)}
+            className="w-24 bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm text-white outline-none"
+          />
+        </div>
+        <button
+          type="button"
+          disabled={busy === 'bill-extend'}
+          onClick={() =>
+            run('bill-extend', async () => {
+              const { data } = await axios.post(
+                `/api/super-admin/agencies/${agencyId}/billing/extend-trial`,
+                { days: extendDays },
+              )
+              if (!data.success) throw new Error(data.message || 'Extend failed')
+              toast.success('Trial extended')
+              await load()
+            })
+          }
+          className="border border-white/15 text-slate-200 text-xs px-4 py-2 hover:border-cyan-600/50"
+        >
+          Extend trial
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          ['bill-reactivate', 'Reactivate', 'reactivate', {}],
+          ['bill-suspend', 'Suspend billing', 'suspend', {}],
+          ['bill-expire', 'Expire', 'expire', {}],
+          ['bill-cancel', 'Cancel now', 'cancel', { atPeriodEnd: false }],
+        ].map(([key, label, action, body]) => (
+          <button
+            key={key}
+            type="button"
+            disabled={busy === key}
+            onClick={() =>
+              run(key, async () => {
+                const { data } = await axios.post(
+                  `/api/super-admin/agencies/${agencyId}/billing/${action}`,
+                  body,
+                )
+                if (!data.success) throw new Error(data.message || `${action} failed`)
+                toast.success(label)
+                await load()
+              })
+            }
+            className="border border-white/10 text-xs px-3 py-2 text-slate-300 hover:border-white/25 disabled:opacity-40"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {events.length > 0 ? (
+        <div className="pt-2 border-t border-white/5">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Recent events</p>
+          <ul className="space-y-1 max-h-40 overflow-y-auto text-xs text-slate-400">
+            {events.slice(0, 12).map((ev) => (
+              <li key={ev._id}>
+                <span className="text-slate-300">{ev.type}</span>
+                {' · '}
+                {ev.createdAt ? new Date(ev.createdAt).toLocaleString() : ''}
+                {ev.to?.status ? ` → ${ev.to.status}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+const AgencyStaffPanel = ({ agencyId, axios, busy, run }) => {
+  const [members, setMembers] = useState([])
+  const [usage, setUsage] = useState({ seats: 1, maxStaff: null })
+  const [form, setForm] = useState({ name: '', email: '', staffRole: 'agent' })
+  const [inviteUrl, setInviteUrl] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await axios.get(`/api/super-admin/agencies/${agencyId}/staff`)
+      if (data.success) {
+        setMembers(data.members || [])
+        setUsage(data.usage || { seats: 1, maxStaff: null })
+      }
+    } catch (error) {
+      toast.error(saError(error))
+    } finally {
+      setLoading(false)
+    }
+  }, [axios, agencyId])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  if (loading && !members.length) {
+    return <p className="text-sm text-slate-500">Loading staff…</p>
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-slate-500">
+        Seats: {usage.seats}
+        {usage.maxStaff == null ? ' / ∞' : ` / ${usage.maxStaff}`}
+      </p>
+      <ul className="space-y-2 text-sm">
+        {members.map((m) => (
+          <li key={m._id} className="flex flex-wrap items-center justify-between gap-2 border border-white/5 px-3 py-2">
+            <div>
+              <p className="text-white">{m.name}</p>
+              <p className="text-xs text-slate-500">
+                {m.email} · {m.staffRole} · {m.accountStatus}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={busy === `staff-rm-${m._id}`}
+              onClick={() =>
+                run(`staff-rm-${m._id}`, async () => {
+                  const { data } = await axios.delete(
+                    `/api/super-admin/agencies/${agencyId}/staff/${m._id}`,
+                  )
+                  if (!data.success) throw new Error(data.message || 'Remove failed')
+                  toast.success('Staff removed')
+                  await load()
+                })
+              }
+              className="text-xs text-rose-400 border border-rose-900/50 px-2 py-1"
+            >
+              Remove
+            </button>
+          </li>
+        ))}
+        {members.length === 0 ? <p className="text-xs text-slate-500">No staff yet.</p> : null}
+      </ul>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <input
+          placeholder="Name"
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm text-white outline-none"
+        />
+        <input
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm text-white outline-none"
+        />
+        <select
+          value={form.staffRole}
+          onChange={(e) => setForm((f) => ({ ...f, staffRole: e.target.value }))}
+          className="bg-[#0a0f14] border border-white/10 px-3 py-2 text-sm text-white outline-none"
+        >
+          <option value="manager">Manager</option>
+          <option value="agent">Agent</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+      <button
+        type="button"
+        disabled={busy === 'staff-invite'}
+        onClick={() =>
+          run('staff-invite', async () => {
+            const { data } = await axios.post(`/api/super-admin/agencies/${agencyId}/staff`, form)
+            if (!data.success) throw new Error(data.message || 'Invite failed')
+            setInviteUrl(data.inviteUrl || '')
+            setForm({ name: '', email: '', staffRole: 'agent' })
+            toast.success('Staff invited')
+            await load()
+          })
+        }
+        className="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-4 py-2"
+      >
+        Invite staff
+      </button>
+      {inviteUrl ? (
+        <p className="text-xs text-cyan-400 break-all">{inviteUrl}</p>
+      ) : null}
+    </div>
+  )
 }
 
 const SuperAdminAgencyDetail = () => {
@@ -308,6 +615,16 @@ const SuperAdminAgencyDetail = () => {
         ) : (
           <p className="text-sm text-slate-500">No primary owner linked.</p>
         )}
+      </section>
+
+      <section className="border border-white/10 p-4 sm:p-6 space-y-4">
+        <h2 className="text-sm uppercase tracking-wider text-slate-400">Billing</h2>
+        <AgencyBillingPanel agencyId={id} axios={axios} busy={busy} run={run} />
+      </section>
+
+      <section className="border border-white/10 p-4 sm:p-6 space-y-4">
+        <h2 className="text-sm uppercase tracking-wider text-slate-400">Staff</h2>
+        <AgencyStaffPanel agencyId={id} axios={axios} busy={busy} run={run} />
       </section>
 
       <section className="border border-white/10 p-4 sm:p-6 space-y-3">

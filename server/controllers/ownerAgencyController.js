@@ -188,6 +188,8 @@ export const updateOwnerAgencyDomain = async (req, res) => {
     if (body.clear === true || body.customDomain === '') {
       agency = await clearAgencyCustomDomain(req.agencyId);
     } else if (body.customDomain !== undefined) {
+      const { assertFeature } = await import('../services/entitlementsService.js');
+      await assertFeature(req.agencyId, 'customDomain');
       agency = await setAgencyCustomDomain(req.agencyId, body.customDomain);
     } else {
       agency = await Agency.findById(req.agencyId);
@@ -217,6 +219,8 @@ export const verifyOwnerAgencyDomain = async (req, res) => {
     if (!req.agencyId) {
       return res.status(500).json({ success: false, message: 'Agency context missing' });
     }
+    const { assertFeature } = await import('../services/entitlementsService.js');
+    await assertFeature(req.agencyId, 'customDomain');
     const agency = await verifyAgencyCustomDomain(req.agencyId, { force: false });
     res.json({
       success: true,
