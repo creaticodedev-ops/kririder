@@ -262,16 +262,28 @@ export const AppProvider = ({ children })=>{
         return () => axios.interceptors.response.eject(interceptor)
     }, [token, navigate, resetOwnerAuth])
 
-    // Scope every public API call to the current agency storefront (slug and/or Host)
+    const needsPublicCatalog = Boolean(storefrontSlug || hostTenant.atRoot)
+
+    // Scope public API calls to the current agency storefront (slug and/or Host).
+    // The KRIRIDER marketing homepage has no tenant — skip catalog requests.
     useEffect(() => {
       applyAgencySlugHeader(storefrontSlug)
       applyAgencyHostHeader(hostTenant.atRoot ? hostTenant.host : '')
+      if (!needsPublicCatalog) {
+        setCars([])
+        setCarsLoading(false)
+        setPickupLocations([])
+        setStorefrontProfile(null)
+        setStorefrontError('')
+        setStorefrontReady(true)
+        return
+      }
       fetchStorefrontProfile(storefrontSlug || null, {
         host: hostTenant.atRoot ? hostTenant.host : '',
       })
       fetchCars()
       fetchPickupLocations()
-    }, [storefrontSlug, hostTenant.atRoot, hostTenant.host, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
+    }, [needsPublicCatalog, storefrontSlug, hostTenant.atRoot, hostTenant.host, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
 
     useEffect(() => {
       const color = storefrontProfile?.primaryBrandColor

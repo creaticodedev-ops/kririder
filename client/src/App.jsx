@@ -2,6 +2,8 @@ import React, { lazy, Suspense, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
+import MarketingHome from './marketing/MarketingHome'
+import { isMarketingSurface } from './utils/marketingSurface'
 import ErrorBoundary from './components/ErrorBoundary'
 import RequirePermission from './components/owner/RequirePermission'
 import { Toaster } from 'react-hot-toast'
@@ -54,6 +56,10 @@ const ActivateAccount = lazy(() => import('./pages/ActivateAccount'))
 const ActivateStaff = lazy(() => import('./pages/ActivateStaff'))
 const AgencySetup = lazy(() => import('./pages/AgencySetup'))
 const StorefrontShell = lazy(() => import('./components/StorefrontShell'))
+const ContactPage = lazy(() => import('./pages/marketing/ContactPage'))
+const AboutPage = lazy(() => import('./pages/marketing/AboutPage'))
+const PrivacyPage = lazy(() => import('./pages/marketing/LegalPages'))
+const TermsPage = lazy(() => import('./pages/marketing/LegalPages').then((m) => ({ default: m.TermsPage })))
 
 const MoroccoPillarPage = lazy(() => import('./pages/seo/MoroccoPillarPage'))
 const CityPage = lazy(() => import('./pages/seo/CityPage'))
@@ -66,10 +72,16 @@ const withPerm = (permission, Component) => (
   <RequirePermission permission={permission}>{React.createElement(Component)}</RequirePermission>
 )
 
+const PublicHome = () => {
+  const { hostTenant } = useAppContext()
+  if (hostTenant.atRoot) return <Home />
+  return <MarketingHome />
+}
+
 const RouteFallback = () => <Loader />
 
 const App = () => {
-  const { showLogin } = useAppContext()
+  const { showLogin, hostTenant } = useAppContext()
   const { pathname } = useLocation()
   const isOwnerPath = pathname.startsWith('/owner')
   const isSuperAdminPath = pathname.startsWith('/superadmin')
@@ -78,8 +90,10 @@ const App = () => {
     pathname.startsWith('/activate-staff') ||
     pathname.startsWith('/agency-setup')
   const hidePublicChrome = isOwnerPath || isSuperAdminPath || isOnboardingPath
-  const isStorefrontHome = pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(pathname)
-  const needsNavOffset = !hidePublicChrome && !isStorefrontHome
+  const marketing = isMarketingSurface(pathname, hostTenant)
+  const isStorefrontHome =
+    !marketing && (pathname === '/' || /^\/s\/[a-z0-9-]+\/?$/i.test(pathname))
+  const needsNavOffset = !hidePublicChrome && !marketing && !isStorefrontHome
 
   // Remove build-time SEO body after hydration (crawlers still see it in raw HTML).
   useEffect(() => {
@@ -113,7 +127,7 @@ const App = () => {
         </Suspense>
       )}
 
-      {!hidePublicChrome && <Navbar />}
+      {!hidePublicChrome && !marketing && <Navbar />}
 
       <div
         id="main-content"
@@ -122,7 +136,11 @@ const App = () => {
       >
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<PublicHome />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/location-voiture-maroc" element={<MoroccoPillarPage />} />
             <Route path="/location-voiture/:city" element={<CityPage />} />
             <Route path="/location-voiture-aeroport/:airport" element={<AirportPage />} />
@@ -184,7 +202,7 @@ const App = () => {
         </Suspense>
       </div>
 
-      {!hidePublicChrome && (
+      {!hidePublicChrome && !marketing && (
         <Suspense fallback={null}>
           <Footer />
         </Suspense>

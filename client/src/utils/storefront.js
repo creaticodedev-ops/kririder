@@ -91,10 +91,8 @@ export const resolveStorefrontSlug = ({
     // ignore malformed search
   }
 
-  if (isPlatformApex(hostname) && getDefaultStorefrontSlug()) {
-    return getDefaultStorefrontSlug()
-  }
-
+  // Platform apex (`kririder.com/`) is the KRIRIDER marketing site.
+  // Tenant catalogs live at /s/:slug, {slug}.kririder.com, or a custom domain.
   return ''
 }
 

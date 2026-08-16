@@ -16,6 +16,7 @@ const SeoHead = ({
   siteName = SITE_NAME,
   origin = SITE_ORIGIN,
   faviconUrl = '',
+  locale = 'fr_MA',
 }) => {
   const brand = siteName || SITE_NAME
   const fullTitle = title
@@ -40,7 +41,7 @@ const SeoHead = ({
       <meta property="og:description" content={description || ''} />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:locale" content="fr_MA" />
+      <meta property="og:locale" content={locale} />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
