@@ -10,6 +10,7 @@ import {
   uploadOnboardingLogo,
   completeOnboarding,
 } from '../controllers/agencyOnboardingController.js';
+import { selfServeSignup, signupInfo } from '../controllers/selfServeSignupController.js';
 
 const router = express.Router();
 
@@ -18,6 +19,15 @@ const tokenLimit = rateLimit({
   max: 30,
   message: 'Too many onboarding requests',
 });
+
+const signupLimit = rateLimit({
+  windowMs: 15 * 60_000,
+  max: 8,
+  message: 'Too many signup attempts. Please try again later.',
+});
+
+router.get('/signup-info', signupInfo);
+router.post('/signup', signupLimit, selfServeSignup);
 
 // Session routes first so they are not captured by :token
 router.get('/session/me', ...requireOnboardingSession, getOnboardingSession);

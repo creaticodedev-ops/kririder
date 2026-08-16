@@ -4,8 +4,8 @@ import { MarketingNav } from './MarketingNav'
 import { MarketingFooter } from './MarketingFooter'
 import './marketing.css'
 
-export const MarketingLayout = ({ children }) => {
-  const { hash } = useLocation()
+export const MarketingLayout = ({ children, footer = true }) => {
+  const { hash, pathname } = useLocation()
 
   useEffect(() => {
     if (!hash) {
@@ -15,13 +15,13 @@ export const MarketingLayout = ({ children }) => {
     const id = hash.replace('#', '')
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [hash])
+  }, [hash, pathname])
 
   return (
     <div className="mkt">
       <MarketingNav />
       {children}
-      <MarketingFooter />
+      {footer ? <MarketingFooter /> : null}
     </div>
   )
 }

@@ -57,6 +57,7 @@ const ActivateStaff = lazy(() => import('./pages/ActivateStaff'))
 const AgencySetup = lazy(() => import('./pages/AgencySetup'))
 const StorefrontShell = lazy(() => import('./components/StorefrontShell'))
 const ContactPage = lazy(() => import('./pages/marketing/ContactPage'))
+const SignupPage = lazy(() => import('./pages/marketing/SignupPage'))
 const AboutPage = lazy(() => import('./pages/marketing/AboutPage'))
 const PrivacyPage = lazy(() => import('./pages/marketing/LegalPages'))
 const TermsPage = lazy(() => import('./pages/marketing/LegalPages').then((m) => ({ default: m.TermsPage })))
@@ -137,6 +138,7 @@ const App = () => {
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<PublicHome />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />

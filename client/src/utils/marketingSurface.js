@@ -1,5 +1,5 @@
 /** Paths that belong to the KRIRIDER SaaS marketing site (not a tenant storefront). */
-export const MARKETING_PATHS = new Set(['/', '/contact', '/privacy', '/terms', '/about'])
+export const MARKETING_PATHS = new Set(['/', '/contact', '/privacy', '/terms', '/about', '/signup'])
 
 export const isMarketingPath = (pathname = '') => {
   const path = String(pathname || '').split('?')[0].replace(/\/+$/, '') || '/'

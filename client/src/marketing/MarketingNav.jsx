@@ -60,7 +60,7 @@ export const MarketingNav = () => {
               <button type="button" className="mkt-btn mkt-btn-ghost" onClick={() => setShowLogin(true)}>
                 Log in
               </button>
-              <PrimaryCta />
+              <PrimaryCta>Start free trial</PrimaryCta>
             </>
           )}
         </div>
@@ -101,7 +101,7 @@ export const MarketingNav = () => {
               <button type="button" onClick={() => setShowLogin(true)}>
                 Log in
               </button>
-              <PrimaryCta />
+              <PrimaryCta>Start free trial</PrimaryCta>
             </>
           )}
         </div>

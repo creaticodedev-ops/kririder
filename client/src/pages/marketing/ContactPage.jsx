@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import SeoHead from '../../seo/SeoHead'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { BRAND, CONTACT_EMAIL, CONTACT_WHATSAPP } from '../../marketing/config'
@@ -60,7 +60,11 @@ export const ContactPage = () => {
           {intentParam === 'demo' ? 'Book a demo' : 'Start your KRIRIDER evaluation'}
         </h1>
         <p className="mkt-lead" style={{ marginTop: '1rem' }}>
-          Tell us about your rental operation. There is no public self-serve signup — new agencies are provisioned by the KRIRIDER team.
+          Prefer to start immediately?{' '}
+          <Link to="/signup" style={{ color: 'inherit' }}>
+            Create a free KRIRIDER account
+          </Link>
+          . Use this form if you need to speak with the team.
         </p>
 
         {sent ? (

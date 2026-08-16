@@ -25,7 +25,7 @@ export const AboutPage = () => (
         Agencies such as {CLIENTS.map((c) => c.name).join(' and ')} use KRIRIDER as clients. Their brands remain theirs. KRIRIDER stays the product.
       </p>
       <div className="mkt-actions" style={{ marginTop: '1.8rem' }}>
-        <PrimaryCta />
+              <PrimaryCta>Start free trial</PrimaryCta>
         <DemoCta />
       </div>
     </section>
