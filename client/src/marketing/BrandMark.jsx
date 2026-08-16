@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
 import { BRAND } from './config'
-import logo from './logo-kririder.png'
 
-export const BrandMark = ({ to = '/', className = '' }) => (
-  <Link to={to} className={`mkt-mark ${className}`.trim()} aria-label={`${BRAND} home`}>
-    <span className="mkt-mark-logo">
-      <img src={logo} alt="" width={220} height={72} />
-    </span>
+const Mark = () => (
+  <span className="mkt-mark-kr" aria-hidden>
+    KR
+  </span>
+)
+
+export const BrandMark = ({ to = '/', className = '', variant = 'light' }) => (
+  <Link to={to} className={`mkt-mark mkt-mark-${variant} ${className}`.trim()} aria-label={`${BRAND} home`}>
+    <Mark />
+    <span className="mkt-mark-word">KRIRIDER</span>
   </Link>
 )
 

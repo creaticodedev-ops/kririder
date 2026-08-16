@@ -1,73 +1,97 @@
-export const BrowserFrame = ({ url = 'app.kririder.com/owner', children }) => (
-  <figure className="mkt-browser">
-    <div className="mkt-browser-bar" aria-hidden>
-      <span className="mkt-dot" />
-      <span className="mkt-dot" />
-      <span className="mkt-dot" />
-      <span className="mkt-url">{url}</span>
+export const AppWindow = ({ title = 'KRIRIDER', children, className = '' }) => (
+  <figure className={`mkt-app ${className}`.trim()}>
+    <div className="mkt-app-top" aria-hidden>
+      <span className="mkt-app-kr">KR</span>
+      <span>{title}</span>
     </div>
     {children}
   </figure>
 )
 
-export const PhoneFrame = ({ title, children }) => (
-  <figure className="mkt-phone">
-    <div className="mkt-phone-screen">
-      <p style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8F1F1F', margin: '0 0 8px' }}>
-        KRIRIDER
-      </p>
-      <p style={{ fontWeight: 600, margin: '0 0 10px', fontSize: 14 }}>{title}</p>
-      {children}
-    </div>
-  </figure>
-)
-
-const Side = ({ active }) => (
-  <aside className="mkt-ui-side" aria-hidden>
-    <b>KRIRIDER</b>
-    {['Dashboard', 'Reservations', 'Walk-in', 'Customers', 'Fleet', 'Maintenance', 'Contracts', 'Invoices', 'Reports'].map((item) => (
-      <p key={item} className={item === active ? 'is-on' : ''}>
+const Nav = ({ active }) => (
+  <aside className="mkt-app-nav" aria-hidden>
+    <p className="mkt-app-nav-brand">KRIRIDER</p>
+    {['Dashboard', 'Reservations', 'Walk-in', 'Customers', 'Fleet', 'Contracts', 'Invoices', 'Reports'].map((item) => (
+      <span key={item} className={item === active ? 'is-on' : ''}>
         {item}
-      </p>
+      </span>
     ))}
   </aside>
 )
 
 export const DashboardPreview = () => (
-  <div className="mkt-ui mkt-ui-app">
-    <Side active="Dashboard" />
-    <div className="mkt-ui-main">
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Operations overview</p>
-      <div className="mkt-kpi">
-        <article>
-          <span>Today</span>
-          <strong>12</strong>
-        </article>
-        <article>
-          <span>On rent</span>
-          <strong>18</strong>
-        </article>
-        <article>
-          <span>Revenue</span>
-          <strong>MAD 86k</strong>
-        </article>
-        <article>
-          <span>Occupancy</span>
-          <strong>74%</strong>
-        </article>
+  <div className="mkt-app-body">
+    <Nav active="Dashboard" />
+    <div className="mkt-app-main">
+      <header className="mkt-app-head">
+        <div>
+          <p>Operations</p>
+          <h3>Dashboard</h3>
+        </div>
+        <span className="mkt-chip">Today</span>
+      </header>
+      <div className="mkt-kpis">
+        {[
+          ['Bookings', '12', '+3 today'],
+          ['On rent', '18', 'active'],
+          ['Revenue', '86k', 'this month'],
+          ['Occupancy', '74%', 'fleet'],
+        ].map(([label, value, hint]) => (
+          <article key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <em>{hint}</em>
+          </article>
+        ))}
       </div>
-      <div className="mkt-grid2">
-        <div className="mkt-panel">
-          <span style={{ color: '#8a817b' }}>Revenue trend</span>
-          <div className="mkt-bars" aria-hidden>
-            {[40, 55, 72, 48, 63, 86, 70].map((h, i) => (
-              <i key={i} style={{ height: `${h}%` }} />
-            ))}
+      <div className="mkt-dash-grid">
+        <div className="mkt-pane">
+          <span>Revenue overview</span>
+          <svg className="mkt-line" viewBox="0 0 280 88" fill="none" aria-hidden>
+            <path d="M8 70 C 40 62, 56 48, 84 52 S 132 22, 160 30 S 220 18, 272 28" stroke="#8F1F1F" strokeWidth="2.4" />
+            <path d="M8 70 C 40 62, 56 48, 84 52 S 132 22, 160 30 S 220 18, 272 28 V 88 H 8 Z" fill="#8F1F1F" opacity="0.12" />
+          </svg>
+        </div>
+        <div className="mkt-pane">
+          <span>Fleet status</span>
+          <div className="mkt-fleet-mix">
+            <i className="is-a" />
+            <div>
+              <p>
+                <b>9</b> available
+              </p>
+              <p>
+                <b>18</b> on rent
+              </p>
+              <p>
+                <b>2</b> maintenance
+              </p>
+            </div>
           </div>
         </div>
-        <div className="mkt-panel">
-          <span style={{ color: '#8a817b' }}>Fleet</span>
-          <p style={{ margin: '8px 0 0' }}>Available 9 · On rent 18 · Offline 2</p>
+        <div className="mkt-pane mkt-pane-wide">
+          <span>Recent reservations</span>
+          <ul className="mkt-mini-table">
+            {[
+              ['RES-1842', 'El Amrani', 'Confirmed'],
+              ['RES-1841', 'Benali', 'Ready'],
+              ['RES-1838', 'Walk-in', 'Active'],
+            ].map(([id, name, status]) => (
+              <li key={id}>
+                <span>{id}</span>
+                <span>{name}</span>
+                <em>{status}</em>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="mkt-pane">
+          <span>Quick actions</span>
+          <ul className="mkt-quick">
+            <li>New reservation</li>
+            <li>Walk-in booking</li>
+            <li>Generate contract</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -75,47 +99,59 @@ export const DashboardPreview = () => (
 )
 
 export const ReservationsPreview = () => (
-  <div className="mkt-ui mkt-ui-app">
-    <Side active="Reservations" />
-    <div className="mkt-ui-main">
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Reservation workspace</p>
-      <div className="mkt-panel">
-        {[
-          ['RES-1842', 'A. El Amrani', 'Confirmed'],
-          ['RES-1841', 'S. Benali', 'Ready'],
-          ['RES-1838', 'Walk-in', 'Active'],
-          ['RES-1833', 'M. Leroux', 'Pending'],
-        ].map(([id, name, status]) => (
-          <div className="mkt-row" key={id}>
-            <span>
-              {id} · {name}
-            </span>
-            <span className={`mkt-pill${status === 'Pending' ? ' warn' : ''}`}>{status}</span>
-          </div>
-        ))}
+  <div className="mkt-app-body">
+    <Nav active="Reservations" />
+    <div className="mkt-app-main">
+      <header className="mkt-app-head">
+        <div>
+          <p>Bookings</p>
+          <h3>Reservation workspace</h3>
+        </div>
+        <span className="mkt-chip">Online · Walk-in · WhatsApp</span>
+      </header>
+      <div className="mkt-pane">
+        <ul className="mkt-mini-table mkt-mini-table-lg">
+          {[
+            ['RES-1842', 'A. El Amrani', 'Duster', 'Confirmed'],
+            ['RES-1841', 'S. Benali', 'Peugeot 208', 'Ready'],
+            ['RES-1838', 'Walk-in', 'C220', 'Active'],
+            ['RES-1833', 'M. Leroux', 'Tucson', 'Pending'],
+          ].map(([id, name, car, status]) => (
+            <li key={id}>
+              <span>{id}</span>
+              <span>{name}</span>
+              <span>{car}</span>
+              <em>{status}</em>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   </div>
 )
 
 export const FleetPreview = () => (
-  <div className="mkt-ui mkt-ui-app">
-    <Side active="Fleet" />
-    <div className="mkt-ui-main">
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Fleet & availability</p>
-      <div className="mkt-panel">
+  <div className="mkt-app-body">
+    <Nav active="Fleet" />
+    <div className="mkt-app-main">
+      <header className="mkt-app-head">
+        <div>
+          <p>Vehicles</p>
+          <h3>Fleet & availability</h3>
+        </div>
+      </header>
+      <div className="mkt-fleet-cards">
         {[
           ['Dacia Duster', 'Available', 'Casablanca'],
           ['Peugeot 208', 'On rent', 'Marrakech'],
           ['Mercedes C220', 'Available', 'Airport'],
           ['Hyundai Tucson', 'Maintenance', 'Agadir'],
         ].map(([car, status, loc]) => (
-          <div className="mkt-row" key={car}>
-            <span>
-              {car} · {loc}
-            </span>
-            <span className={`mkt-pill${status !== 'Available' && status !== 'On rent' ? ' warn' : ''}`}>{status}</span>
-          </div>
+          <article key={car}>
+            <strong>{car}</strong>
+            <span>{loc}</span>
+            <em className={status === 'Maintenance' ? 'is-warn' : ''}>{status}</em>
+          </article>
         ))}
       </div>
     </div>
@@ -123,20 +159,21 @@ export const FleetPreview = () => (
 )
 
 export const ContractsPreview = () => (
-  <div className="mkt-ui mkt-ui-app">
-    <Side active="Contracts" />
-    <div className="mkt-ui-main">
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Contract & signature</p>
-      <div className="mkt-grid2">
-        <div className="mkt-panel">
-          <span style={{ color: '#8a817b' }}>Document</span>
-          <p style={{ margin: '8px 0 0', fontWeight: 600 }}>Rental contract RES-1842</p>
-          <p style={{ margin: '4px 0 0', color: '#8a817b' }}>Customer documents · PDF generated</p>
+  <div className="mkt-app-body">
+    <Nav active="Contracts" />
+    <div className="mkt-app-main">
+      <header className="mkt-app-head">
+        <div>
+          <p>Documents</p>
+          <h3>Contract RES-1842</h3>
         </div>
-        <div className="mkt-panel">
-          <span style={{ color: '#8a817b' }}>Remote signature</span>
-          <p style={{ margin: '10px 0 6px' }}>Link sent</p>
-          <span className="mkt-pill">Awaiting customer</span>
+        <span className="mkt-chip">PDF ready</span>
+      </header>
+      <div className="mkt-doc">
+        <p>Rental agreement · generated from the booking</p>
+        <div className="mkt-sign">
+          <span>Remote signature</span>
+          <em>Awaiting customer</em>
         </div>
       </div>
     </div>
@@ -144,35 +181,102 @@ export const ContractsPreview = () => (
 )
 
 export const AnalyticsPreview = () => (
-  <div className="mkt-ui mkt-ui-app">
-    <Side active="Reports" />
-    <div className="mkt-ui-main">
-      <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Performance</p>
-      <div className="mkt-kpi">
-        <article>
-          <span>Week</span>
-          <strong>MAD 21k</strong>
-        </article>
-        <article>
-          <span>Month</span>
-          <strong>MAD 86k</strong>
-        </article>
-        <article>
-          <span>Online</span>
-          <strong>MAD 54k</strong>
-        </article>
-        <article>
-          <span>Walk-in</span>
-          <strong>MAD 32k</strong>
-        </article>
-      </div>
-      <div className="mkt-panel" style={{ marginTop: 8 }}>
-        <div className="mkt-bars" aria-hidden>
-          {[32, 44, 38, 60, 52, 78, 70, 64, 82, 74].map((h, i) => (
-            <i key={i} style={{ height: `${h}%` }} />
-          ))}
+  <div className="mkt-app-body">
+    <Nav active="Reports" />
+    <div className="mkt-app-main">
+      <header className="mkt-app-head">
+        <div>
+          <p>Performance</p>
+          <h3>Analytics</h3>
         </div>
+      </header>
+      <div className="mkt-kpis">
+        {[
+          ['Week', '21k'],
+          ['Month', '86k'],
+          ['Online', '54k'],
+          ['Walk-in', '32k'],
+        ].map(([label, value]) => (
+          <article key={label}>
+            <span>{label}</span>
+            <strong>{value}</strong>
+            <em>MAD</em>
+          </article>
+        ))}
+      </div>
+      <div className="mkt-pane">
+        <svg className="mkt-line" viewBox="0 0 280 72" fill="none" aria-hidden>
+          <path d="M6 50 C 36 46, 54 28, 86 34 S 140 14, 176 24 S 230 18, 274 22" stroke="#8F1F1F" strokeWidth="2.2" />
+        </svg>
       </div>
     </div>
+  </div>
+)
+
+export const HeroStage = () => (
+  <div className="mkt-hero-stage">
+    <AppWindow className="mkt-hero-stage-main" title="Owner workspace">
+      <DashboardPreview />
+    </AppWindow>
+    <aside className="mkt-float mkt-float-a" aria-hidden>
+      <p>Reservation</p>
+      <strong>RES-1842</strong>
+      <span>A. El Amrani · Duster</span>
+      <em>Confirmed</em>
+    </aside>
+    <aside className="mkt-float mkt-float-b" aria-hidden>
+      <p>Contract</p>
+      <strong>PDF generated</strong>
+      <span>Signature requested</span>
+    </aside>
+  </div>
+)
+
+export const SnippetReservations = () => (
+  <div className="mkt-snip">
+    <p>Today</p>
+    <ul>
+      <li>
+        <span>RES-1842</span> Confirmed
+      </li>
+      <li>
+        <span>RES-1841</span> Ready
+      </li>
+      <li>
+        <span>Walk-in</span> Active
+      </li>
+    </ul>
+  </div>
+)
+
+export const SnippetFleet = () => (
+  <div className="mkt-snip">
+    <p>Dacia Duster</p>
+    <strong>Available</strong>
+    <span>Casablanca · airport</span>
+  </div>
+)
+
+export const SnippetContract = () => (
+  <div className="mkt-snip mkt-snip-doc">
+    <p>Contrat de location</p>
+    <span>RES-1842 · PDF</span>
+    <em>Signature requested</em>
+  </div>
+)
+
+export const SnippetAnalytics = () => (
+  <div className="mkt-snip">
+    <p>This month</p>
+    <strong>MAD 86k</strong>
+    <span>Online 54k · Walk-in 32k</span>
+  </div>
+)
+
+export const SnippetCustomers = () => (
+  <div className="mkt-snip">
+    <p>A. El Amrani</p>
+    <span>History on agency record</span>
+    <em>Last stay RES-1842</em>
   </div>
 )

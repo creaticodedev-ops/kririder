@@ -130,7 +130,7 @@ export const SignupPage = () => {
       />
       <div className="mkt-signup">
         <aside className="mkt-signup-aside">
-          <BrandMark />
+          <BrandMark variant="dark" />
           <p className="mkt-kicker" style={{ marginTop: '2.4rem' }}>
             Free trial
           </p>

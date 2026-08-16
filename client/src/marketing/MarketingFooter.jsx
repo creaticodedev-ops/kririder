@@ -15,7 +15,7 @@ export const MarketingFooter = () => (
         <h2>Product</h2>
         <Link to="/#features">Features</Link>
         <Link to="/#pricing">Pricing</Link>
-        <Link to="/#product">Product overview</Link>
+        <Link to="/#workspace">Workspace</Link>
       </div>
       <div>
         <h2>Company</h2>
