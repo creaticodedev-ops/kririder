@@ -8,6 +8,7 @@ import { ContactCta, PrimaryCta } from './Ctas'
 import MarketingLayout from './MarketingLayout'
 import { Caption, Crop, Frame, HeroScene, Reveal, SHOTS } from './experience'
 import { Ecosystem, FinanceChapter } from './chapters'
+import { FinalCta } from './FinalCta'
 import './experience.css'
 
 const softwareJsonLd = {
@@ -279,21 +280,7 @@ export const MarketingHome = () => (
       </div>
     </section>
 
-    <section className="mkt-final">
-      <div className="mkt-wrap">
-        <p className="mkt-kicker">Get started</p>
-        <h2 className="mkt-h2">Run your rental business with KRIRIDER.</h2>
-        <p className="mkt-lead">
-          Create an account in minutes. {TRIAL_DAYS}-day free trial — one per agency. No payment during registration.
-        </p>
-        <div className="mkt-actions">
-          <PrimaryCta variant="light" arrow>
-            Start your free trial
-          </PrimaryCta>
-          <ContactCta className="mkt-btn-ghost-light">Talk to us</ContactCta>
-        </div>
-      </div>
-    </section>
+    <FinalCta />
   </MarketingLayout>
 )
 
