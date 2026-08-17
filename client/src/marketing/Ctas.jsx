@@ -9,10 +9,14 @@ const Arrow = () => (
   </svg>
 )
 
-export const PrimaryCta = ({ children, className = '', variant = 'primary', arrow = false }) => {
+export const PrimaryCta = ({ children, className = '', variant = 'primary', arrow = false, onClick }) => {
   const { t } = useMktI18n()
   return (
-    <Link to="/signup" className={`mkt-btn ${variant === 'light' ? 'mkt-btn-light' : 'mkt-btn-primary'} ${className}`.trim()}>
+    <Link
+      to="/signup"
+      className={`mkt-btn ${variant === 'light' ? 'mkt-btn-light' : 'mkt-btn-primary'} ${className}`.trim()}
+      onClick={onClick}
+    >
       {children ?? t('cta.trial')}
       {arrow ? <Arrow /> : null}
     </Link>
