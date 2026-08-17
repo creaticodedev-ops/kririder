@@ -4,8 +4,16 @@ import SeoHead from '../../seo/SeoHead'
 import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { BRAND, CONTACT_EMAIL, CONTACT_WHATSAPP } from '../../marketing/config'
+import { useMktI18n } from '../../marketing/i18n/MarketingI18n'
 
-export const ContactPage = () => {
+export const ContactPage = () => (
+  <MarketingLayout>
+    <ContactInner />
+  </MarketingLayout>
+)
+
+const ContactInner = () => {
+  const { t, htmlLang, ogLocale, dir } = useMktI18n()
   const [params] = useSearchParams()
   const intentParam = params.get('intent') === 'demo' ? 'demo' : 'trial'
   const [sent, setSent] = useState(false)
@@ -18,23 +26,27 @@ export const ContactPage = () => {
     message: '',
   })
 
+  const who = form.company || form.name
   const subject = useMemo(
-    () => (form.intent === 'demo' ? `KRIRIDER demo request — ${form.company || form.name}` : `KRIRIDER trial request — ${form.company || form.name}`),
-    [form.intent, form.company, form.name],
+    () =>
+      form.intent === 'demo'
+        ? t('contact.subjectDemo', { who })
+        : t('contact.subjectTrial', { who }),
+    [form.intent, t, who],
   )
 
   const body = useMemo(
     () =>
       [
-        `Name: ${form.name}`,
-        `Email: ${form.email}`,
-        `Company: ${form.company}`,
-        `Fleet size: ${form.fleet || '—'}`,
-        `Request: ${form.intent === 'demo' ? 'Book a demo' : 'Start free trial'}`,
+        `${t('contact.bodyName')}: ${form.name}`,
+        `${t('contact.bodyEmail')}: ${form.email}`,
+        `${t('contact.bodyCompany')}: ${form.company}`,
+        `${t('contact.bodyFleet')}: ${form.fleet || '—'}`,
+        `${t('contact.bodyRequest')}: ${form.intent === 'demo' ? t('contact.intentDemo') : t('contact.intentTrial')}`,
         '',
         form.message || '',
       ].join('\n'),
-    [form],
+    [form, t],
   )
 
   const onSubmit = (event) => {
@@ -46,43 +58,42 @@ export const ContactPage = () => {
   }
 
   return (
-    <MarketingLayout>
+    <>
       <SeoHead
-        title="Contact KRIRIDER"
-        description="Start a KRIRIDER evaluation or book a product demo for your car rental business."
+        title={t('seo.contactTitle')}
+        description={t('seo.contactDescription')}
         path="/contact"
-        lang="en"
-        locale="en_GB"
+        lang={htmlLang}
+        dir={dir}
+        locale={ogLocale}
         siteName={BRAND}
       />
       <section className="mkt-wrap mkt-section">
         <BrandMark variant="light" size="page" />
-        <p className="mkt-kicker">Contact</p>
+        <p className="mkt-kicker">{t('contact.kicker')}</p>
         <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-          {intentParam === 'demo' ? 'Book a demo' : 'Start your KRIRIDER evaluation'}
+          {intentParam === 'demo' ? t('contact.titleDemo') : t('contact.titleTrial')}
         </h1>
         <p className="mkt-lead" style={{ marginTop: '1rem' }}>
-          Prefer to start immediately?{' '}
+          {t('contact.leadBefore')}{' '}
           <Link to="/signup" style={{ color: 'inherit' }}>
-            Create a free KRIRIDER account
+            {t('contact.leadLink')}
           </Link>
-          . Use this form if you need to speak with the team.
+          . {t('contact.leadAfter')}
         </p>
 
         {sent ? (
           <p className="mkt-lead" style={{ marginTop: '2rem' }}>
-            {CONTACT_EMAIL
-              ? 'Your email client should open with the request. If it does not, write to us using the address below.'
-              : 'Your request details are ready. Add VITE_PLATFORM_SUPPORT_EMAIL to send automatically, or share this summary with your KRIRIDER contact.'}
+            {CONTACT_EMAIL ? t('contact.sentMail') : t('contact.sentManual')}
           </p>
         ) : (
           <form className="mkt-form" style={{ marginTop: '2rem' }} onSubmit={onSubmit}>
             <div className="mkt-field">
-              <label htmlFor="mkt-name">Name</label>
+              <label htmlFor="mkt-name">{t('contact.name')}</label>
               <input id="mkt-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="mkt-field">
-              <label htmlFor="mkt-email">Work email</label>
+              <label htmlFor="mkt-email">{t('contact.email')}</label>
               <input
                 id="mkt-email"
                 type="email"
@@ -92,26 +103,26 @@ export const ContactPage = () => {
               />
             </div>
             <div className="mkt-field">
-              <label htmlFor="mkt-company">Rental company</label>
+              <label htmlFor="mkt-company">{t('contact.company')}</label>
               <input id="mkt-company" required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
             </div>
             <div className="mkt-field">
-              <label htmlFor="mkt-fleet">Fleet size</label>
+              <label htmlFor="mkt-fleet">{t('contact.fleet')}</label>
               <input id="mkt-fleet" value={form.fleet} onChange={(e) => setForm({ ...form, fleet: e.target.value })} />
             </div>
             <div className="mkt-field">
-              <label htmlFor="mkt-intent">Request</label>
+              <label htmlFor="mkt-intent">{t('contact.request')}</label>
               <select id="mkt-intent" value={form.intent} onChange={(e) => setForm({ ...form, intent: e.target.value })}>
-                <option value="trial">Start Free Trial</option>
-                <option value="demo">Book a Demo</option>
+                <option value="trial">{t('contact.intentTrial')}</option>
+                <option value="demo">{t('contact.intentDemo')}</option>
               </select>
             </div>
             <div className="mkt-field">
-              <label htmlFor="mkt-message">Message</label>
+              <label htmlFor="mkt-message">{t('contact.message')}</label>
               <textarea id="mkt-message" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
             </div>
             <button type="submit" className="mkt-btn mkt-btn-primary">
-              Send request
+              {t('contact.send')}
             </button>
           </form>
         )}
@@ -119,14 +130,14 @@ export const ContactPage = () => {
         <p className="mkt-note">
           {CONTACT_EMAIL ? (
             <>
-              Email{' '}
+              {t('contact.emailLabel')}{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'inherit' }}>
                 {CONTACT_EMAIL}
               </a>
               {CONTACT_WHATSAPP ? (
                 <>
                   {' '}
-                  · WhatsApp{' '}
+                  · {t('contact.whatsapp')}{' '}
                   <a href={`https://wa.me/${CONTACT_WHATSAPP}`} style={{ color: 'inherit' }}>
                     {CONTACT_WHATSAPP}
                   </a>
@@ -134,11 +145,11 @@ export const ContactPage = () => {
               ) : null}
             </>
           ) : (
-            'Set VITE_PLATFORM_SUPPORT_EMAIL so requests open a mail composer to your team.'
+            t('contact.noEmail')
           )}
         </p>
       </section>
-    </MarketingLayout>
+    </>
   )
 }
 

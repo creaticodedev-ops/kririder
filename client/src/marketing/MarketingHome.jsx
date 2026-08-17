@@ -2,31 +2,15 @@ import { motion, useReducedMotion } from 'motion/react'
 import SeoHead from '../seo/SeoHead'
 import { SITE_ORIGIN } from '../seo/constants'
 import { organizationJsonLd, websiteJsonLd } from '../seo/jsonLd'
-import { BRAND, CLIENTS, PLANS, SEO, TRIAL_DAYS } from './config'
+import { BRAND, CLIENTS, PLANS, TRIAL_DAYS } from './config'
 import BrandMark from './BrandMark'
 import { ContactCta, PrimaryCta } from './Ctas'
 import MarketingLayout from './MarketingLayout'
 import { Caption, Crop, Frame, HeroScene, Reveal, SHOTS } from './experience'
 import { Ecosystem, FinanceChapter } from './chapters'
 import { FinalCta } from './FinalCta'
+import { useMktI18n } from './i18n/MarketingI18n'
 import './experience.css'
-
-const softwareJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: BRAND,
-  applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web',
-  description: SEO.description,
-  url: SITE_ORIGIN,
-  offers: {
-    '@type': 'AggregateOffer',
-    priceCurrency: 'MAD',
-    lowPrice: '0',
-    highPrice: '599',
-    offerCount: 3,
-  },
-}
 
 const Tick = () => (
   <svg className="mkt-tick" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -34,7 +18,7 @@ const Tick = () => (
   </svg>
 )
 
-const Shot = ({ title, src, pos, alt, overlay }) => {
+const Shot = ({ title, src, pos, alt, overlay, isRtl }) => {
   const reduce = useReducedMotion()
   return (
     <motion.div
@@ -48,7 +32,7 @@ const Shot = ({ title, src, pos, alt, overlay }) => {
       {overlay ? (
         <motion.div
           className="mkt-spot-overlay"
-          initial={reduce ? false : { opacity: 0, y: 18, x: 16 }}
+          initial={reduce ? false : { opacity: 0, y: 18, x: isRtl ? -16 : 16 }}
           whileInView={reduce ? undefined : { opacity: 1, y: 0, x: 0 }}
           viewport={{ once: true, margin: '-12%' }}
           transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
@@ -62,7 +46,7 @@ const Shot = ({ title, src, pos, alt, overlay }) => {
   )
 }
 
-const Spotlight = ({ id, kicker, title, lead, points, shot, overlay, flip = false, tone = 'paper' }) => (
+const Spotlight = ({ id, kicker, title, lead, points, shot, overlay, flip = false, tone = 'paper', isRtl, cta }) => (
   <section id={id} className={`mkt-spot is-${tone}`}>
     <div className={`mkt-wrap mkt-spot-grid${flip ? ' is-flip' : ''}`}>
       <Reveal className="mkt-spot-copy">
@@ -80,11 +64,11 @@ const Spotlight = ({ id, kicker, title, lead, points, shot, overlay, flip = fals
           </ul>
         ) : null}
         <div className="mkt-actions">
-          <PrimaryCta arrow>Start your free trial</PrimaryCta>
+          <PrimaryCta arrow>{cta}</PrimaryCta>
         </div>
       </Reveal>
       <Reveal className="mkt-spot-visual" delay={0.08}>
-        <Shot {...shot} overlay={overlay} />
+        <Shot {...shot} overlay={overlay} isRtl={isRtl} />
         <Caption />
       </Reveal>
     </div>
@@ -93,14 +77,42 @@ const Spotlight = ({ id, kicker, title, lead, points, shot, overlay, flip = fals
 
 export const MarketingHome = () => (
   <MarketingLayout>
+    <HomeInner />
+  </MarketingLayout>
+)
+
+const HomeInner = () => {
+  const { t, ta, htmlLang, ogLocale, dir } = useMktI18n()
+  const isRtl = dir === 'rtl'
+  const softwareJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: BRAND,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    description: t('seo.homeDescription'),
+    url: SITE_ORIGIN,
+    inLanguage: htmlLang,
+    offers: {
+      '@type': 'AggregateOffer',
+      priceCurrency: 'MAD',
+      lowPrice: '0',
+      highPrice: '599',
+      offerCount: 3,
+    },
+  }
+
+  return (
+    <>
     <SeoHead
-      title={SEO.title}
-      description={SEO.description}
+      title={t('seo.homeTitle')}
+      description={t('seo.homeDescription')}
       path="/"
-      lang="en"
-      locale="en_GB"
+      lang={htmlLang}
+      dir={dir}
+      locale={ogLocale}
       siteName={BRAND}
-      jsonLd={[organizationJsonLd(null), websiteJsonLd(null), softwareJsonLd]}
+      jsonLd={[organizationJsonLd(null), { ...websiteJsonLd(null), inLanguage: htmlLang }, softwareJsonLd]}
     />
 
     <section className="mkt-xp-hero">
@@ -108,42 +120,39 @@ export const MarketingHome = () => (
         <div className="mkt-xp-hero-copy">
           <BrandMark variant="dark" size="hero" />
           <p className="mkt-badge">
-            <i /> Car rental operating system
+            <i /> {t('hero.badge')}
           </p>
           <h1 className="mkt-h1">
-            The operating system for <em>modern car rental</em> businesses.
+            {t('hero.titleBefore')}
+            <em>{t('hero.titleEm')}</em>
+            {t('hero.titleAfter')}
           </h1>
-          <p className="mkt-lead">
-            KRIRIDER is the platform rental companies use to run reservations, fleet, customers, contracts, payments,
-            invoices and analytics from one workspace.
-          </p>
+          <p className="mkt-lead">{t('hero.lead')}</p>
           <ul className="mkt-points">
-            <li>Save time at the desk</li>
-            <li>Keep the fleet visible</li>
-            <li>Close the rental digitally</li>
+            <li>{t('hero.p1')}</li>
+            <li>{t('hero.p2')}</li>
+            <li>{t('hero.p3')}</li>
           </ul>
           <div className="mkt-actions">
-            <PrimaryCta arrow>Start free trial</PrimaryCta>
+            <PrimaryCta arrow>{t('cta.trial')}</PrimaryCta>
             <a className="mkt-btn mkt-btn-ghost-light" href="#product">
-              Explore the platform
+              {t('cta.explore')}
             </a>
           </div>
-          <p className="mkt-note mkt-note-light">
-            {TRIAL_DAYS}-day free trial — one per agency. No payment to start.
-          </p>
+          <p className="mkt-note mkt-note-light">{t('hero.note', { days: TRIAL_DAYS })}</p>
         </div>
         <HeroScene />
       </div>
     </section>
 
-    <section className="mkt-proof" aria-label="Customers">
+    <section className="mkt-proof" aria-label={t('proof.label')}>
       <div className="mkt-wrap mkt-proof-row">
-        <p>Trusted by car rental companies on KRIRIDER</p>
+        <p>{t('proof.title')}</p>
         <div className="mkt-proof-logos">
           {CLIENTS.map((client) => (
             <strong key={client.name}>
               {client.name}
-              <span>Client</span>
+              <span>{t('proof.client')}</span>
             </strong>
           ))}
         </div>
@@ -153,15 +162,17 @@ export const MarketingHome = () => (
     <Spotlight
       id="product"
       tone="paper"
-      kicker="One workspace"
-      title="Run your entire operation from one workspace."
-      lead="The owner dashboard is the morning view: occupancy, bookings, revenue and fleet status — then the same product opens the work behind each number."
-      points={['Bookings, fleet and revenue in one place', 'Walk-in and online in the same desk', 'Staff work in a shared agency account']}
+      isRtl={isRtl}
+      cta={t('cta.trialLong')}
+      kicker={t('spot.product.kicker')}
+      title={t('spot.product.title')}
+      lead={t('spot.product.lead')}
+      points={[t('spot.product.p1'), t('spot.product.p2'), t('spot.product.p3')]}
       shot={{
-        title: 'Dashboard',
+        title: t('frames.dashboard'),
         src: SHOTS.dashboard,
         pos: '50% 8%',
-        alt: 'KRIRIDER dashboard with occupancy, bookings and fleet status',
+        alt: t('alts.dashboard'),
       }}
     />
 
@@ -169,42 +180,46 @@ export const MarketingHome = () => (
       id="features"
       tone="sand"
       flip
-      kicker="Reservations"
-      title="Reservations without the spreadsheet chaos."
-      lead="Online, walk-in and WhatsApp channels share statuses from pending through return. The calendar, the list and the booking file are the same rental."
-      points={['Calendar occupancy against live bookings', 'Walk-in created at the desk', 'Customer history on the agency record']}
+      isRtl={isRtl}
+      cta={t('cta.trialLong')}
+      kicker={t('spot.features.kicker')}
+      title={t('spot.features.title')}
+      lead={t('spot.features.lead')}
+      points={[t('spot.features.p1'), t('spot.features.p2'), t('spot.features.p3')]}
       shot={{
-        title: 'Calendar',
+        title: t('frames.calendar'),
         src: SHOTS.calendar,
         pos: '50% 28%',
-        alt: 'KRIRIDER reservation calendar',
+        alt: t('alts.calendar'),
       }}
       overlay={{
-        title: 'Reservation',
+        title: t('frames.reservation'),
         src: SHOTS.reservations,
         pos: '74% 30%',
-        alt: 'KRIRIDER reservation list',
+        alt: t('alts.reservations'),
       }}
     />
 
     <Spotlight
       id="fleet"
       tone="paper"
-      kicker="Fleet"
-      title="A fleet that stays organized."
-      lead="Each row is a physical vehicle — Fleet ID, VIN, plate, mileage and branch. Availability and maintenance sit next to the booking that needs the car."
-      points={['Physical assets, not spreadsheet rows', 'Locations attached to the vehicle', 'Maintenance tracked per car']}
+      isRtl={isRtl}
+      cta={t('cta.trialLong')}
+      kicker={t('spot.fleet.kicker')}
+      title={t('spot.fleet.title')}
+      lead={t('spot.fleet.lead')}
+      points={[t('spot.fleet.p1'), t('spot.fleet.p2'), t('spot.fleet.p3')]}
       shot={{
-        title: 'Manage cars',
+        title: t('frames.manageCars'),
         src: SHOTS.fleet,
         pos: '48% 16%',
-        alt: 'KRIRIDER fleet table with vehicles, plates and status',
+        alt: t('alts.fleet'),
       }}
       overlay={{
-        title: 'Maintenance',
+        title: t('frames.maintenance'),
         src: SHOTS.maintenance,
         pos: '50% 20%',
-        alt: 'KRIRIDER fleet maintenance',
+        alt: t('alts.maintenance'),
       }}
     />
 
@@ -212,21 +227,23 @@ export const MarketingHome = () => (
       id="contracts"
       tone="sand"
       flip
-      kicker="Documents"
-      title="Contracts and signatures, completely digital."
-      lead="Contracts and invoices are generated from the rental. Customers complete files through a dedicated completion link — the stay is not retyped onto paper."
-      points={['PDFs generated from the booking', 'Remote signature requests', 'Agency templates for contracts and invoices']}
+      isRtl={isRtl}
+      cta={t('cta.trialLong')}
+      kicker={t('spot.contracts.kicker')}
+      title={t('spot.contracts.title')}
+      lead={t('spot.contracts.lead')}
+      points={[t('spot.contracts.p1'), t('spot.contracts.p2'), t('spot.contracts.p3')]}
       shot={{
-        title: 'Contracts',
+        title: t('frames.contracts'),
         src: SHOTS.contracts,
         pos: '52% 14%',
-        alt: 'KRIRIDER contract workspace',
+        alt: t('alts.contracts'),
       }}
       overlay={{
-        title: 'Signatures',
+        title: t('frames.signatures'),
         src: SHOTS.signatures,
         pos: '68% 35%',
-        alt: 'KRIRIDER signature requests',
+        alt: t('alts.signatures'),
       }}
     />
 
@@ -237,29 +254,26 @@ export const MarketingHome = () => (
       <div className="mkt-wrap">
         <Reveal className="mkt-intro mkt-intro-center">
           <BrandMark variant="light" size="page" />
-          <p className="mkt-kicker">Pricing</p>
-          <h2 className="mkt-h2">Simple, transparent plans.</h2>
-          <p className="mkt-lead">
-            Start free. After {TRIAL_DAYS} days, continue on Starter, Professional or Business. No card during
-            registration.
-          </p>
+          <p className="mkt-kicker">{t('pricing.kicker')}</p>
+          <h2 className="mkt-h2">{t('pricing.title')}</h2>
+          <p className="mkt-lead">{t('pricing.lead', { days: TRIAL_DAYS })}</p>
         </Reveal>
         <div className="mkt-plans">
           {PLANS.map((plan) => (
             <Reveal key={plan.id} className={`mkt-plan${plan.popular ? ' is-pop' : ''}`}>
-              {plan.popular ? <span className="mkt-plan-badge">Most popular</span> : null}
-              <h3>{plan.name}</h3>
+              {plan.popular ? <span className="mkt-plan-badge">{t('pricing.popular')}</span> : null}
+              <h3>{t(`pricing.${plan.id}.name`)}</h3>
               <p className="mkt-amount">
-                {plan.price}
+                {plan.id === 'business' ? t('pricing.business.price') : plan.price}
                 {plan.currency ? (
                   <small>
-                    {plan.currency}/{plan.interval}
+                    {plan.currency}/{t('pricing.month')}
                   </small>
                 ) : null}
               </p>
-              <p className="mkt-plan-audience">{plan.audience}</p>
+              <p className="mkt-plan-audience">{t(`pricing.${plan.id}.audience`)}</p>
               <ul>
-                {plan.features.map((feature) => (
+                {ta(`pricing.${plan.id}.features`).map((feature) => (
                   <li key={feature}>
                     <Tick />
                     {feature}
@@ -267,21 +281,20 @@ export const MarketingHome = () => (
                 ))}
               </ul>
               {plan.id === 'business' ? (
-                <ContactCta>Talk to us</ContactCta>
+                <ContactCta>{t('cta.talk')}</ContactCta>
               ) : (
-                <PrimaryCta>Start free trial</PrimaryCta>
+                <PrimaryCta>{t('cta.trial')}</PrimaryCta>
               )}
             </Reveal>
           ))}
         </div>
-        <p className="mkt-note">
-          Starter, Professional and Business are marketing names for Basic, Pro and Enterprise in the product catalog.
-        </p>
+        <p className="mkt-note">{t('pricing.note')}</p>
       </div>
     </section>
 
     <FinalCta />
-  </MarketingLayout>
-)
+  </>
+  )
+}
 
 export default MarketingHome

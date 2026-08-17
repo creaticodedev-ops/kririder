@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { ContactCta, PrimaryCta } from './Ctas'
 import { TRIAL_DAYS } from './config'
+import { useMktI18n } from './i18n/MarketingI18n'
 
 const Car = ({ uid }) => (
   <svg className="mkt-final-car" viewBox="0 0 720 220" aria-hidden>
@@ -51,6 +52,7 @@ const Car = ({ uid }) => (
 )
 
 export const FinalCta = () => {
+  const { t } = useMktI18n()
   const reduce = useReducedMotion()
   const ref = useRef(null)
   const uid = useId().replace(/:/g, '')
@@ -96,16 +98,14 @@ export const FinalCta = () => {
       </div>
       <div className="mkt-final-scrim" aria-hidden />
       <div className="mkt-wrap mkt-final-copy">
-        <p className="mkt-kicker">Get started</p>
-        <h2 className="mkt-h2">Run your rental business with KRIRIDER.</h2>
-        <p className="mkt-lead">
-          Create an account in minutes. {TRIAL_DAYS}-day free trial — one per agency. No payment during registration.
-        </p>
+        <p className="mkt-kicker">{t('final.kicker')}</p>
+        <h2 className="mkt-h2">{t('final.title')}</h2>
+        <p className="mkt-lead">{t('final.lead', { days: TRIAL_DAYS })}</p>
         <div className="mkt-actions">
           <PrimaryCta variant="light" arrow>
-            Start your free trial
+            {t('cta.trialLong')}
           </PrimaryCta>
-          <ContactCta className="mkt-btn-ghost-light">Talk to us</ContactCta>
+          <ContactCta className="mkt-btn-ghost-light">{t('cta.talk')}</ContactCta>
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, useMotionValueEvent, useReducedMotion, useTransform } from 'motion/react'
 import { Caption, Crop, Frame, Reveal, SHOTS, StickyScene } from './experience'
+import { useMktI18n } from './i18n/MarketingI18n'
 
 const StepLabel = ({ progress, steps }) => {
   const [index, setIndex] = useState(0)
@@ -236,23 +237,22 @@ export const ContractChapter = () => {
 }
 
 const FinancePin = ({ progress }) => {
+  const { t, ta, isRtl } = useMktI18n()
   const reduce = useReducedMotion()
-  const x = useTransform(progress, [0, 1], reduce ? ['0%', '0%'] : ['0%', '-75%'])
+  const x = useTransform(progress, [0, 1], reduce ? ['0%', '0%'] : ['0%', isRtl ? '75%' : '-75%'])
   const slides = [
-    { src: SHOTS.revenues, title: 'Revenues', alt: 'KRIRIDER revenues with paid and unpaid totals' },
-    { src: SHOTS.invoices, title: 'Invoices', alt: 'KRIRIDER invoices' },
-    { src: SHOTS.analytics, title: 'Analytics', alt: 'KRIRIDER analytics' },
-    { src: SHOTS.reports, title: 'Reports', alt: 'KRIRIDER reports and exports' },
+    { src: SHOTS.revenues, title: t('frames.revenues'), alt: t('alts.revenues') },
+    { src: SHOTS.invoices, title: t('frames.invoices'), alt: t('alts.invoices') },
+    { src: SHOTS.analytics, title: t('frames.analytics'), alt: t('alts.analytics') },
+    { src: SHOTS.reports, title: t('frames.reports'), alt: t('alts.reports') },
   ]
   return (
     <div className="mkt-xp-chapter">
       <div className="mkt-xp-copy">
-        <p className="mkt-kicker">Finance & analytics</p>
-        <h2 className="mkt-h2">Know exactly how your business is performing.</h2>
-        <p className="mkt-lead">
-          Booking-derived income, invoices and CSV/PDF reports sit next to the work that produced them.
-        </p>
-        <StepLabel progress={progress} steps={['Revenues', 'Invoices', 'Analytics', 'Reports']} />
+        <p className="mkt-kicker">{t('finance.kicker')}</p>
+        <h2 className="mkt-h2">{t('finance.title')}</h2>
+        <p className="mkt-lead">{t('finance.lead')}</p>
+        <StepLabel progress={progress} steps={ta('finance.steps')} />
       </div>
       <div className="mkt-xp-film">
         <motion.div className="mkt-xp-film-track" style={{ x }}>
@@ -276,49 +276,50 @@ export const FinanceChapter = () => {
   )
 }
 
-export const Ecosystem = () => (
+export const Ecosystem = () => {
+  const { t } = useMktI18n()
+  return (
   <section className="mkt-xp-eco" id="workspace">
     <div className="mkt-wrap">
       <Reveal className="mkt-intro">
-        <p className="mkt-kicker">The platform</p>
-        <h2 className="mkt-h2">The whole operation, in one KRIRIDER workspace.</h2>
-        <p className="mkt-lead">
-          Dashboard, desk, documents, money and the public storefront share the same agency account.
-        </p>
+        <p className="mkt-kicker">{t('eco.kicker')}</p>
+        <h2 className="mkt-h2">{t('eco.title')}</h2>
+        <p className="mkt-lead">{t('eco.lead')}</p>
       </Reveal>
       <div className="mkt-xp-eco-stage">
         <Reveal className="mkt-xp-eco-core" delay={0.05}>
-          <Frame title="Dashboard" className="is-hero">
-            <Crop src={SHOTS.dashboard} pos="50% 10%" alt="KRIRIDER dashboard" />
+          <Frame title={t('frames.dashboard')} className="is-hero">
+            <Crop src={SHOTS.dashboard} pos="50% 10%" alt={t('alts.dashboard')} />
           </Frame>
         </Reveal>
         <Reveal className="mkt-xp-eco-s is-a" delay={0.12}>
-          <Frame title="Walk-in">
-            <Crop src={SHOTS.walkin} pos="50% 20%" alt="KRIRIDER walk-in reservation" />
+          <Frame title={t('frames.walkin')}>
+            <Crop src={SHOTS.walkin} pos="50% 20%" alt={t('alts.walkin')} />
           </Frame>
         </Reveal>
         <Reveal className="mkt-xp-eco-s is-b" delay={0.18}>
-          <Frame title="Customers">
-            <Crop src={SHOTS.customers} pos="50% 22%" alt="KRIRIDER customers" />
+          <Frame title={t('frames.customers')}>
+            <Crop src={SHOTS.customers} pos="50% 22%" alt={t('alts.customers')} />
           </Frame>
         </Reveal>
         <Reveal className="mkt-xp-eco-s is-c" delay={0.24}>
-          <Frame title="Storefront">
-            <Crop src={SHOTS.storefront} pos="50% 18%" alt="Agency storefront on KRIRIDER" />
+          <Frame title={t('frames.storefront')}>
+            <Crop src={SHOTS.storefront} pos="50% 18%" alt={t('alts.storefront')} />
           </Frame>
         </Reveal>
         <Reveal className="mkt-xp-eco-s is-d" delay={0.3}>
-          <Frame title="Templates">
-            <Crop src={SHOTS.templates} pos="50% 20%" alt="KRIRIDER document templates" />
+          <Frame title={t('frames.templates')}>
+            <Crop src={SHOTS.templates} pos="50% 20%" alt={t('alts.templates')} />
           </Frame>
         </Reveal>
         <Reveal className="mkt-xp-eco-s is-e" delay={0.36}>
-          <Frame title="Accounting">
-            <Crop src={SHOTS.accounting} pos="50% 20%" alt="KRIRIDER accounting" />
+          <Frame title={t('frames.accounting')}>
+            <Crop src={SHOTS.accounting} pos="50% 20%" alt={t('alts.accounting')} />
           </Frame>
         </Reveal>
       </div>
       <Caption />
     </div>
   </section>
-)
+  )
+}

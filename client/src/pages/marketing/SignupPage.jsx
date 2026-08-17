@@ -8,11 +8,12 @@ import { resolveOwnerPermissions } from '../../utils/ownerPermissions'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import BrandMark from '../../marketing/BrandMark'
 import SignupStage from '../../marketing/SignupStage'
+import MktLangSwitch from '../../marketing/MktLangSwitch'
+import { useMktI18n } from '../../marketing/i18n/MarketingI18n'
 import { BRAND, CLIENTS, TRIAL_DAYS } from '../../marketing/config'
 import '../../marketing/signup.css'
 
 const COUNTRIES = ['Morocco', 'France', 'Spain', 'Belgium', 'United Kingdom', 'United Arab Emirates', 'Tunisia', 'Algeria', 'Senegal', 'Other']
-const STEPS = ['Account', 'Business', 'Workspace']
 
 const empty = {
   name: '',
@@ -68,13 +69,26 @@ const Field = ({ id, label, error, children }) => (
   </div>
 )
 
-export const SignupPage = () => {
+const Arrow = () => (
+  <svg className="mkt-btn-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const SignupPage = () => (
+  <MarketingLayout footer={false} nav={false}>
+    <SignupInner />
+  </MarketingLayout>
+)
+
+const SignupInner = () => {
   const navigate = useNavigate()
   const reduce = useReducedMotion()
+  const { t, ta, htmlLang, ogLocale, dir, isRtl } = useMktI18n()
   const { axios, isOwner, setToken, setUser, setIsOwner, setOnboardingRequired, applyLicense, setShowLogin } =
     useAppContext()
   const [step, setStep] = useState(0)
-  const [dir, setDir] = useState(1)
+  const [slide, setSlide] = useState(1)
   const [form, setForm] = useState(empty)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -84,6 +98,8 @@ export const SignupPage = () => {
   const [showPass, setShowPass] = useState(false)
   const [showPass2, setShowPass2] = useState(false)
   const [touched, setTouched] = useState({})
+  const steps = ta('signup.steps')
+  const flow = isRtl ? -1 : 1
 
   useEffect(() => {
     if (isOwner && !created) navigate('/owner', { replace: true })
@@ -105,39 +121,39 @@ export const SignupPage = () => {
     if (error) setError('')
   }
 
-  const blur = (key) => () => setTouched((t) => ({ ...t, [key]: true }))
+  const blur = (key) => () => setTouched((prev) => ({ ...prev, [key]: true }))
 
   const fieldErrors = useMemo(() => {
     const next = {}
-    if (touched.name && !form.name.trim()) next.name = 'Enter your full name'
-    if (touched.email && (!form.email.trim() || !form.email.includes('@'))) next.email = 'Enter a valid work email'
-    if (touched.password && form.password.length < minPassword) next.password = `Password must be at least ${minPassword} characters`
-    if (touched.confirmPassword && form.password !== form.confirmPassword) next.confirmPassword = 'Passwords do not match'
-    if (touched.agencyName && !form.agencyName.trim()) next.agencyName = 'Enter your rental company name'
-    if (touched.country && !form.country.trim()) next.country = 'Select a country'
+    if (touched.name && !form.name.trim()) next.name = t('signup.errName')
+    if (touched.email && (!form.email.trim() || !form.email.includes('@'))) next.email = t('signup.errEmail')
+    if (touched.password && form.password.length < minPassword) next.password = t('signup.errPassword', { min: minPassword })
+    if (touched.confirmPassword && form.password !== form.confirmPassword) next.confirmPassword = t('signup.errMatch')
+    if (touched.agencyName && !form.agencyName.trim()) next.agencyName = t('signup.errAgency')
+    if (touched.country && !form.country.trim()) next.country = t('signup.errCountry')
     return next
-  }, [form, touched, minPassword])
+  }, [form, touched, minPassword, t])
 
   const validateStep0 = () => {
-    if (!form.name.trim()) return 'Enter your full name'
-    if (!form.email.trim() || !form.email.includes('@')) return 'Enter a valid work email'
-    if (form.password.length < minPassword) return `Password must be at least ${minPassword} characters`
-    if (form.password !== form.confirmPassword) return 'Passwords do not match'
+    if (!form.name.trim()) return t('signup.errName')
+    if (!form.email.trim() || !form.email.includes('@')) return t('signup.errEmail')
+    if (form.password.length < minPassword) return t('signup.errPassword', { min: minPassword })
+    if (form.password !== form.confirmPassword) return t('signup.errMatch')
     return ''
   }
 
   const validateStep1 = () => {
-    if (!form.agencyName.trim()) return 'Enter your rental company name'
-    if (!form.country.trim()) return 'Select a country'
+    if (!form.agencyName.trim()) return t('signup.errAgency')
+    if (!form.country.trim()) return t('signup.errCountry')
     return ''
   }
 
   const stepReady = step === 0 ? !validateStep0() : step === 1 ? !validateStep1() : true
   const strength = passwordScore(form.password)
-  const strengthLabel = strength === 1 ? 'Weak' : strength === 2 ? 'Medium' : strength === 3 ? 'Strong' : ''
+  const strengthLabel = strength === 1 ? t('signup.weak') : strength === 2 ? t('signup.medium') : strength === 3 ? t('signup.strong') : ''
 
   const go = (next) => {
-    setDir(next > step ? 1 : -1)
+    setSlide(next > step ? 1 : -1)
     setError('')
     setStep(next)
   }
@@ -146,10 +162,10 @@ export const SignupPage = () => {
     const msg = step === 0 ? validateStep0() : validateStep1()
     if (msg) {
       setError(msg)
-      setTouched((t) =>
+      setTouched((prev) =>
         step === 0
-          ? { ...t, name: true, email: true, password: true, confirmPassword: true }
-          : { ...t, agencyName: true, country: true },
+          ? { ...prev, name: true, email: true, password: true, confirmPassword: true }
+          : { ...prev, agencyName: true, country: true },
       )
       return
     }
@@ -181,7 +197,7 @@ export const SignupPage = () => {
         fleetSize: form.fleetSize.trim(),
       })
       if (!data?.success || !data.token) {
-        throw new Error(data?.message || 'Could not create the account')
+        throw new Error(data?.message || t('signup.fail'))
       }
       localStorage.setItem('token', data.token)
       axios.defaults.headers.common.Authorization = `Bearer ${data.token}`
@@ -196,24 +212,25 @@ export const SignupPage = () => {
       })
       go(3)
     } catch (err) {
-      setError(getErrorMessage(err, err.response?.data?.message || 'Could not create the account'))
+      setError(getErrorMessage(err, err.response?.data?.message || t('signup.fail')))
     } finally {
       setSubmitting(false)
     }
   }
 
-  const transition = reduce
-    ? { duration: 0 }
-    : { duration: 0.38, ease }
+  const transition = reduce ? { duration: 0 } : { duration: 0.38, ease }
+  const stepKicker =
+    step === 0 ? t('signup.stepAccount') : step === 1 ? t('signup.stepBusiness') : t('signup.stepWorkspace')
 
   return (
-    <MarketingLayout footer={false} nav={false}>
+    <>
       <SeoHead
-        title="Create your KRIRIDER account"
-        description="Start a free KRIRIDER trial and create your rental workspace in minutes."
+        title={t('seo.signupTitle')}
+        description={t('seo.signupDescription')}
         path="/signup"
-        lang="en"
-        locale="en_GB"
+        lang={htmlLang}
+        dir={dir}
+        locale={ogLocale}
         siteName={BRAND}
       />
       <div className="onboard">
@@ -223,62 +240,60 @@ export const SignupPage = () => {
         <header className="onboard-top">
           <BrandMark variant="dark" size="nav" />
           <div className="onboard-top-links">
+            <MktLangSwitch />
             <button type="button" onClick={() => setShowLogin(true)}>
-              Log in
+              {t('nav.login')}
             </button>
-            <Link to="/">Back to site</Link>
+            <Link to="/">{t('signup.backToSite')}</Link>
           </div>
         </header>
 
         <div className="onboard-body">
           <div className="onboard-intro">
-            <p className="mkt-kicker">Start your free trial</p>
+            <p className="mkt-kicker">{t('signup.kicker')}</p>
             <h1>
-              Your rental workspace <em>starts here.</em>
+              {t('signup.titleBefore')}
+              <em>{t('signup.titleEm')}</em>
             </h1>
-            <p>
-              {trialDays} days free. No payment required.
-            </p>
+            <p>{t('signup.leadShort', { days: trialDays })}</p>
           </div>
           <div className="onboard-copy">
-            <p className="mkt-kicker">Start your free trial</p>
+            <p className="mkt-kicker">{t('signup.kicker')}</p>
             <h1>
-              Your rental workspace <em>starts here.</em>
+              {t('signup.titleBefore')}
+              <em>{t('signup.titleEm')}</em>
             </h1>
-            <p className="mkt-lead">
-              {trialDays} days free. No payment required. Create your owner account and open a KRIRIDER workspace for
-              reservations, fleet, customers and contracts.
-            </p>
+            <p className="mkt-lead">{t('signup.lead', { days: trialDays })}</p>
             <ul className="onboard-points">
               <li>
                 <PointIco d="M4 10h12M4 6h12M4 14h8" />
                 <div>
-                  <strong>One operating system</strong>
-                  <span>Reservations, fleet, customers, contracts and daily operations in one workspace.</span>
+                  <strong>{t('signup.point1Title')}</strong>
+                  <span>{t('signup.point1')}</span>
                 </div>
               </li>
               <li>
                 <PointIco d="M10 3l7 4v6c0 3.2-2.8 5.5-7 7-4.2-1.5-7-3.8-7-7V7l7-4z" />
                 <div>
-                  <strong>Built for rental companies</strong>
-                  <span>KRIRIDER is the platform. Your agency brand stays yours.</span>
+                  <strong>{t('signup.point2Title')}</strong>
+                  <span>{t('signup.point2')}</span>
                 </div>
               </li>
               <li>
                 <PointIco d="M4 11l4 4 8-8" />
                 <div>
-                  <strong>{trialDays}-day trial</strong>
-                  <span>One trial per agency. No payment during registration.</span>
+                  <strong>{t('signup.point3Title', { days: trialDays })}</strong>
+                  <span>{t('signup.point3')}</span>
                 </div>
               </li>
             </ul>
             <div className="onboard-clients">
-              <p>Trusted by car rental companies on KRIRIDER</p>
+              <p>{t('signup.trusted')}</p>
               <div>
                 {CLIENTS.map((client) => (
                   <strong key={client.name}>
                     {client.name}
-                    <span>Client</span>
+                    <span>{t('signup.client')}</span>
                   </strong>
                 ))}
               </div>
@@ -289,9 +304,18 @@ export const SignupPage = () => {
 
           <div className="onboard-form">
             {step < 3 ? (
-              <form onSubmit={step === 2 ? createWorkspace : (e) => { e.preventDefault(); next() }}>
-                <div className="onboard-progress" aria-label="Registration steps">
-                  {STEPS.map((label, i) => (
+              <form
+                onSubmit={
+                  step === 2
+                    ? createWorkspace
+                    : (e) => {
+                        e.preventDefault()
+                        next()
+                      }
+                }
+              >
+                <div className="onboard-progress" aria-label={t('signup.stepsAria')}>
+                  {steps.map((label, i) => (
                     <span key={label} style={{ display: 'contents' }}>
                       {i > 0 ? <i /> : null}
                       <button
@@ -310,35 +334,38 @@ export const SignupPage = () => {
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={step}
-                    initial={reduce ? false : { opacity: 0, x: 18 * dir, filter: 'blur(6px)' }}
+                    initial={reduce ? false : { opacity: 0, x: 18 * slide * flow, filter: 'blur(6px)' }}
                     animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                    exit={reduce ? undefined : { opacity: 0, x: -14 * dir, filter: 'blur(6px)' }}
+                    exit={reduce ? undefined : { opacity: 0, x: -14 * slide * flow, filter: 'blur(6px)' }}
                     transition={transition}
                   >
                     <p className="onboard-step-kicker">
-                      Step {String(step + 1).padStart(2, '0')} — {step === 0 ? 'Your account' : step === 1 ? 'Your business' : 'Your workspace'}
+                      {t('signup.stepLabel', { n: String(step + 1).padStart(2, '0'), name: stepKicker })}
                     </p>
                     <h2>
-                      {step === 0 && 'Let’s create your account.'}
-                      {step === 1 && 'Tell us about the agency.'}
-                      {step === 2 && 'Prepare the workspace.'}
+                      {step === 0 && t('signup.hAccount')}
+                      {step === 1 && t('signup.hBusiness')}
+                      {step === 2 && t('signup.hWorkspace')}
                     </h2>
                     <p className="mkt-lead">
-                      {step === 0 && 'This becomes the owner login for your KRIRIDER workspace.'}
-                      {step === 1 && 'Your company name is how the workspace will appear.'}
+                      {step === 0 && t('signup.leadAccount')}
+                      {step === 1 && t('signup.leadBusiness')}
                       {step === 2 &&
-                        `KRIRIDER will create your owner account, ${form.agencyName || 'your agency'}, and a ${trialDays}-day trial workspace.`}
+                        t('signup.leadWorkspace', {
+                          agency: form.agencyName || t('signup.yourAgency'),
+                          days: trialDays,
+                        })}
                     </p>
 
                     {step === 0 && (
                       <div className="onboard-fields">
-                        <Field id="su-name" label="Full name" error={fieldErrors.name}>
+                        <Field id="su-name" label={t('signup.name')} error={fieldErrors.name}>
                           <input id="su-name" autoComplete="name" required value={form.name} onChange={setField('name')} onBlur={blur('name')} />
                         </Field>
-                        <Field id="su-email" label="Work email" error={fieldErrors.email}>
+                        <Field id="su-email" label={t('signup.email')} error={fieldErrors.email}>
                           <input id="su-email" type="email" autoComplete="email" required value={form.email} onChange={setField('email')} onBlur={blur('email')} />
                         </Field>
-                        <Field id="su-pass" label="Password" error={fieldErrors.password}>
+                        <Field id="su-pass" label={t('signup.password')} error={fieldErrors.password}>
                           <div className="onboard-pass">
                             <input
                               id="su-pass"
@@ -350,7 +377,12 @@ export const SignupPage = () => {
                               onChange={setField('password')}
                               onBlur={blur('password')}
                             />
-                            <button type="button" className="onboard-eye" aria-label={showPass ? 'Hide password' : 'Show password'} onClick={() => setShowPass((v) => !v)}>
+                            <button
+                              type="button"
+                              className="onboard-eye"
+                              aria-label={showPass ? t('signup.hidePassword') : t('signup.showPassword')}
+                              onClick={() => setShowPass((v) => !v)}
+                            >
                               <Eye off={showPass} />
                             </button>
                           </div>
@@ -359,11 +391,11 @@ export const SignupPage = () => {
                               <i className={strength >= 1 ? 'is-on' : ''} />
                               <i className={strength >= 2 ? 'is-on' : ''} />
                               <i className={strength >= 3 ? 'is-on' : ''} />
-                              <span>{strengthLabel} strength</span>
+                              <span>{t('signup.strength', { level: strengthLabel })}</span>
                             </div>
                           ) : null}
                         </Field>
-                        <Field id="su-pass2" label="Confirm password" error={fieldErrors.confirmPassword}>
+                        <Field id="su-pass2" label={t('signup.confirm')} error={fieldErrors.confirmPassword}>
                           <div className="onboard-pass">
                             <input
                               id="su-pass2"
@@ -374,7 +406,12 @@ export const SignupPage = () => {
                               onChange={setField('confirmPassword')}
                               onBlur={blur('confirmPassword')}
                             />
-                            <button type="button" className="onboard-eye" aria-label={showPass2 ? 'Hide password' : 'Show password'} onClick={() => setShowPass2((v) => !v)}>
+                            <button
+                              type="button"
+                              className="onboard-eye"
+                              aria-label={showPass2 ? t('signup.hidePassword') : t('signup.showPassword')}
+                              onClick={() => setShowPass2((v) => !v)}
+                            >
                               <Eye off={showPass2} />
                             </button>
                           </div>
@@ -384,17 +421,19 @@ export const SignupPage = () => {
 
                     {step === 1 && (
                       <div className="onboard-fields">
-                        <Field id="su-agency" label="Company / agency name" error={fieldErrors.agencyName}>
+                        <Field id="su-agency" label={t('signup.agency')} error={fieldErrors.agencyName}>
                           <input id="su-agency" required value={form.agencyName} onChange={setField('agencyName')} onBlur={blur('agencyName')} />
                         </Field>
-                        <Field id="su-country" label="Country" error={fieldErrors.country}>
+                        <Field id="su-country" label={t('signup.country')} error={fieldErrors.country}>
                           <select id="su-country" value={form.country} onChange={setField('country')} onBlur={blur('country')}>
-                            {COUNTRIES.map((c) => (
-                              <option key={c}>{c}</option>
+                            {COUNTRIES.map((country) => (
+                              <option key={country} value={country}>
+                                {t(`countries.${country}`)}
+                              </option>
                             ))}
                           </select>
                         </Field>
-                        <Field id="su-phone" label="Phone (optional)">
+                        <Field id="su-phone" label={t('signup.phone')}>
                           <input id="su-phone" type="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} />
                         </Field>
                       </div>
@@ -402,25 +441,25 @@ export const SignupPage = () => {
 
                     {step === 2 && (
                       <div className="onboard-fields">
-                        <Field id="su-city" label="City (optional)">
+                        <Field id="su-city" label={t('signup.city')}>
                           <input id="su-city" value={form.city} onChange={setField('city')} />
                         </Field>
-                        <Field id="su-fleet" label="Fleet size (optional)">
-                          <input id="su-fleet" placeholder="e.g. 12 vehicles" value={form.fleetSize} onChange={setField('fleetSize')} />
+                        <Field id="su-fleet" label={t('signup.fleet')}>
+                          <input id="su-fleet" placeholder={t('signup.fleetPh')} value={form.fleetSize} onChange={setField('fleetSize')} />
                         </Field>
                         <div className="onboard-recap">
                           <div>
-                            <span>Owner</span> {form.name || '—'}
+                            <span>{t('signup.recapOwner')}</span> {form.name || '—'}
                           </div>
                           <div>
-                            <span>Email</span> {form.email || '—'}
+                            <span>{t('signup.recapEmail')}</span> {form.email || '—'}
                           </div>
                           <div>
-                            <span>Agency</span> {form.agencyName || '—'} · {form.country}
+                            <span>{t('signup.recapAgency')}</span> {form.agencyName || '—'} · {t(`countries.${form.country}`)}
                           </div>
                         </div>
                         <p className="mkt-lead" style={{ margin: 0 }}>
-                          You will be signed in automatically. Existing emails cannot register twice.
+                          {t('signup.autoSignin')}
                         </p>
                       </div>
                     )}
@@ -436,23 +475,19 @@ export const SignupPage = () => {
                 <div className="onboard-actions">
                   {step > 0 ? (
                     <button type="button" className="onboard-back" onClick={() => go(step - 1)} disabled={submitting}>
-                      Back
+                      {t('signup.back')}
                     </button>
                   ) : null}
                   <button type="submit" className="onboard-cta" disabled={submitting || !stepReady}>
                     {submitting ? <span className="onboard-spin" aria-hidden /> : null}
-                    {step === 2 ? (submitting ? 'Creating workspace…' : 'Create account') : 'Continue'}
-                    {step < 2 ? (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : null}
+                    {step === 2 ? (submitting ? t('signup.creating') : t('signup.create')) : t('cta.continue')}
+                    {step < 2 ? <Arrow /> : null}
                   </button>
                 </div>
                 <p className="onboard-login">
-                  Already have an account?{' '}
+                  {t('signup.already')}{' '}
                   <button type="button" onClick={() => setShowLogin(true)}>
-                    Log in
+                    {t('nav.login')}
                   </button>
                 </p>
               </form>
@@ -468,18 +503,18 @@ export const SignupPage = () => {
                     <path d="M3.2 8.4l3 3.1 6.6-7" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="onboard-step-kicker">Workspace ready</p>
-                <h2>Welcome to KRIRIDER.</h2>
+                <p className="onboard-step-kicker">{t('signup.readyKicker')}</p>
+                <h2>{t('signup.welcome')}</h2>
                 <p className="mkt-lead">
-                  Your workspace is ready{created?.agency?.name ? ` for ${created.agency.name}` : ''}. Trial:{' '}
-                  {created?.trialDays || trialDays} days.
+                  {t('signup.readyLead', {
+                    forAgency: created?.agency?.name ? t('signup.forAgency', { name: created.agency.name }) : '',
+                    days: created?.trialDays || trialDays,
+                  })}
                 </p>
                 <div className="onboard-actions">
                   <button type="button" className="onboard-cta" onClick={() => navigate('/owner')}>
-                    Open dashboard
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    {t('signup.openDash')}
+                    <Arrow />
                   </button>
                 </div>
               </motion.div>
@@ -489,24 +524,24 @@ export const SignupPage = () => {
 
         <div className="onboard-rail">
           <div>
-            <strong>{trialDays} days free</strong>
-            <span>No payment during registration</span>
+            <strong>{t('signup.rail1t', { days: trialDays })}</strong>
+            <span>{t('signup.rail1s')}</span>
           </div>
           <div>
-            <strong>One trial per agency</strong>
-            <span>Owner account + workspace</span>
+            <strong>{t('signup.rail2t')}</strong>
+            <span>{t('signup.rail2s')}</span>
           </div>
           <div>
-            <strong>Ready after signup</strong>
-            <span>Signed in automatically</span>
+            <strong>{t('signup.rail3t')}</strong>
+            <span>{t('signup.rail3s')}</span>
           </div>
           <div>
-            <strong>Your brand stays yours</strong>
-            <span>KRIRIDER is the platform</span>
+            <strong>{t('signup.rail4t')}</strong>
+            <span>{t('signup.rail4s')}</span>
           </div>
         </div>
       </div>
-    </MarketingLayout>
+    </>
   )
 }
 

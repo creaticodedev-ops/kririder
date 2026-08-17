@@ -25,8 +25,7 @@
   width: 100%;
   max-width: 72.5rem;
   margin-inline: auto;
-  padding-inline: max(1.15rem, env(safe-area-inset-left));
-  padding-right: max(1.15rem, env(safe-area-inset-right));
+  padding-inline: max(1.15rem, env(safe-area-inset-left), env(safe-area-inset-right));
 }
 
 @media (min-width: 768px) {
@@ -293,6 +292,12 @@
   min-height: 2.5rem;
 }
 
+.mkt-nav-mobile {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
 .mkt-burger {
   width: 2.6rem;
   height: 2.6rem;
@@ -316,6 +321,9 @@
   }
   .mkt-nav-cta {
     display: flex;
+  }
+  .mkt-nav-mobile {
+    display: none;
   }
   .mkt-burger {
     display: none;
@@ -1472,7 +1480,7 @@
 
 .mkt-matrix th,
 .mkt-matrix td {
-  text-align: left;
+  text-align: start;
   padding: 0.95rem 0.9rem;
   border-bottom: 1px solid var(--mkt-line);
   vertical-align: top;
@@ -2245,7 +2253,7 @@
 .mkt-spot-overlay {
   position: absolute;
   width: 54%;
-  right: -4%;
+  inset-inline-end: -4%;
   bottom: -12%;
   z-index: 2;
 }
@@ -2355,7 +2363,7 @@
   .mkt-spot-overlay {
     position: relative;
     width: 100%;
-    right: auto;
+    inset-inline-end: auto;
     bottom: auto;
     margin-top: 0.75rem;
   }
@@ -2363,3 +2371,159 @@
     padding-block: 3.2rem;
   }
 }
+
+.mkt-lang {
+  position: relative;
+}
+
+.mkt-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(246, 239, 232, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(246, 239, 232, 0.88);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mkt-lang-btn:hover,
+.mkt-lang-btn[aria-expanded='true'] {
+  color: #fff;
+  border-color: rgba(246, 239, 232, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mkt-lang-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  inset-inline-end: 0;
+  z-index: 60;
+  min-width: 11.5rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: #161210;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+}
+
+.mkt-lang-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.35rem;
+  padding: 0 0.65rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: rgba(246, 239, 232, 0.82);
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  text-align: start;
+}
+
+.mkt-lang-menu button b {
+  width: 1.6rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(246, 239, 232, 0.45);
+}
+
+.mkt-lang-menu button:hover,
+.mkt-lang-menu button.is-on {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.mkt-lang-menu button.is-on b {
+  color: #e8b4b0;
+}
+
+html.mkt-rtl,
+.mkt[dir='rtl'] {
+  --font-sans: 'IBM Plex Sans Arabic', 'Outfit', sans-serif;
+  --font-display: 'Noto Naskh Arabic', 'Cormorant Garamond', serif;
+}
+
+.mkt[dir='rtl'] {
+  letter-spacing: 0;
+}
+
+.mkt[dir='rtl'] .mkt-kicker,
+.mkt[dir='rtl'] .mkt-badge,
+.mkt[dir='rtl'] .mkt-plan-badge,
+.mkt[dir='rtl'] .mkt-note,
+.mkt[dir='rtl'] .onboard-step-kicker {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mkt[dir='rtl'] .mkt-h1,
+.mkt[dir='rtl'] .mkt-h2,
+.mkt[dir='rtl'] .mkt-h3,
+.mkt[dir='rtl'] .mkt-amount {
+  letter-spacing: 0;
+  line-height: 1.28;
+}
+
+.mkt[dir='rtl'] .mkt-lead {
+  line-height: 1.85;
+}
+
+.mkt[dir='rtl'] em {
+  font-style: normal;
+  font-weight: 600;
+}
+
+.mkt[dir='rtl'] .mkt-btn {
+  white-space: normal;
+  text-align: center;
+}
+
+.mkt[dir='rtl'] .mkt-btn-arrow {
+  transform: scaleX(-1);
+}
+
+.mkt[dir='rtl'] .mkt-actions {
+  flex-direction: row;
+}
+
+.mkt[dir='rtl'] input,
+.mkt[dir='rtl'] select,
+.mkt[dir='rtl'] textarea {
+  text-align: start;
+}
+
+.mkt-xp-hero-scene,
+.mkt-xp-eco-stage,
+.mkt-xp-film,
+.mkt-xp-compose,
+.mkt-final-scene,
+.mkt-xp-frame,
+.onboard-stage,
+.onboard-shot,
+.onboard-chip {
+  direction: ltr;
+}
+
+.mkt-xp-pane,
+.onboard-shot img,
+.onboard-chip-view {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.mkt[dir='rtl'] .mkt-final-scene {
+  transform: scaleX(-1);
+}
+

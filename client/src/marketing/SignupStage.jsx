@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { SHOTS } from './productPreviews'
+import { useMktI18n } from './i18n/MarketingI18n'
 
 const useFinePointer = () => {
   const [fine, setFine] = useState(false)
@@ -43,6 +44,7 @@ const Chip = ({ src, pos, title, delay = 0 }) => {
 }
 
 export const SignupStage = () => {
+  const { t } = useMktI18n()
   const reduce = useReducedMotion()
   const fine = useFinePointer()
   const root = useRef(null)
@@ -79,11 +81,11 @@ export const SignupStage = () => {
               <i />
               <i />
             </span>
-            Owner workspace
+            {t('frames.workspace')}
           </div>
           <img
             src={SHOTS.dashboard}
-            alt="KRIRIDER dashboard. Interface shown from HDN Car, a KRIRIDER client."
+            alt={t('alts.dashboard')}
             width={1600}
             height={1000}
             decoding="async"
@@ -91,21 +93,21 @@ export const SignupStage = () => {
         </motion.figure>
       </Layer>
       <Layer mx={sx} my={sy} depth={1.15} className="onboard-float is-a">
-        <Chip src={SHOTS.reservations} pos="72% 28%" title="Reservations" delay={0.28} />
+        <Chip src={SHOTS.reservations} pos="72% 28%" title={t('frames.reservations')} delay={0.28} />
       </Layer>
       <Layer mx={sx} my={sy} depth={1.25} className="onboard-float is-b">
-        <Chip src={SHOTS.fleet} pos="48% 18%" title="Fleet" delay={0.38} />
+        <Chip src={SHOTS.fleet} pos="48% 18%" title={t('frames.fleet')} delay={0.38} />
       </Layer>
       <Layer mx={sx} my={sy} depth={1.35} className="onboard-float is-c">
-        <Chip src={SHOTS.revenues} pos="50% 20%" title="Revenue" delay={0.48} />
+        <Chip src={SHOTS.revenues} pos="50% 20%" title={t('frames.revenue')} delay={0.48} />
       </Layer>
       <Layer mx={sx} my={sy} depth={1.2} className="onboard-float is-d">
-        <Chip src={SHOTS.calendar} pos="55% 32%" title="Calendar" delay={0.56} />
+        <Chip src={SHOTS.calendar} pos="55% 32%" title={t('frames.calendar')} delay={0.56} />
       </Layer>
       <Layer mx={sx} my={sy} depth={1.3} className="onboard-float is-e">
-        <Chip src={SHOTS.contracts} pos="50% 16%" title="Contracts" delay={0.64} />
+        <Chip src={SHOTS.contracts} pos="50% 16%" title={t('frames.contracts')} delay={0.64} />
       </Layer>
-      <p className="onboard-caption">Real KRIRIDER workspace. Interface shown from HDN Car, a KRIRIDER client.</p>
+      <p className="onboard-caption">{t('caption')}</p>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useMktI18n } from './i18n/MarketingI18n'
 
 export const trialTo = () => '/signup'
 
@@ -8,23 +9,32 @@ const Arrow = () => (
   </svg>
 )
 
-export const PrimaryCta = ({ children = 'Try KRIRIDER free', className = '', variant = 'primary', arrow = false }) => (
-  <Link to="/signup" className={`mkt-btn ${variant === 'light' ? 'mkt-btn-light' : 'mkt-btn-primary'} ${className}`.trim()}>
-    {children}
-    {arrow ? <Arrow /> : null}
-  </Link>
-)
+export const PrimaryCta = ({ children, className = '', variant = 'primary', arrow = false }) => {
+  const { t } = useMktI18n()
+  return (
+    <Link to="/signup" className={`mkt-btn ${variant === 'light' ? 'mkt-btn-light' : 'mkt-btn-primary'} ${className}`.trim()}>
+      {children ?? t('cta.trial')}
+      {arrow ? <Arrow /> : null}
+    </Link>
+  )
+}
 
-export const DemoCta = ({ children = 'Create account', className = '' }) => (
-  <Link to="/signup" className={`mkt-btn mkt-btn-ghost ${className}`.trim()}>
-    {children}
-  </Link>
-)
+export const DemoCta = ({ children, className = '' }) => {
+  const { t } = useMktI18n()
+  return (
+    <Link to="/signup" className={`mkt-btn mkt-btn-ghost ${className}`.trim()}>
+      {children ?? t('cta.account')}
+    </Link>
+  )
+}
 
-export const ContactCta = ({ children = 'Talk to us', className = '' }) => (
-  <Link to="/contact" className={`mkt-btn mkt-btn-ghost ${className}`.trim()}>
-    {children}
-  </Link>
-)
+export const ContactCta = ({ children, className = '' }) => {
+  const { t } = useMktI18n()
+  return (
+    <Link to="/contact" className={`mkt-btn mkt-btn-ghost ${className}`.trim()}>
+      {children ?? t('cta.talk')}
+    </Link>
+  )
+}
 
 export default PrimaryCta

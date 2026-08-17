@@ -58,7 +58,8 @@
   justify-content: space-between;
   gap: 1rem;
   min-height: 4.4rem;
-  padding: 0.7rem max(1.2rem, env(safe-area-inset-left)) 0.7rem max(1.2rem, env(safe-area-inset-right));
+  padding-block: 0.7rem;
+  padding-inline: max(1.2rem, env(safe-area-inset-left), env(safe-area-inset-right));
 }
 
 .onboard-top-links {
@@ -792,3 +793,16 @@
     transform: translate3d(0, -8px, 0);
   }
 }
+
+.mkt[dir='rtl'] .onboard-haze {
+  right: auto;
+  left: -8%;
+}
+
+@media (min-width: 1180px) {
+  .mkt[dir='rtl'] .onboard-body {
+    grid-template-columns: minmax(23rem, 26.5rem) minmax(0, 1fr) minmax(17rem, 22.5rem);
+    grid-template-areas: 'form stage copy';
+  }
+}
+

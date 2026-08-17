@@ -11,6 +11,7 @@ const SeoHead = ({
   image = DEFAULT_OG_IMAGE,
   noindex = false,
   lang = 'fr',
+  dir,
   type = 'website',
   jsonLd = [],
   siteName = SITE_NAME,
@@ -26,9 +27,10 @@ const SeoHead = ({
   const robots = noindex ? 'noindex,nofollow' : 'index,follow'
   const graphs = (Array.isArray(jsonLd) ? jsonLd : [jsonLd]).filter(Boolean)
   const ogImage = image || DEFAULT_OG_IMAGE
+  const htmlAttributes = dir ? { lang, dir } : { lang }
 
   return (
-    <Helmet htmlAttributes={{ lang }}>
+    <Helmet htmlAttributes={htmlAttributes}>
       <title>{fullTitle}</title>
       <meta name="description" content={description || ''} />
       <meta name="robots" content={robots} />

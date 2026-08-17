@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { SHOTS } from './productPreviews'
+import { useMktI18n } from './i18n/MarketingI18n'
 
-export const Caption = () => (
-  <p className="mkt-caption">Real KRIRIDER workspace. Interface shown from HDN Car, a KRIRIDER client.</p>
-)
+export const Caption = () => {
+  const { t } = useMktI18n()
+  return <p className="mkt-caption">{t('caption')}</p>
+}
 
 export const Frame = ({ title = 'KRIRIDER', className = '', children }) => (
   <figure className={`mkt-xp-frame ${className}`.trim()}>
@@ -83,6 +85,7 @@ const Layer = ({ mx, my, depth, className, children }) => {
 }
 
 export const HeroScene = () => {
+  const { t } = useMktI18n()
   const reduce = useReducedMotion()
   const fine = useFinePointer()
   const root = useRef(null)
@@ -114,25 +117,25 @@ export const HeroScene = () => {
     >
       <Layer mx={sx} my={sy} depth={0.55} className="mkt-xp-layer is-back-left">
         <motion.div initial={enter(0.06, { rotate: -8 })} animate={{ opacity: 1, y: 0, rotate: -7 }} className="mkt-xp-tilt">
-          <Frame title="Reservations">
+          <Frame title={t('frames.reservations')}>
             <Crop src={SHOTS.reservations} pos="70% 30%" alt="" eager />
           </Frame>
         </motion.div>
       </Layer>
       <Layer mx={sx} my={sy} depth={0.45} className="mkt-xp-layer is-back-right">
         <motion.div initial={enter(0.14, { rotate: 8 })} animate={{ opacity: 1, y: 0, rotate: 6 }} className="mkt-xp-tilt">
-          <Frame title="Fleet">
+          <Frame title={t('frames.fleet')}>
             <Crop src={SHOTS.fleet} pos="48% 20%" alt="" />
           </Frame>
         </motion.div>
       </Layer>
       <Layer mx={sx} my={sy} depth={1} className="mkt-xp-layer is-main">
         <motion.div initial={enter(0.2, { scale: 0.97 })} animate={{ opacity: 1, y: 0, scale: 1 }}>
-          <Frame title="Owner workspace" className="is-hero">
+          <Frame title={t('frames.workspace')} className="is-hero">
             <Crop
               src={SHOTS.dashboard}
               pos="50% 8%"
-              alt="KRIRIDER dashboard with occupancy, bookings and fleet status"
+              alt={t('alts.dashboard')}
               eager
             />
           </Frame>
@@ -140,18 +143,18 @@ export const HeroScene = () => {
       </Layer>
       <Layer mx={sx} my={sy} depth={1.35} className="mkt-xp-layer is-chip-a">
         <motion.div initial={enter(0.4)} animate={{ opacity: 1, y: 0 }}>
-          <Frame title="Calendar">
+          <Frame title={t('frames.calendar')}>
             <Crop src={SHOTS.calendar} pos="55% 35%" alt="" />
           </Frame>
-          <span>Reservations</span>
+          <span>{t('frames.reservations')}</span>
         </motion.div>
       </Layer>
       <Layer mx={sx} my={sy} depth={1.4} className="mkt-xp-layer is-chip-b">
         <motion.div initial={enter(0.5)} animate={{ opacity: 1, y: 0 }}>
-          <Frame title="Analytics">
+          <Frame title={t('frames.analytics')}>
             <Crop src={SHOTS.analytics} pos="52% 18%" alt="" />
           </Frame>
-          <span>Revenue</span>
+          <span>{t('frames.revenue')}</span>
         </motion.div>
       </Layer>
     </div>
