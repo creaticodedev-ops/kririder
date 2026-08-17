@@ -7,7 +7,7 @@
   --mkt-accent: #8f1f1f;
   --mkt-accent-hover: #a52626;
   --mkt-soft: rgba(143, 31, 31, 0.08);
-  --mkt-hero: #141110;
+  --mkt-hero: #0b0908;
   --mkt-hero-ink: #f6efe8;
   --mkt-shadow: 0 28px 64px -28px rgba(20, 12, 10, 0.45);
   --mkt-radius: 12px;
@@ -69,8 +69,8 @@
 }
 
 .mkt-h1 {
-  font-size: clamp(2.05rem, 4.2vw, 3.45rem);
-  line-height: 1.08;
+  font-size: clamp(2.35rem, 5.4vw, 4.15rem);
+  line-height: 1.05;
   margin: 0;
 }
 
@@ -101,8 +101,8 @@
   justify-content: center;
   gap: 0.45rem;
   min-height: 2.85rem;
-  padding: 0.62rem 1.2rem;
-  border-radius: 8px;
+  padding: 0.62rem 1.25rem;
+  border-radius: 999px;
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -213,8 +213,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: #fff;
-  border-bottom: 1px solid var(--mkt-line);
+  background: #0b0908;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: env(safe-area-inset-top);
 }
 
@@ -234,14 +234,14 @@
 }
 
 .mkt-nav-links a {
-  color: rgba(26, 20, 18, 0.68);
+  color: rgba(246, 239, 232, 0.62);
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
 }
 
 .mkt-nav-links a:hover {
-  color: var(--mkt-ink);
+  color: #fff;
 }
 
 .mkt-nav-cta {
@@ -252,7 +252,7 @@
 }
 
 .mkt-nav-cta .mkt-btn-ghost {
-  color: var(--mkt-ink);
+  color: rgba(246, 239, 232, 0.88);
   border: 0;
   min-height: 2.5rem;
 }
@@ -265,7 +265,7 @@
   justify-content: center;
   border: 0;
   background: none;
-  color: var(--mkt-ink);
+  color: #f6efe8;
   cursor: pointer;
 }
 
@@ -291,8 +291,8 @@
   flex-direction: column;
   gap: 0.1rem;
   padding: 0.35rem 0 1.3rem;
-  border-top: 1px solid var(--mkt-line);
-  background: #fff;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0908;
 }
 
 .mkt-drawer a,
@@ -300,7 +300,7 @@
   min-height: 2.75rem;
   display: flex;
   align-items: center;
-  color: var(--mkt-ink);
+  color: #f6efe8;
   text-decoration: none;
   background: none;
   border: 0;
@@ -1494,10 +1494,15 @@
 }
 
 .mkt-foot {
-  background: #fff;
-  border-top: 1px solid var(--mkt-line);
+  background: #0b0908;
+  color: #f6efe8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 2.6rem;
   padding-bottom: max(1.8rem, env(safe-area-inset-bottom));
+}
+
+.mkt-foot .mkt-lead {
+  color: rgba(246, 239, 232, 0.58);
 }
 
 .mkt-foot-grid {
@@ -1516,18 +1521,19 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   margin: 0 0 0.7rem;
+  color: rgba(246, 239, 232, 0.5);
 }
 
 .mkt-foot a {
   display: block;
-  color: var(--mkt-muted);
+  color: rgba(246, 239, 232, 0.62);
   text-decoration: none;
   margin: 0.32rem 0;
   font-size: 0.88rem;
 }
 
 .mkt-foot a:hover {
-  color: var(--mkt-ink);
+  color: #fff;
 }
 
 .mkt-foot-legal {
@@ -1537,8 +1543,8 @@
   gap: 0.7rem;
   margin-top: 2rem;
   padding-top: 1.1rem;
-  border-top: 1px solid var(--mkt-line);
-  color: var(--mkt-muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(246, 239, 232, 0.42);
   font-size: 0.78rem;
 }
 
@@ -1694,5 +1700,220 @@
 @media (min-width: 640px) and (max-width: 979px) {
   .mkt-hero-copy .mkt-h1 {
     max-width: 22ch;
+  }
+}
+
+.mkt-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.35rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: rgba(246, 239, 232, 0.78);
+  font-size: 0.88rem;
+}
+
+.mkt-points li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mkt-points li::before {
+  content: '';
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 99px;
+  background: var(--mkt-accent);
+}
+
+.mkt-note-light {
+  color: rgba(246, 239, 232, 0.5);
+}
+
+.mkt-tick {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--mkt-accent);
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+}
+
+.mkt-ticks {
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.mkt-ticks li {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  color: var(--mkt-ink);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.mkt-spot {
+  padding-block: 4.4rem;
+  scroll-margin-top: 5.2rem;
+}
+
+.mkt-spot.is-paper {
+  background: #fff;
+}
+
+.mkt-spot.is-sand {
+  background: #efeae4;
+}
+
+.mkt-spot-grid {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 980px) {
+  .mkt-spot-grid {
+    grid-template-columns: 0.92fr 1.08fr;
+    gap: 3.2rem;
+  }
+  .mkt-spot-grid.is-flip > :first-child {
+    order: 2;
+  }
+}
+
+.mkt-spot-shot {
+  position: relative;
+}
+
+@media (min-width: 980px) {
+  .mkt-spot-shot.has-overlay {
+    margin-bottom: 2.8rem;
+  }
+}
+
+.mkt-spot-overlay {
+  position: absolute;
+  width: 54%;
+  right: -4%;
+  bottom: -12%;
+  z-index: 2;
+}
+
+.mkt-plans-band {
+  background: #f6f3ef;
+  padding-block: 4.6rem;
+  scroll-margin-top: 5.2rem;
+}
+
+.mkt-plans {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (min-width: 900px) {
+  .mkt-plans {
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: stretch;
+  }
+}
+
+.mkt-plan {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--mkt-line);
+  border-radius: 16px;
+  padding: 1.45rem 1.3rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.mkt-plan h3 {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  margin: 0;
+}
+
+.mkt-plan .mkt-amount {
+  margin: 0.7rem 0 0;
+}
+
+.mkt-plan-audience {
+  color: var(--mkt-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0.7rem 0 0;
+  min-height: 3.4em;
+}
+
+.mkt-plan ul {
+  list-style: none;
+  margin: 1.1rem 0 1.3rem;
+  padding: 0;
+  display: grid;
+  gap: 0.48rem;
+  flex: 1;
+}
+
+.mkt-plan li {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.mkt-plan .mkt-btn {
+  width: 100%;
+}
+
+.mkt-plan.is-pop {
+  background: #161210;
+  color: #f6efe8;
+  border-color: #161210;
+}
+
+.mkt-plan.is-pop .mkt-plan-audience,
+.mkt-plan.is-pop li {
+  color: rgba(246, 239, 232, 0.78);
+}
+
+.mkt-plan.is-pop .mkt-tick {
+  color: #e8b4b0;
+}
+
+.mkt-plan.is-pop .mkt-btn-primary {
+  background: #fff;
+  color: #161210;
+}
+
+.mkt-plan-badge {
+  display: inline-block;
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: #fff;
+  background: var(--mkt-accent);
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 979px) {
+  .mkt-spot-overlay {
+    position: relative;
+    width: 100%;
+    right: auto;
+    bottom: auto;
+    margin-top: 0.75rem;
+  }
+  .mkt-spot {
+    padding-block: 3.2rem;
   }
 }

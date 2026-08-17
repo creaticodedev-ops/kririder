@@ -21,4 +21,10 @@ export const DemoCta = ({ children = 'Create account', className = '' }) => (
   </Link>
 )
 
+export const ContactCta = ({ children = 'Talk to us', className = '' }) => (
+  <Link to="/contact" className={`mkt-btn mkt-btn-ghost ${className}`.trim()}>
+    {children}
+  </Link>
+)
+
 export default PrimaryCta

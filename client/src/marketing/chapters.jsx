@@ -247,8 +247,8 @@ const FinancePin = ({ progress }) => {
   return (
     <div className="mkt-xp-chapter">
       <div className="mkt-xp-copy">
-        <p className="mkt-kicker">07 — Finance</p>
-        <h2 className="mkt-h2">Payment, invoice, revenue, analytics — still the same stay.</h2>
+        <p className="mkt-kicker">Finance & analytics</p>
+        <h2 className="mkt-h2">Know exactly how your business is performing.</h2>
         <p className="mkt-lead">
           Booking-derived income, invoices and CSV/PDF reports sit next to the work that produced them.
         </p>
@@ -280,7 +280,7 @@ export const Ecosystem = () => (
   <section className="mkt-xp-eco" id="workspace">
     <div className="mkt-wrap">
       <Reveal className="mkt-intro">
-        <p className="mkt-kicker">08 — Connected</p>
+        <p className="mkt-kicker">The platform</p>
         <h2 className="mkt-h2">The whole operation, in one KRIRIDER workspace.</h2>
         <p className="mkt-lead">
           Dashboard, desk, documents, money and the public storefront share the same agency account.

@@ -5,8 +5,8 @@ import BrandMark from './BrandMark'
 import { PrimaryCta } from './Ctas'
 
 const LINKS = [
-  { href: '/#product', label: 'Product' },
   { href: '/#features', label: 'Features' },
+  { href: '/#product', label: 'Product' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/about', label: 'About' },
 ]
@@ -37,7 +37,7 @@ export const MarketingNav = () => {
   return (
     <header className={`mkt-nav${solid || open ? ' is-solid' : ''}`}>
       <div className="mkt-wrap mkt-nav-inner">
-        <BrandMark />
+        <BrandMark variant="dark" />
         <nav className="mkt-nav-links" aria-label="Product">
           {LINKS.map((item) => (
             <Link key={item.href} to={item.href}>
