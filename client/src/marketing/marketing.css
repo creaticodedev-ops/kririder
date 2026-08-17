@@ -176,36 +176,72 @@
 .mkt-mark {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
   text-decoration: none;
-  color: inherit;
-  min-height: 2.8rem;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
-.mkt-mark-kr {
-  display: grid;
-  place-items: center;
-  width: 2.55rem;
-  height: 2.55rem;
-  border-radius: 7px;
-  background: var(--mkt-accent);
-  color: #fff;
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1;
+.mkt-mark img {
+  display: block;
+  width: auto;
+  height: 2.15rem;
+  max-width: min(13.5rem, 58vw);
+  object-fit: contain;
+  object-position: left center;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.mkt-mark-word {
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--mkt-ink);
+.mkt-mark picture {
+  display: block;
+  line-height: 0;
 }
 
-.mkt-mark-dark .mkt-mark-word {
-  color: #fff;
+.mkt-mark-hero {
+  margin-bottom: 1.15rem;
+}
+
+.mkt-mark-hero img {
+  height: clamp(2.35rem, 6.4vw, 3.55rem);
+  max-width: min(22rem, 86vw);
+}
+
+.mkt-mark-foot img {
+  height: 2.4rem;
+  max-width: min(16rem, 80vw);
+}
+
+.mkt-mark-page {
+  margin-bottom: 1.45rem;
+}
+
+.mkt-mark-page img {
+  height: clamp(2rem, 5vw, 2.7rem);
+  max-width: min(18rem, 78vw);
+}
+
+.mkt-mark-light {
+  background: #0b0908;
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem 0.55rem;
+}
+
+@media (max-width: 639px) {
+  .mkt-mark-nav img {
+    height: 1.72rem;
+    max-width: min(11.8rem, 62vw);
+  }
+
+  .mkt-mark-foot img {
+    height: 2.05rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 899px) {
+  .mkt-mark-nav img {
+    height: 1.9rem;
+    max-width: min(12.6rem, 52vw);
+  }
 }
 
 /* —— Nav —— */
@@ -1204,8 +1240,8 @@
   margin-bottom: 2rem;
 }
 
-.mkt-intro-center .mkt-lead {
-  margin-inline: auto;
+.mkt-intro-center .mkt-mark {
+  margin-bottom: 1.2rem;
 }
 
 .mkt-tabs {

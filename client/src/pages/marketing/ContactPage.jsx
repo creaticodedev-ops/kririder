@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import SeoHead from '../../seo/SeoHead'
+import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { BRAND, CONTACT_EMAIL, CONTACT_WHATSAPP } from '../../marketing/config'
 
@@ -55,6 +56,7 @@ export const ContactPage = () => {
         siteName={BRAND}
       />
       <section className="mkt-wrap mkt-section">
+        <BrandMark variant="light" size="page" />
         <p className="mkt-kicker">Contact</p>
         <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
           {intentParam === 'demo' ? 'Book a demo' : 'Start your KRIRIDER evaluation'}

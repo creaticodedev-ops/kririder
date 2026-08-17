@@ -3,6 +3,7 @@ import SeoHead from '../seo/SeoHead'
 import { SITE_ORIGIN } from '../seo/constants'
 import { organizationJsonLd, websiteJsonLd } from '../seo/jsonLd'
 import { BRAND, CLIENTS, PLANS, SEO, TRIAL_DAYS } from './config'
+import BrandMark from './BrandMark'
 import { ContactCta, PrimaryCta } from './Ctas'
 import MarketingLayout from './MarketingLayout'
 import { Caption, Crop, Frame, HeroScene, Reveal, SHOTS } from './experience'
@@ -104,6 +105,7 @@ export const MarketingHome = () => (
     <section className="mkt-xp-hero">
       <div className="mkt-wrap mkt-xp-hero-grid">
         <div className="mkt-xp-hero-copy">
+          <BrandMark variant="dark" size="hero" />
           <p className="mkt-badge">
             <i /> Car rental operating system
           </p>
@@ -233,6 +235,7 @@ export const MarketingHome = () => (
     <section className="mkt-plans-band" id="pricing">
       <div className="mkt-wrap">
         <Reveal className="mkt-intro mkt-intro-center">
+          <BrandMark variant="light" size="page" />
           <p className="mkt-kicker">Pricing</p>
           <h2 className="mkt-h2">Simple, transparent plans.</h2>
           <p className="mkt-lead">

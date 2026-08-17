@@ -1,4 +1,5 @@
 import SeoHead from '../../seo/SeoHead'
+import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { BRAND, CONTACT_EMAIL } from '../../marketing/config'
 
@@ -13,6 +14,7 @@ const PrivacyPage = () => (
       siteName={BRAND}
     />
     <section className="mkt-wrap mkt-section">
+      <BrandMark variant="light" size="page" />
       <p className="mkt-kicker">Legal</p>
       <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
         Privacy
@@ -53,6 +55,7 @@ const TermsPage = () => (
       siteName={BRAND}
     />
     <section className="mkt-wrap mkt-section">
+      <BrandMark variant="light" size="page" />
       <p className="mkt-kicker">Legal</p>
       <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
         Terms of use

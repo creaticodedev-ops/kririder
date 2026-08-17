@@ -28,7 +28,7 @@ const resolveBrand = (storefront) => {
   return {
     name: SITE_NAME,
     url: SITE_ORIGIN,
-    logo: `${SITE_ORIGIN}/images/logo.png`,
+    logo: `${SITE_ORIGIN}/images/kririder-logo.png`,
     email: NAP.email || '',
     telephone: NAP.telephone || '',
     streetAddress: NAP.streetAddress || '',

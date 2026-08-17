@@ -37,7 +37,7 @@ export const MarketingNav = () => {
   return (
     <header className={`mkt-nav${solid || open ? ' is-solid' : ''}`}>
       <div className="mkt-wrap mkt-nav-inner">
-        <BrandMark variant="dark" />
+        <BrandMark variant="dark" size="nav" />
         <nav className="mkt-nav-links" aria-label="Product">
           {LINKS.map((item) => (
             <Link key={item.href} to={item.href}>

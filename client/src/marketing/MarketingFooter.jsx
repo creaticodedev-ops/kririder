@@ -7,7 +7,7 @@ export const MarketingFooter = () => (
     <div className="mkt-wrap">
       <div className="mkt-foot-grid">
         <div>
-          <BrandMark variant="dark" />
+          <BrandMark variant="dark" size="foot" />
           <p className="mkt-lead" style={{ marginTop: '1rem', fontSize: '0.92rem' }}>
             Car rental management software for reservations, fleet, customers, contracts and daily operations.
           </p>

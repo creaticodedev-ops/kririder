@@ -1,4 +1,5 @@
 import SeoHead from '../../seo/SeoHead'
+import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { BRAND, CLIENTS } from '../../marketing/config'
 import { DemoCta, PrimaryCta } from '../../marketing/Ctas'
@@ -14,6 +15,7 @@ export const AboutPage = () => (
       siteName={BRAND}
     />
     <section className="mkt-wrap mkt-section">
+      <BrandMark variant="light" size="page" />
       <p className="mkt-kicker">Company</p>
       <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)' }}>
         Software for rental companies — not a rental company website.
