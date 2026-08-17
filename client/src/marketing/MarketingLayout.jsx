@@ -4,7 +4,7 @@ import { MarketingNav } from './MarketingNav'
 import { MarketingFooter } from './MarketingFooter'
 import './marketing.css'
 
-export const MarketingLayout = ({ children, footer = true }) => {
+export const MarketingLayout = ({ children, footer = true, nav = true }) => {
   const { hash, pathname } = useLocation()
 
   useEffect(() => {
@@ -18,8 +18,8 @@ export const MarketingLayout = ({ children, footer = true }) => {
   }, [hash, pathname])
 
   return (
-    <div className="mkt">
-      <MarketingNav />
+    <div className={`mkt${nav ? '' : ' is-onboard'}`}>
+      {nav ? <MarketingNav /> : null}
       {children}
       {footer ? <MarketingFooter /> : null}
     </div>
