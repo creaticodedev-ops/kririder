@@ -67,9 +67,44 @@ const agencySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'active', 'suspended', 'disabled'],
+      enum: ['pending', 'active', 'suspended', 'disabled', 'rejected'],
       default: 'active',
       index: true,
+    },
+    /** How the tenant was created — self-serve signups require Super Admin approval. */
+    createdVia: {
+      type: String,
+      enum: ['self_serve', 'superadmin_invite', 'admin', 'migration'],
+      default: 'superadmin_invite',
+      index: true,
+    },
+    deletedAt: { type: Date, default: null, index: true },
+    approvedAt: { type: Date, default: null },
+    approvedBy: { type: ObjectId, ref: 'User', default: null },
+    rejectedAt: { type: Date, default: null },
+    rejectedBy: { type: ObjectId, ref: 'User', default: null },
+    rejectionReason: { type: String, default: '', trim: true, maxlength: 500 },
+    notifications: {
+      email: {
+        status: {
+          type: String,
+          enum: ['idle', 'sent', 'failed', 'skipped', 'not_configured'],
+          default: 'idle',
+        },
+        at: { type: Date, default: null },
+        error: { type: String, default: '' },
+        messageId: { type: String, default: '' },
+      },
+      whatsapp: {
+        status: {
+          type: String,
+          enum: ['idle', 'sent', 'failed', 'skipped', 'not_configured', 'link_ready'],
+          default: 'idle',
+        },
+        at: { type: Date, default: null },
+        error: { type: String, default: '' },
+        waMeUrl: { type: String, default: '' },
+      },
     },
     primaryOwnerUserId: {
       type: ObjectId,

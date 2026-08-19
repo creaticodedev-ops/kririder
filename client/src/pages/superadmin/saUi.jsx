@@ -55,9 +55,9 @@ export const SaBadge = ({ tone = 'neutral', children, className = '' }) => {
 
 export const statusBadgeTone = (status) => {
   const s = String(status || '').toLowerCase()
-  if (s === 'active' || s === 'trialing') return 'success'
-  if (s === 'pending' || s === 'trial' || s === 'past_due') return 'warn'
-  if (s === 'suspended' || s === 'disabled' || s === 'expired' || s === 'canceled') return 'danger'
+  if (s === 'active' || s === 'trialing' || s === 'approved' || s === 'sent') return 'success'
+  if (s === 'pending' || s === 'trial' || s === 'past_due' || s === 'link_ready') return 'warn'
+  if (s === 'suspended' || s === 'disabled' || s === 'expired' || s === 'canceled' || s === 'rejected' || s === 'failed') return 'danger'
   return 'neutral'
 }
 

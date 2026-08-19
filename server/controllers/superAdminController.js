@@ -28,8 +28,16 @@ import {
   buildOnboardingUrl,
 } from '../services/agencyInviteToken.js';
 import { getOrCreateAgencySettings, updateWhatsAppSettings } from '../services/agencySettingsService.js';
+import { buildAgencyAccessUrls } from '../services/agencyAccessUrls.js';
+import {
+  approveAgencyRequest,
+  rejectAgencyRequest,
+  retryAgencyNotifications,
+  softDeleteAgencyRequest,
+  notDeleted,
+} from '../services/agencyApprovalService.js';
 
-const AGENCY_STATUSES = ['pending', 'active', 'suspended', 'disabled'];
+const AGENCY_STATUSES = ['pending', 'active', 'suspended', 'disabled', 'rejected'];
 const OWNER_ACCOUNT_STATUSES = ['pending', 'active', 'suspended', 'disabled'];
 
 const mapAgencyStatusToOwnerStatus = (status) => {
@@ -37,7 +45,7 @@ const mapAgencyStatusToOwnerStatus = (status) => {
   if (status === 'active') return 'active';
   if (status === 'suspended') return 'suspended';
   if (status === 'disabled') return 'disabled';
-  return 'active';
+  if (status === 'rejected') return 'disabled';
 };
 
 const inviteMetaForOwner = (owner) => {
@@ -153,6 +161,8 @@ export const getPlatformOverview = async (req, res) => {
       totalCustomers,
       totalAgencies,
       activeAgencies,
+      pendingAgencies,
+      rejectedAgencies,
     ] = await Promise.all([
       User.countDocuments({ role: 'owner' }),
       User.countDocuments({ role: 'owner', accountStatus: 'active' }),
@@ -163,8 +173,10 @@ export const getPlatformOverview = async (req, res) => {
       Car.countDocuments({ owner: { $ne: null } }),
       Booking.countDocuments({}),
       GuestCustomer.countDocuments({}),
-      Agency.countDocuments({}),
-      Agency.countDocuments({ status: 'active' }),
+      Agency.countDocuments(notDeleted),
+      Agency.countDocuments({ ...notDeleted, status: 'active' }),
+      Agency.countDocuments({ ...notDeleted, status: 'pending' }),
+      Agency.countDocuments({ ...notDeleted, status: 'rejected' }),
     ]);
 
     const recentAdmins = await User.find({ role: 'owner' })
@@ -186,6 +198,9 @@ export const getPlatformOverview = async (req, res) => {
         totalCustomers,
         totalAgencies,
         activeAgencies,
+        pendingAgencies,
+        rejectedAgencies,
+        approvedAgencies: activeAgencies,
       },
       recentAdmins: recentAdmins.map(sanitizeAdmin),
       permissionCatalog: OWNER_PERMISSIONS,
@@ -349,9 +364,14 @@ export const createAdmin = async (req, res) => {
 
 const sanitizeAgency = (agency, owner = null) => {
   const obj = agency.toObject ? agency.toObject() : { ...agency };
+  delete obj.customDomainVerifyToken;
+  delete obj.__v;
   const invite = inviteMetaForOwner(owner);
+  const access = buildAgencyAccessUrls(obj);
   return {
     ...obj,
+    access,
+    dashboardUrl: access.dashboardUrl,
     primaryOwner: owner
       ? {
           _id: owner._id,
@@ -376,16 +396,26 @@ export const listAgencies = async (req, res) => {
     const skip = (page - 1) * limit;
     const q = String(req.query.q || req.query.search || '').trim();
     const status = String(req.query.status || '').trim();
-    const filter = {};
+    const createdVia = String(req.query.createdVia || '').trim();
+    const clauses = [notDeleted];
     if (q) {
-      filter.$or = [
-        { name: new RegExp(escapeRegex(q), 'i') },
-        { slug: new RegExp(escapeRegex(q), 'i') },
-      ];
+      clauses.push({
+        $or: [
+          { name: new RegExp(escapeRegex(q), 'i') },
+          { slug: new RegExp(escapeRegex(q), 'i') },
+          { email: new RegExp(escapeRegex(q), 'i') },
+          { city: new RegExp(escapeRegex(q), 'i') },
+          { phone: new RegExp(escapeRegex(q), 'i') },
+        ],
+      });
     }
     if (AGENCY_STATUSES.includes(status)) {
-      filter.status = status;
+      clauses.push({ status });
     }
+    if (['self_serve', 'superadmin_invite', 'admin', 'migration'].includes(createdVia)) {
+      clauses.push({ createdVia });
+    }
+    const filter = clauses.length === 1 ? clauses[0] : { $and: clauses };
 
     const [total, agencies] = await Promise.all([
       Agency.countDocuments(filter),
@@ -496,6 +526,7 @@ export const createAgency = async (req, res) => {
       name: agencyName,
       slug,
       status: 'pending',
+      createdVia: 'superadmin_invite',
       primaryOwnerUserId: admin._id,
       legacyOwnerId: admin._id,
       isPublicStorefront: false,
@@ -822,7 +853,7 @@ export const getAgencyById = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid agency id' });
     }
     const agency = await Agency.findById(req.params.id).lean();
-    if (!agency) {
+    if (!agency || agency.deletedAt) {
       return res.status(404).json({ success: false, message: 'Agency not found' });
     }
     const owner = await User.findById(agency.primaryOwnerUserId)
@@ -885,7 +916,7 @@ export const setAgencyStatus = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid agency id' });
     }
     const { status } = req.body;
-    if (!['active', 'suspended', 'disabled', 'pending'].includes(status)) {
+    if (!['active', 'suspended', 'disabled', 'pending', 'rejected'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid agency status' });
     }
     const agency = await Agency.findById(req.params.id);
@@ -920,6 +951,98 @@ export const setAgencyStatus = async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ success: false, message: 'Failed to update agency status' });
+  }
+};
+
+const approvalPayload = (result) => ({
+  success: true,
+  agency: sanitizeAgency(result.agency, result.owner),
+  access: result.urls || buildAgencyAccessUrls(result.agency),
+  notifications: result.notifications || result.agency.notifications || {},
+  whatsappUrl: result.whatsappUrl || result.notifications?.whatsapp?.waMeUrl || '',
+});
+
+export const approveAgency = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const result = await approveAgencyRequest(req.params.id, req.user);
+    res.json({
+      ...approvalPayload(result),
+      message: result.alreadyApproved ? 'Agency is already approved' : 'Agency approved',
+      alreadyApproved: Boolean(result.alreadyApproved),
+    });
+  } catch (error) {
+    console.error('[approveAgency]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to approve agency',
+    });
+  }
+};
+
+export const rejectAgency = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const result = await rejectAgencyRequest(req.params.id, req.user, req.body?.reason);
+    res.json({
+      ...approvalPayload(result),
+      message: 'Agency request rejected',
+    });
+  } catch (error) {
+    console.error('[rejectAgency]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to reject agency',
+    });
+  }
+};
+
+export const deleteAgencyRequest = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const result = await softDeleteAgencyRequest(req.params.id, req.user);
+    res.json({
+      success: true,
+      message: 'Agency request deleted',
+      agency: sanitizeAgency(result.agency, result.owner),
+    });
+  } catch (error) {
+    console.error('[deleteAgencyRequest]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to delete agency request',
+    });
+  }
+};
+
+export const notifyAgency = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid agency id' });
+    }
+    const result = await retryAgencyNotifications(req.params.id, req.user, {
+      reject: req.body?.kind === 'reject',
+    });
+    res.json({
+      ...approvalPayload(result),
+      message: 'Notification retry complete',
+    });
+  } catch (error) {
+    console.error('[notifyAgency]', error.message);
+    res.status(error.status || 500).json({
+      success: false,
+      code: error.code,
+      message: error.message || 'Failed to retry notifications',
+    });
   }
 };
 

@@ -194,6 +194,28 @@ const SuperAdminAgencyDetail = () => {
             />
           </div>
 
+          {agency.status === 'pending' || agency.status === 'rejected' ? (
+            <SaCard
+              title="Approval Center"
+              description="Self-serve registrations are activated here. Invite-only agencies still need a password before approval."
+              action={
+                <Link to="/superadmin/requests" className={sa.link}>
+                  Open requests →
+                </Link>
+              }
+            >
+              <p className="text-sm text-[var(--sa-text-secondary)] mb-3">
+                Dashboard URL:{' '}
+                <span className="font-mono text-xs">{agency.dashboardUrl || agency.access?.dashboardUrl || '—'}</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link to="/superadmin/requests" className={sa.btnPrimary}>
+                  Review in Approval Center
+                </Link>
+              </div>
+            </SaCard>
+          ) : null}
+
           {needsInvite ? (
             <SaCard
               title="Owner onboarding"

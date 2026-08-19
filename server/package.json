@@ -25,6 +25,7 @@
     "test:onboarding:offline": "node scripts/verify-agency-onboarding.mjs",
     "test:onboarding:e2e": "node scripts/verify-agency-onboarding-e2e.mjs",
     "test:signup:e2e": "node scripts/verify-self-serve-signup.mjs",
+    "test:approval:e2e": "node scripts/verify-agency-approval.mjs",
     "test:storefront:e2e": "node scripts/verify-storefront-isolation.mjs",
     "test:platform-apex": "node scripts/verify-platform-apex.mjs",
     "diagnose:public-tenant": "node scripts/diagnose-public-tenant.mjs",

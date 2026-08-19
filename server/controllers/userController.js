@@ -12,6 +12,7 @@ import {
 import { syncOwnerPermissions, resolveOwnerPermissions } from '../utils/ownerPermissions.js';
 import { normalizeEmail, findUserByEmail } from '../utils/emailUtils.js';
 import { BRAND_NAME } from '../utils/brand.js';
+import Agency from '../models/Agency.js';
 import { attachDisplayPromotions } from '../services/promotionDisplayService.js';
 import { getBookingSettings } from '../services/bookingSettingsService.js';
 import { getModelUnavailablePeriods } from '../services/availabilityService.js';
@@ -86,10 +87,17 @@ export const loginUser = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
         if (user.accountStatus === 'suspended' || user.accountStatus === 'disabled') {
+            let lockedMessage = `This admin account has been suspended or disabled. Contact ${BRAND_NAME}.`;
+            if (user.role === 'owner' && user.agencyId) {
+              const agency = await Agency.findById(user.agencyId).select('status rejectedAt').lean();
+              if (agency?.status === 'rejected' || agency?.rejectedAt) {
+                lockedMessage = 'This KRIRIDER agency request was not approved. Contact support if you believe this is a mistake.';
+              }
+            }
             return res.status(403).json({
                 success: false,
                 code: 'ACCOUNT_LOCKED',
-                message: `This admin account has been suspended or disabled. Contact ${BRAND_NAME}.`,
+                message: lockedMessage,
             });
         }
 
@@ -110,8 +118,19 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        // Pending owner + password set: agency setup wizard
-        if (user.role === 'owner' && user.accountStatus === 'pending') {
+        // Self-serve signup awaiting Super Admin approval — no dashboard, no setup wizard
+        if (user.role === 'owner' && user.accountStatus === 'pending' && user.passwordSetAt) {
+            const agency = user.agencyId
+              ? await Agency.findById(user.agencyId).select('status createdVia').lean()
+              : null;
+            if (agency?.createdVia === 'self_serve' && agency.status === 'pending') {
+                return res.status(403).json({
+                    success: false,
+                    code: 'APPROVAL_PENDING',
+                    message:
+                      'Your KRIRIDER agency is awaiting approval. You will receive an email when it is activated.',
+                });
+            }
             user.lastLoginAt = new Date();
             await user.save();
             const token = generateToken(user);
@@ -198,6 +217,17 @@ export const getUserData = async (req, res) => {
                     success: false,
                     code: 'ONBOARDING_REQUIRED',
                     message: 'Complete account activation using the invitation link.',
+                });
+            }
+            const agency = user.agencyId
+              ? await Agency.findById(user.agencyId).select('status createdVia').lean()
+              : null;
+            if (agency?.createdVia === 'self_serve' && agency.status === 'pending') {
+                return res.status(403).json({
+                    success: false,
+                    code: 'APPROVAL_PENDING',
+                    message:
+                      'Your KRIRIDER agency is awaiting approval. You will receive an email when it is activated.',
                 });
             }
             const safePending = user.toObject ? user.toObject() : { ...user };

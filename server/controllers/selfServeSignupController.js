@@ -9,7 +9,7 @@ export const selfServeSignup = async (req, res) => {
     const result = await registerSelfServeAgency(req.body || {});
     return res.status(201).json({
       success: true,
-      message: 'Your KRIRIDER workspace is ready',
+      message: 'Your KRIRIDER agency request has been submitted and is awaiting approval',
       ...result,
     });
   } catch (error) {

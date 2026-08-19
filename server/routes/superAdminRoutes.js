@@ -22,6 +22,10 @@ import {
   createAgency,
   updateAgency,
   setAgencyStatus,
+  approveAgency,
+  rejectAgency,
+  deleteAgencyRequest,
+  notifyAgency,
   resendAgencyInvite,
   verifyAgencyDomain,
 } from '../controllers/superAdminController.js';
@@ -61,6 +65,10 @@ superAdminRouter.post('/agencies', ...gate, createAgency);
 superAdminRouter.get('/agencies/:id', ...gate, getAgencyById);
 superAdminRouter.patch('/agencies/:id', ...gate, updateAgency);
 superAdminRouter.patch('/agencies/:id/status', ...gate, setAgencyStatus);
+superAdminRouter.post('/agencies/:id/approve', ...gate, approveAgency);
+superAdminRouter.post('/agencies/:id/reject', ...gate, rejectAgency);
+superAdminRouter.delete('/agencies/:id', ...gate, deleteAgencyRequest);
+superAdminRouter.post('/agencies/:id/notify', ...gate, notifyAgency);
 superAdminRouter.post('/agencies/:id/resend-invite', ...gate, resendAgencyInvite);
 superAdminRouter.post('/agencies/:id/domains/verify', ...gate, verifyAgencyDomain);
 

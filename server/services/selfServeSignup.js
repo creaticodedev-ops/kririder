@@ -1,25 +1,13 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Agency from '../models/Agency.js';
 import { normalizeEmail, findUserByEmail } from '../utils/emailUtils.js';
-import { createTrialDefaults, serializeLicense, TRIAL_DAYS } from './licenseService.js';
-import { getOrCreateAgencySettings } from './agencySettingsService.js';
-import { ensureAgencySubscription } from './billingService.js';
-import { ensureDefaultTemplates } from '../controllers/exportTemplateController.js';
-import { ensureOwnerDefaultLocations } from '../controllers/pickupLocationController.js';
+import { serializeLicense, TRIAL_DAYS } from './licenseService.js';
 import { clearPublicTenantCache } from './publicTenant.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 const inFlightEmails = new Set();
-
-const generateToken = (user) =>
-  jwt.sign(
-    { _id: user._id.toString(), tv: user.tokenVersion || 0 },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' },
-  );
 
 const trim = (value, max = 160) => String(value || '').trim().slice(0, max);
 
@@ -103,7 +91,6 @@ export const registerSelfServeAgency = async (body = {}) => {
       throw err;
     }
 
-    const trial = createTrialDefaults();
     const hashed = await bcrypt.hash(password, 10);
     const now = new Date();
 
@@ -115,16 +102,19 @@ export const registerSelfServeAgency = async (body = {}) => {
         password: hashed,
         role: 'owner',
         agencyName,
-        accountStatus: 'active',
+        accountStatus: 'pending',
         permissions: [],
         notes,
         passwordSetAt: now,
-        onboardingCompletedAt: now,
+        onboardingCompletedAt: null,
         inviteTokenHash: null,
         inviteExpiresAt: null,
         inviteUsedAt: now,
         lastLoginAt: now,
-        ...trial,
+        licenseStatus: 'trial',
+        trialStartedAt: null,
+        trialEndsAt: null,
+        licensedAt: null,
       });
     } catch (dupErr) {
       if (dupErr?.code === 11000) {
@@ -141,7 +131,8 @@ export const registerSelfServeAgency = async (body = {}) => {
     const agency = await Agency.create({
       name: agencyName,
       slug,
-      status: 'active',
+      status: 'pending',
+      createdVia: 'self_serve',
       primaryOwnerUserId: user._id,
       legacyOwnerId: user._id,
       isPublicStorefront: false,
@@ -151,7 +142,7 @@ export const registerSelfServeAgency = async (body = {}) => {
       city,
       country,
       address,
-      onboardingCompletedAt: now,
+      onboardingCompletedAt: null,
       contractBranding: {
         companyName: agencyName,
         logoUrl: '',
@@ -163,34 +154,22 @@ export const registerSelfServeAgency = async (body = {}) => {
 
     user.agencyId = agency._id;
     await user.save();
-
-    await getOrCreateAgencySettings(user._id, agency._id);
-    await ensureAgencySubscription(agency._id, {
-      planCode: 'free_trial',
-      status: 'trialing',
-      trialStartedAt: trial.trialStartedAt,
-      trialEndsAt: trial.trialEndsAt,
-      actorType: 'owner',
-      actorId: user._id,
-      notes: 'Self-serve signup trial',
-    });
-    await ensureDefaultTemplates(user._id);
-    await ensureOwnerDefaultLocations(user._id, agency._id);
     clearPublicTenantCache();
 
-    const token = generateToken(user);
     return {
-      token,
+      token: null,
+      approvalPending: true,
       onboardingRequired: false,
       trialDays: TRIAL_DAYS,
       license: serializeLicense(user),
-      redirectTo: '/owner',
+      redirectTo: null,
       user: publicUser(user),
       agency: {
         _id: agency._id,
         name: agency.name,
         slug: agency.slug,
         status: agency.status,
+        createdVia: agency.createdVia,
         primaryOwnerUserId: agency.primaryOwnerUserId,
         legacyOwnerId: agency.legacyOwnerId,
       },

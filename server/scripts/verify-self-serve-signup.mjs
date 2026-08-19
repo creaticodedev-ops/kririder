@@ -1,5 +1,5 @@
 /**
- * E2E: public self-serve signup creates owner + agency + trial, without Super Admin.
+ * E2E: public self-serve signup creates a pending agency until Super Admin approval.
  *
  *   npm run test:signup:e2e
  */
@@ -38,12 +38,9 @@ async function main() {
   const db = await connectDb();
   const { default: User } = await import('../models/User.js');
   const { default: Agency } = await import('../models/Agency.js');
-  const { default: AgencySubscription } = await import('../models/AgencySubscription.js');
   const { TRIAL_DAYS } = await import('../services/licenseService.js');
   const { registerSelfServeAgency, getSignupInfo } = await import('../services/selfServeSignup.js');
   const { loginUser } = await import('../controllers/userController.js');
-  const { getUserData } = await import('../controllers/userController.js');
-  const jwt = (await import('jsonwebtoken')).default;
 
   const info = getSignupInfo();
   if (info.trialDays === TRIAL_DAYS) pass(`signup-info trialDays=${TRIAL_DAYS}`);
@@ -71,32 +68,25 @@ async function main() {
   }
 
   const created = await registerSelfServeAgency(payload);
-  if (created.token && created.user?.role === 'owner' && !created.onboardingRequired) {
-    pass('signup returns JWT and active owner');
-  } else fail('signup token/user incomplete');
+  if (created.approvalPending && !created.token && created.user?.role === 'owner') {
+    pass('signup returns pending request without JWT');
+  } else fail('signup should not auto-activate');
 
   const user = await User.findById(created.user._id);
   const agency = await Agency.findById(created.agency._id);
-  if (user.accountStatus === 'active' && user.passwordSetAt && user.onboardingCompletedAt) {
-    pass('owner is active with password and completed onboarding');
-  } else fail('owner not fully activated');
+  if (user.accountStatus === 'pending' && user.passwordSetAt) {
+    pass('owner is pending with password set');
+  } else fail('owner should be pending with password');
 
   if (
     String(agency.primaryOwnerUserId) === String(user._id) &&
-    String(agency.legacyOwnerId) === String(user._id) &&
     String(user.agencyId) === String(agency._id) &&
-    agency.status === 'active' &&
+    agency.status === 'pending' &&
+    agency.createdVia === 'self_serve' &&
     agency.isPublicStorefront === false
   ) {
-    pass('agency owner relationship is correct');
+    pass('pending agency owner relationship is correct');
   } else fail('agency/owner link incorrect');
-
-  if (user.licenseStatus === 'trial' && user.trialEndsAt) pass('user trial initialized');
-  else fail('user trial missing');
-
-  const sub = await AgencySubscription.findOne({ agencyId: agency._id, isCurrent: true });
-  if (sub?.planCode === 'free_trial' && sub.status === 'trialing') pass('billing subscription is free_trial/trialing');
-  else fail(`subscription unexpected: ${sub?.planCode} ${sub?.status}`);
 
   try {
     await registerSelfServeAgency(payload);
@@ -105,10 +95,6 @@ async function main() {
     if (err.status === 409) pass('duplicate email rejected');
     else fail(`duplicate email: ${err.message}`);
   }
-
-  const decoded = jwt.verify(created.token, process.env.JWT_SECRET);
-  if (String(decoded._id) === String(user._id)) pass('JWT subject is the new owner');
-  else fail('JWT subject mismatch');
 
   const mockRes = () => {
     const res = {
@@ -128,19 +114,12 @@ async function main() {
 
   const loginRes = mockRes();
   await loginUser({ body: { email, password: 'StrongPass9' } }, loginRes);
-  if (loginRes.statusCode === 200 && loginRes.body?.token && loginRes.body?.onboardingRequired === false) {
-    pass('new owner can log in to dashboard');
+  if (loginRes.statusCode === 403 && loginRes.body?.code === 'APPROVAL_PENDING') {
+    pass('new owner cannot log in until Super Admin approval');
   } else fail(`login after signup: ${loginRes.statusCode} ${JSON.stringify(loginRes.body)}`);
-
-  const dataRes = mockRes();
-  await getUserData({ user }, dataRes);
-  if (dataRes.body?.success && dataRes.body?.onboardingRequired !== true && dataRes.body?.user?.agencyId) {
-    pass('getUserData opens owner workspace');
-  } else fail('getUserData after signup unexpected');
 
   await User.deleteOne({ _id: user._id });
   await Agency.deleteOne({ _id: agency._id });
-  await AgencySubscription.deleteMany({ agencyId: agency._id });
   await db.stop();
   console.log('\nSelf-serve signup E2E complete.');
 }

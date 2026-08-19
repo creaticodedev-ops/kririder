@@ -196,8 +196,13 @@ const SignupInner = () => {
         city: form.city.trim(),
         fleetSize: form.fleetSize.trim(),
       })
-      if (!data?.success || !data.token) {
+      if (!data?.success) {
         throw new Error(data?.message || t('signup.fail'))
+      }
+      if (data.approvalPending || !data.token) {
+        setCreated(data)
+        go(3)
+        return
       }
       localStorage.setItem('token', data.token)
       axios.defaults.headers.common.Authorization = `Bearer ${data.token}`
@@ -503,19 +508,32 @@ const SignupInner = () => {
                     <path d="M3.2 8.4l3 3.1 6.6-7" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="onboard-step-kicker">{t('signup.readyKicker')}</p>
-                <h2>{t('signup.welcome')}</h2>
+                <p className="onboard-step-kicker">
+                  {created?.approvalPending ? t('signup.pendingKicker') : t('signup.readyKicker')}
+                </p>
+                <h2>{created?.approvalPending ? t('signup.pendingWelcome') : t('signup.welcome')}</h2>
                 <p className="mkt-lead">
-                  {t('signup.readyLead', {
-                    forAgency: created?.agency?.name ? t('signup.forAgency', { name: created.agency.name }) : '',
-                    days: created?.trialDays || trialDays,
-                  })}
+                  {created?.approvalPending
+                    ? t('signup.pendingLead', {
+                        forAgency: created?.agency?.name ? t('signup.forAgency', { name: created.agency.name }) : '',
+                      })
+                    : t('signup.readyLead', {
+                        forAgency: created?.agency?.name ? t('signup.forAgency', { name: created.agency.name }) : '',
+                        days: created?.trialDays || trialDays,
+                      })}
                 </p>
                 <div className="onboard-actions">
-                  <button type="button" className="onboard-cta" onClick={() => navigate('/owner')}>
-                    {t('signup.openDash')}
-                    <Arrow />
-                  </button>
+                  {created?.approvalPending ? (
+                    <Link to="/" className="onboard-cta">
+                      {t('signup.backToSite')}
+                      <Arrow />
+                    </Link>
+                  ) : (
+                    <button type="button" className="onboard-cta" onClick={() => navigate('/owner')}>
+                      {t('signup.openDash')}
+                      <Arrow />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}

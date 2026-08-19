@@ -19,6 +19,7 @@ const ICONS = {
   staff: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
   activity: 'M13 10V3L4 14h7v7l9-11h-7z',
   audit: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  requests: 'M3 7a2 2 0 012-2h10a2 2 0 012 2v9a2 2 0 01-2 2H8l-3 3v-3H5a2 2 0 01-2-2V7z',
   settings: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4',
   sun: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z',
   moon: 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z',
@@ -31,6 +32,7 @@ const NAV_GROUPS = [
     label: 'Platform',
     links: [
       { to: '/superadmin', end: true, label: 'Dashboard', icon: ICONS.dashboard },
+      { to: '/superadmin/requests', label: 'Requests', icon: ICONS.requests },
       { to: '/superadmin/agencies', label: 'Agencies', icon: ICONS.agencies },
       { to: '/superadmin/billing', label: 'Billing', icon: ICONS.billing },
     ],
@@ -52,6 +54,7 @@ const NAV_GROUPS = [
 ]
 
 const PAGE_TITLES = [
+  { match: /^\/superadmin\/requests/, title: 'Agency requests' },
   { match: /^\/superadmin\/agencies\/[^/]+$/, title: 'Agency detail' },
   { match: /^\/superadmin\/agencies/, title: 'Agencies' },
   { match: /^\/superadmin\/admins\/[^/]+$/, title: 'Staff profile' },

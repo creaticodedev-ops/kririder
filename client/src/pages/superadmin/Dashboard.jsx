@@ -36,7 +36,7 @@ const SuperAdminDashboard = () => {
   }, [axios])
 
   const o = data?.overview || {}
-  const pendingAgencies = Math.max(0, (o.totalAgencies || 0) - (o.activeAgencies || 0))
+  const pendingAgencies = o.pendingAgencies ?? Math.max(0, (o.totalAgencies || 0) - (o.activeAgencies || 0))
 
   const agencyChart = useMemo(
     () => [
@@ -79,25 +79,25 @@ const SuperAdminDashboard = () => {
         subtitle="Platform health across agencies, subscriptions, and operators."
         action={
           <>
-            <Link to="/superadmin/agencies?create=1" className={sa.btnPrimary}>
-              Create agency
+            <Link to="/superadmin/requests" className={sa.btnPrimary}>
+              Review requests
             </Link>
-            <Link to="/superadmin/agencies" className={sa.btnSecondary}>
-              View agencies
+            <Link to="/superadmin/agencies?create=1" className={sa.btnSecondary}>
+              Create agency
             </Link>
           </>
         }
       />
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <SaStat label="Pending requests" value={o.pendingAgencies} accent="var(--sa-warn)" hint="Awaiting approval" />
+        <SaStat label="Approved agencies" value={o.approvedAgencies ?? o.activeAgencies} accent="var(--sa-success)" />
+        <SaStat label="Rejected requests" value={o.rejectedAgencies} accent="var(--sa-danger)" />
         <SaStat label="Total agencies" value={o.totalAgencies} />
-        <SaStat label="Active agencies" value={o.activeAgencies} accent="var(--sa-success)" />
-        <SaStat label="Pending / other" value={pendingAgencies} accent="var(--sa-warn)" />
         <SaStat label="Suspended admins" value={o.suspendedAdmins} accent="var(--sa-danger)" />
         <SaStat label="Active subscriptions*" value={billing?.active ?? o.licensedAdmins} hint="* From billing when available" />
         <SaStat label="Trialing" value={billing?.trialing ?? o.trialAdmins} />
         <SaStat label="Expired" value={billing?.expired ?? o.expiredAdmins} />
-        <SaStat label="Staff / owners" value={o.totalAdmins} hint={`${o.activeAdmins || 0} active accounts`} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -126,7 +126,7 @@ const SuperAdminDashboard = () => {
       <div className="grid lg:grid-cols-2 gap-4">
         <SaCard
           title="Recent agencies"
-          action={<SaLink to="/superadmin/agencies">View all →</SaLink>}
+          action={<SaLink to="/superadmin/requests">Approval center →</SaLink>}
         >
           <ul className="divide-y divide-[var(--sa-border)]">
             {recentAgencies.map((a) => (
