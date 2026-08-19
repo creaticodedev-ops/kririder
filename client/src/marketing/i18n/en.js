@@ -33,6 +33,8 @@ export const en = {
     trialLong: 'Start your free trial',
     trialBrand: 'Try KRIRIDER free',
     explore: 'Explore the platform',
+    exploreProduct: 'Explore the product',
+    seeHow: 'See how it works',
     talk: 'Talk to us',
     account: 'Create account',
     continue: 'Continue',
@@ -64,6 +66,7 @@ export const en = {
   proof: {
     label: 'Customers',
     title: 'Trusted by car rental companies on KRIRIDER',
+    plate: 'Agencies on KRIRIDER',
     client: 'Client',
     and: ' and ',
   },
@@ -108,42 +111,24 @@ export const en = {
     templates: 'KRIRIDER document templates',
     accounting: 'KRIRIDER accounting',
   },
-  spot: {
-    product: {
-      kicker: 'One workspace',
-      title: 'Run your entire operation from one workspace.',
+  act: {
+    desk: {
+      index: '01',
+      kicker: 'The desk',
+      title: 'One workspace. The whole operation in view.',
       lead:
-        'The owner dashboard is the morning view: occupancy, bookings, revenue and fleet status — then the same product opens the work behind each number.',
-      p1: 'Bookings, fleet and revenue in one place',
-      p2: 'Walk-in and online in the same desk',
-      p3: 'Staff work in a shared agency account',
+        'Occupancy, bookings, revenue and fleet status sit on the same morning screen. The calendar, the list and the file are the same rental — walk-in or online.',
+      aside: 'Staff share one agency account. Nothing sits between the desk and the car.',
+      cta: 'Explore the product',
     },
-    features: {
-      kicker: 'Reservations',
-      title: 'Reservations without the spreadsheet chaos.',
+    asset: {
+      index: '02',
+      kicker: 'The asset',
+      title: 'The vehicle, then the document.',
       lead:
-        'Online, walk-in and WhatsApp channels share statuses from pending through return. The calendar, the list and the booking file are the same rental.',
-      p1: 'Calendar occupancy against live bookings',
-      p2: 'Walk-in created at the desk',
-      p3: 'Customer history on the agency record',
-    },
-    fleet: {
-      kicker: 'Fleet',
-      title: 'A fleet that stays organized.',
-      lead:
-        'Each row is a physical vehicle — Fleet ID, VIN, plate, mileage and branch. Availability and maintenance sit next to the booking that needs the car.',
-      p1: 'Physical assets, not spreadsheet rows',
-      p2: 'Locations attached to the vehicle',
-      p3: 'Maintenance tracked per car',
-    },
-    contracts: {
-      kicker: 'Documents',
-      title: 'Contracts and signatures, completely digital.',
-      lead:
-        'Contracts and invoices are generated from the rental. Customers complete files through a dedicated completion link — the stay is not retyped onto paper.',
-      p1: 'PDFs generated from the booking',
-      p2: 'Remote signature requests',
-      p3: 'Agency templates for contracts and invoices',
+        'Each row is a physical car — plate, mileage, branch, maintenance. The contract is generated from that rental, not retyped onto paper.',
+      aside: 'Customers complete files through a dedicated link. Signatures return to the same booking.',
+      cta: 'See how it works',
     },
   },
   finance: {
@@ -158,7 +143,7 @@ export const en = {
     lead: 'Dashboard, desk, documents, money and the public storefront share the same agency account.',
   },
   pricing: {
-    kicker: 'Pricing',
+    kicker: 'Configuration',
     title: 'Simple, transparent plans.',
     lead: 'Start free. After {{days}} days, continue on Starter, Professional or Business. No card during registration.',
     popular: 'Most popular',
@@ -204,7 +189,7 @@ export const en = {
     },
   },
   final: {
-    kicker: 'Get started',
+    kicker: 'Departure',
     title: 'Run your rental business with KRIRIDER.',
     lead: 'Create an account in minutes. {{days}}-day free trial — one per agency. No payment during registration.',
   },

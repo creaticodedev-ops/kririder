@@ -33,6 +33,8 @@ export const es = {
     trialLong: 'Empezar la prueba gratuita',
     trialBrand: 'Probar KRIRIDER gratis',
     explore: 'Explorar la plataforma',
+    exploreProduct: 'Explorar el producto',
+    seeHow: 'Ver cómo funciona',
     talk: 'Hablar con nosotros',
     account: 'Crear cuenta',
     continue: 'Continuar',
@@ -64,6 +66,7 @@ export const es = {
   proof: {
     label: 'Clientes',
     title: 'Agencias de alquiler que operan con KRIRIDER',
+    plate: 'Agencias en KRIRIDER',
     client: 'Cliente',
     and: ' y ',
   },
@@ -108,42 +111,24 @@ export const es = {
     templates: 'Plantillas de documentos KRIRIDER',
     accounting: 'Contabilidad KRIRIDER',
   },
-  spot: {
-    product: {
-      kicker: 'Un solo espacio',
-      title: 'Dirija toda la operación desde un único espacio de trabajo.',
+  act: {
+    desk: {
+      index: '01',
+      kicker: 'El mostrador',
+      title: 'Un solo espacio. Toda la operación a la vista.',
       lead:
-        'El panel del propietario es la vista de la mañana: ocupación, reservas, ingresos y flota. El mismo producto abre el trabajo detrás de cada cifra.',
-      p1: 'Reservas, flota e ingresos en un solo lugar',
-      p2: 'Mostrador y online en el mismo escritorio',
-      p3: 'El equipo trabaja en una cuenta de agencia compartida',
+        'Ocupación, reservas, ingresos y estado de flota en la misma pantalla de la mañana. El calendario, la lista y el expediente son el mismo alquiler — en mostrador o en línea.',
+      aside: 'El equipo comparte la cuenta de la agencia. Nada se interpone entre el mostrador y el coche.',
+      cta: 'Explorar el producto',
     },
-    features: {
-      kicker: 'Reservas',
-      title: 'Reservas sin el caos de las hojas de cálculo.',
+    asset: {
+      index: '02',
+      kicker: 'El activo',
+      title: 'El vehículo, después el documento.',
       lead:
-        'Los canales online, de mostrador y WhatsApp comparten estados, desde pendiente hasta la devolución. El calendario, la lista y el expediente son el mismo alquiler.',
-      p1: 'Ocupación del calendario alineada con reservas reales',
-      p2: 'Alquiler de mostrador creado en el despacho',
-      p3: 'Historial del cliente en la ficha de la agencia',
-    },
-    fleet: {
-      kicker: 'Flota',
-      title: 'Una flota que se mantiene ordenada.',
-      lead:
-        'Cada fila es un vehículo real: identificador, VIN, matrícula, kilometraje y sucursal. Disponibilidad y mantenimiento quedan junto a la reserva que necesita el coche.',
-      p1: 'Activos físicos, no filas de una hoja',
-      p2: 'Ubicaciones asociadas al vehículo',
-      p3: 'Mantenimiento por coche',
-    },
-    contracts: {
-      kicker: 'Documentos',
-      title: 'Contratos y firmas, totalmente digitales.',
-      lead:
-        'Contratos y facturas se generan desde el alquiler. El cliente completa el expediente con un enlace dedicado: la estancia no se vuelve a teclear en papel.',
-      p1: 'PDF generados desde la reserva',
-      p2: 'Solicitudes de firma a distancia',
-      p3: 'Plantillas de agencia para contratos y facturas',
+        'Cada fila es un coche real — matrícula, kilometraje, sucursal, mantenimiento. El contrato nace de ese alquiler, no se vuelve a teclear en papel.',
+      aside: 'El cliente completa el expediente con un enlace dedicado. Las firmas vuelven a la misma reserva.',
+      cta: 'Ver cómo funciona',
     },
   },
   finance: {
@@ -158,7 +143,7 @@ export const es = {
     lead: 'Panel, mostrador, documentos, finanzas y el escaparate público comparten la misma cuenta de agencia.',
   },
   pricing: {
-    kicker: 'Precios',
+    kicker: 'Configuración',
     title: 'Planes simples y transparentes.',
     lead: 'Empiece gratis. Tras {{days}} días, continúe en Starter, Professional o Business. Sin tarjeta en el registro.',
     popular: 'El más elegido',
@@ -204,7 +189,7 @@ export const es = {
     },
   },
   final: {
-    kicker: 'Empezar',
+    kicker: 'Salida',
     title: 'Gestione su alquiler con KRIRIDER.',
     lead: 'Cree una cuenta en minutos. Prueba de {{days}} días — una por agencia. Sin pago en el registro.',
   },

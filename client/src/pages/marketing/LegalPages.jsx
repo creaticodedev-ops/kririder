@@ -1,6 +1,6 @@
 import SeoHead from '../../seo/SeoHead'
-import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
+import { PageHero } from '../../marketing/PageHero'
 import { BRAND, CONTACT_EMAIL } from '../../marketing/config'
 import { useMktI18n } from '../../marketing/i18n/MarketingI18n'
 
@@ -18,23 +18,20 @@ const LegalInner = ({ path, titleKey, descKey, kickerKey, headingKey, bodyKeys, 
         locale={ogLocale}
         siteName={BRAND}
       />
-      <section className="mkt-wrap mkt-section">
-        <BrandMark variant="light" size="page" />
-        <p className="mkt-kicker">{t(kickerKey)}</p>
-        <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-          {t(headingKey)}
-        </h1>
-        <div className="mkt-lead" style={{ marginTop: '1.2rem', display: 'grid', gap: '1rem' }}>
+      <PageHero kicker={t(kickerKey)} title={t(headingKey)} />
+      <section className="mkt-page-body">
+        <div className="mkt-wrap mkt-page-prose">
           {bodyKeys.map((key) => (
-            <p key={key}>{t(key)}</p>
+            <p key={key} className="mkt-lead">
+              {t(key)}
+            </p>
           ))}
           {CONTACT_EMAIL ? (
-            <p>
-              {t(questionKey)}{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+            <p className="mkt-lead">
+              {t(questionKey)} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
             </p>
           ) : fallbackKey ? (
-            <p>{t(fallbackKey)}</p>
+            <p className="mkt-lead">{t(fallbackKey)}</p>
           ) : null}
         </div>
       </section>

@@ -87,7 +87,7 @@ export const MarketingNav = () => {
               <button type="button" className="mkt-btn mkt-btn-ghost" onClick={() => setShowLogin(true)}>
                 {t('nav.login')}
               </button>
-              <PrimaryCta>{t('cta.trial')}</PrimaryCta>
+              <PrimaryCta magnetic={false}>{t('cta.trial')}</PrimaryCta>
             </>
           )}
         </div>

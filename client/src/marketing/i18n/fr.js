@@ -33,6 +33,8 @@ export const fr = {
     trialLong: 'Démarrer l’essai gratuit',
     trialBrand: 'Essayer KRIRIDER gratuitement',
     explore: 'Découvrir la plateforme',
+    exploreProduct: 'Explorer le produit',
+    seeHow: 'Voir le fonctionnement',
     talk: 'Nous contacter',
     account: 'Créer un compte',
     continue: 'Continuer',
@@ -64,6 +66,7 @@ export const fr = {
   proof: {
     label: 'Clients',
     title: 'Des agences de location font confiance à KRIRIDER',
+    plate: 'Agences sur KRIRIDER',
     client: 'Client',
     and: ' et ',
   },
@@ -108,42 +111,24 @@ export const fr = {
     templates: 'Modèles de documents KRIRIDER',
     accounting: 'Comptabilité KRIRIDER',
   },
-  spot: {
-    product: {
-      kicker: 'Un seul espace',
-      title: 'Pilotez toute l’opération depuis un seul espace de travail.',
+  act: {
+    desk: {
+      index: '01',
+      kicker: 'Le comptoir',
+      title: 'Un seul espace. Toute l’opération sous les yeux.',
       lead:
-        'Le tableau de bord propriétaire est la vue du matin : occupation, réservations, revenus et flotte — puis le même produit ouvre le travail derrière chaque chiffre.',
-      p1: 'Réservations, flotte et revenus au même endroit',
-      p2: 'Comptoir et en ligne dans le même bureau',
-      p3: 'Les équipes travaillent dans un compte d’agence partagé',
+        'Occupation, réservations, revenus et état de flotte sur le même écran du matin. Le calendrier, la liste et le dossier sont la même location — au comptoir ou en ligne.',
+      aside: 'Les équipes partagent le compte de l’agence. Rien ne s’interpose entre le comptoir et le véhicule.',
+      cta: 'Explorer le produit',
     },
-    features: {
-      kicker: 'Réservations',
-      title: 'Des réservations sans le chaos des tableurs.',
+    asset: {
+      index: '02',
+      kicker: 'L’actif',
+      title: 'Le véhicule, puis le document.',
       lead:
-        'Canaux en ligne, comptoir et WhatsApp partagent les statuts, de l’attente au retour. Le calendrier, la liste et le dossier sont la même location.',
-      p1: 'Occupation du calendrier alignée sur les réservations',
-      p2: 'Location au comptoir créée sur place',
-      p3: 'Historique client sur le dossier de l’agence',
-    },
-    fleet: {
-      kicker: 'Flotte',
-      title: 'Une flotte qui reste ordonnée.',
-      lead:
-        'Chaque ligne est un véhicule réel — identifiant flotte, VIN, plaque, kilométrage et agence. Disponibilité et maintenance restent à côté de la réservation qui a besoin de la voiture.',
-      p1: 'Des actifs physiques, pas des lignes de tableur',
-      p2: 'Lieux rattachés au véhicule',
-      p3: 'Maintenance suivie par voiture',
-    },
-    contracts: {
-      kicker: 'Documents',
-      title: 'Contrats et signatures, entièrement numériques.',
-      lead:
-        'Contrats et factures sont générés depuis la location. Les clients complètent le dossier via un lien dédié — le séjour n’est pas retapé sur papier.',
-      p1: 'PDF générés à partir de la réservation',
-      p2: 'Demandes de signature à distance',
-      p3: 'Modèles d’agence pour contrats et factures',
+        'Chaque ligne est une voiture réelle — plaque, kilométrage, agence, maintenance. Le contrat naît de cette location, il n’est pas retapé sur papier.',
+      aside: 'Les clients complètent le dossier via un lien dédié. Les signatures reviennent sur la même réservation.',
+      cta: 'Voir le fonctionnement',
     },
   },
   finance: {
@@ -158,7 +143,7 @@ export const fr = {
     lead: 'Tableau de bord, comptoir, documents, finance et vitrine publique partagent le même compte d’agence.',
   },
   pricing: {
-    kicker: 'Tarifs',
+    kicker: 'Configuration',
     title: 'Des offres simples et lisibles.',
     lead: 'Commencez gratuitement. Après {{days}} jours, poursuivez sur Starter, Professional ou Business. Aucune carte à l’inscription.',
     popular: 'Le plus choisi',
@@ -204,7 +189,7 @@ export const fr = {
     },
   },
   final: {
-    kicker: 'Démarrer',
+    kicker: 'Départ',
     title: 'Pilotez votre location avec KRIRIDER.',
     lead: 'Créez un compte en quelques minutes. Essai de {{days}} jours — un par agence. Aucun paiement à l’inscription.',
   },

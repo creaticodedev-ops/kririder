@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useReducedMotion } from 'motion/react'
 import { useMktI18n } from './i18n/MarketingI18n'
 
 export const trialTo = () => '/signup'
@@ -9,13 +11,43 @@ const Arrow = () => (
   </svg>
 )
 
-export const PrimaryCta = ({ children, className = '', variant = 'primary', arrow = false, onClick }) => {
+const useMagnetic = (enabled) => {
+  const ref = useRef(null)
+  const reduce = useReducedMotion()
+  const onMove = (event) => {
+    if (!enabled || reduce || !ref.current) return
+    if (typeof window === 'undefined' || !window.matchMedia('(pointer:fine)').matches) return
+    const box = ref.current.getBoundingClientRect()
+    const x = (event.clientX - box.left - box.width / 2) * 0.07
+    const y = (event.clientY - box.top - box.height / 2) * 0.09
+    ref.current.style.transition = 'none'
+    ref.current.style.setProperty('--mx', `${x}px`)
+    ref.current.style.setProperty('--my', `${y}px`)
+    ref.current.style.setProperty('--hx', `${((event.clientX - box.left) / box.width) * 100}%`)
+    ref.current.style.setProperty('--hy', `${((event.clientY - box.top) / box.height) * 100}%`)
+  }
+  const onLeave = () => {
+    if (!ref.current) return
+    ref.current.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)'
+    ref.current.style.setProperty('--mx', '0px')
+    ref.current.style.setProperty('--my', '0px')
+  }
+  return { ref, onMove, onLeave }
+}
+
+export const PrimaryCta = ({ children, className = '', variant = 'primary', arrow = true, onClick, magnetic = true }) => {
   const { t } = useMktI18n()
+  const isLight = variant === 'light'
+  const skipMag = !magnetic || className.includes('mkt-menu-cta')
+  const mag = useMagnetic(!skipMag)
   return (
     <Link
+      ref={mag.ref}
       to="/signup"
-      className={`mkt-btn ${variant === 'light' ? 'mkt-btn-light' : 'mkt-btn-primary'} ${className}`.trim()}
+      className={`mkt-btn ${isLight ? 'mkt-btn-light' : 'mkt-btn-primary'} mkt-cta ${className}`.trim()}
       onClick={onClick}
+      onMouseMove={mag.onMove}
+      onMouseLeave={mag.onLeave}
     >
       {children ?? t('cta.trial')}
       {arrow ? <Arrow /> : null}

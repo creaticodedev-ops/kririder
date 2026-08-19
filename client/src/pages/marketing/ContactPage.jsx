@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import SeoHead from '../../seo/SeoHead'
-import BrandMark from '../../marketing/BrandMark'
 import MarketingLayout from '../../marketing/MarketingLayout'
+import { PageHero } from '../../marketing/PageHero'
 import { BRAND, CONTACT_EMAIL, CONTACT_WHATSAPP } from '../../marketing/config'
 import { useMktI18n } from '../../marketing/i18n/MarketingI18n'
 
@@ -68,86 +68,76 @@ const ContactInner = () => {
         locale={ogLocale}
         siteName={BRAND}
       />
-      <section className="mkt-wrap mkt-section">
-        <BrandMark variant="light" size="page" />
-        <p className="mkt-kicker">{t('contact.kicker')}</p>
-        <h1 className="mkt-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)' }}>
-          {intentParam === 'demo' ? t('contact.titleDemo') : t('contact.titleTrial')}
-        </h1>
-        <p className="mkt-lead" style={{ marginTop: '1rem' }}>
-          {t('contact.leadBefore')}{' '}
-          <Link to="/signup" style={{ color: 'inherit' }}>
-            {t('contact.leadLink')}
-          </Link>
-          . {t('contact.leadAfter')}
+      <PageHero
+        kicker={t('contact.kicker')}
+        title={intentParam === 'demo' ? t('contact.titleDemo') : t('contact.titleTrial')}
+      >
+        <p className="mkt-lead">
+          {t('contact.leadBefore')} <Link to="/signup">{t('contact.leadLink')}</Link>. {t('contact.leadAfter')}
         </p>
-
-        {sent ? (
-          <p className="mkt-lead" style={{ marginTop: '2rem' }}>
-            {CONTACT_EMAIL ? t('contact.sentMail') : t('contact.sentManual')}
-          </p>
-        ) : (
-          <form className="mkt-form" style={{ marginTop: '2rem' }} onSubmit={onSubmit}>
-            <div className="mkt-field">
-              <label htmlFor="mkt-name">{t('contact.name')}</label>
-              <input id="mkt-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </div>
-            <div className="mkt-field">
-              <label htmlFor="mkt-email">{t('contact.email')}</label>
-              <input
-                id="mkt-email"
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-            <div className="mkt-field">
-              <label htmlFor="mkt-company">{t('contact.company')}</label>
-              <input id="mkt-company" required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
-            </div>
-            <div className="mkt-field">
-              <label htmlFor="mkt-fleet">{t('contact.fleet')}</label>
-              <input id="mkt-fleet" value={form.fleet} onChange={(e) => setForm({ ...form, fleet: e.target.value })} />
-            </div>
-            <div className="mkt-field">
-              <label htmlFor="mkt-intent">{t('contact.request')}</label>
-              <select id="mkt-intent" value={form.intent} onChange={(e) => setForm({ ...form, intent: e.target.value })}>
-                <option value="trial">{t('contact.intentTrial')}</option>
-                <option value="demo">{t('contact.intentDemo')}</option>
-              </select>
-            </div>
-            <div className="mkt-field">
-              <label htmlFor="mkt-message">{t('contact.message')}</label>
-              <textarea id="mkt-message" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
-            </div>
-            <button type="submit" className="mkt-btn mkt-btn-primary">
-              {t('contact.send')}
-            </button>
-          </form>
-        )}
-
-        <p className="mkt-note">
-          {CONTACT_EMAIL ? (
-            <>
-              {t('contact.emailLabel')}{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'inherit' }}>
-                {CONTACT_EMAIL}
-              </a>
-              {CONTACT_WHATSAPP ? (
-                <>
-                  {' '}
-                  · {t('contact.whatsapp')}{' '}
-                  <a href={`https://wa.me/${CONTACT_WHATSAPP}`} style={{ color: 'inherit' }}>
-                    {CONTACT_WHATSAPP}
-                  </a>
-                </>
-              ) : null}
-            </>
+      </PageHero>
+      <section className="mkt-page-body">
+        <div className="mkt-wrap">
+          {sent ? (
+            <p className="mkt-lead">{CONTACT_EMAIL ? t('contact.sentMail') : t('contact.sentManual')}</p>
           ) : (
-            t('contact.noEmail')
+            <form className="mkt-form" onSubmit={onSubmit}>
+              <div className="mkt-field">
+                <label htmlFor="mkt-name">{t('contact.name')}</label>
+                <input id="mkt-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className="mkt-field">
+                <label htmlFor="mkt-email">{t('contact.email')}</label>
+                <input
+                  id="mkt-email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </div>
+              <div className="mkt-field">
+                <label htmlFor="mkt-company">{t('contact.company')}</label>
+                <input id="mkt-company" required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} />
+              </div>
+              <div className="mkt-field">
+                <label htmlFor="mkt-fleet">{t('contact.fleet')}</label>
+                <input id="mkt-fleet" value={form.fleet} onChange={(e) => setForm({ ...form, fleet: e.target.value })} />
+              </div>
+              <div className="mkt-field">
+                <label htmlFor="mkt-intent">{t('contact.request')}</label>
+                <select id="mkt-intent" value={form.intent} onChange={(e) => setForm({ ...form, intent: e.target.value })}>
+                  <option value="trial">{t('contact.intentTrial')}</option>
+                  <option value="demo">{t('contact.intentDemo')}</option>
+                </select>
+              </div>
+              <div className="mkt-field">
+                <label htmlFor="mkt-message">{t('contact.message')}</label>
+                <textarea id="mkt-message" rows={5} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} />
+              </div>
+              <button type="submit" className="mkt-btn mkt-btn-primary mkt-cta">
+                {t('contact.send')}
+              </button>
+            </form>
           )}
-        </p>
+
+          <p className="mkt-note">
+            {CONTACT_EMAIL ? (
+              <>
+                {t('contact.emailLabel')} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+                {CONTACT_WHATSAPP ? (
+                  <>
+                    {' '}
+                    · {t('contact.whatsapp')}{' '}
+                    <a href={`https://wa.me/${CONTACT_WHATSAPP}`}>{CONTACT_WHATSAPP}</a>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              t('contact.noEmail')
+            )}
+          </p>
+        </div>
       </section>
     </>
   )

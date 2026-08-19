@@ -4,6 +4,7 @@ import { MarketingNav } from './MarketingNav'
 import { MarketingFooter } from './MarketingFooter'
 import { MarketingI18nProvider, useMktI18n } from './i18n/MarketingI18n'
 import './marketing.css'
+import './experience.css'
 
 const Shell = ({ children, footer, nav }) => {
   const { hash, pathname } = useLocation()
