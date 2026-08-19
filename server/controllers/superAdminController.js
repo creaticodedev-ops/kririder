@@ -163,6 +163,7 @@ export const getPlatformOverview = async (req, res) => {
       activeAgencies,
       pendingAgencies,
       rejectedAgencies,
+      suspendedAgencies,
     ] = await Promise.all([
       User.countDocuments({ role: 'owner' }),
       User.countDocuments({ role: 'owner', accountStatus: 'active' }),
@@ -177,12 +178,38 @@ export const getPlatformOverview = async (req, res) => {
       Agency.countDocuments({ ...notDeleted, status: 'active' }),
       Agency.countDocuments({ ...notDeleted, status: 'pending' }),
       Agency.countDocuments({ ...notDeleted, status: 'rejected' }),
+      Agency.countDocuments({ ...notDeleted, status: 'suspended' }),
     ]);
 
-    const recentAdmins = await User.find({ role: 'owner' })
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .limit(8);
+    const agencyPreview = (docs) =>
+      docs.map((a) => ({
+        _id: a._id,
+        name: a.name,
+        slug: a.slug,
+        email: a.email,
+        status: a.status,
+        createdAt: a.createdAt,
+        approvedAt: a.approvedAt || null,
+      }));
+
+    const [recentPending, recentApproved, recentSuspended, recentAdmins] = await Promise.all([
+      Agency.find({ ...notDeleted, status: 'pending' })
+        .select('name slug email status createdAt')
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean(),
+      Agency.find({ ...notDeleted, status: 'active', approvedAt: { $ne: null } })
+        .select('name slug email status createdAt approvedAt')
+        .sort({ approvedAt: -1 })
+        .limit(6)
+        .lean(),
+      Agency.find({ ...notDeleted, status: 'suspended' })
+        .select('name slug email status createdAt')
+        .sort({ updatedAt: -1 })
+        .limit(6)
+        .lean(),
+      User.find({ role: 'owner' }).select('-password').sort({ createdAt: -1 }).limit(8),
+    ]);
 
     res.json({
       success: true,
@@ -200,8 +227,12 @@ export const getPlatformOverview = async (req, res) => {
         activeAgencies,
         pendingAgencies,
         rejectedAgencies,
+        suspendedAgencies,
         approvedAgencies: activeAgencies,
       },
+      recentPending: agencyPreview(recentPending),
+      recentApproved: agencyPreview(recentApproved),
+      recentSuspended: agencyPreview(recentSuspended),
       recentAdmins: recentAdmins.map(sanitizeAdmin),
       permissionCatalog: OWNER_PERMISSIONS,
       trialDaysDefault: TRIAL_DAYS,
@@ -340,6 +371,21 @@ export const createAdmin = async (req, res) => {
     const agency = await ensureAgencyForOwner(admin);
     clearPublicTenantCache();
     await audit(req.user, admin, 'superadmin.admin.create', `Created admin ${admin.email}`);
+    try {
+      const { pushInbox } = await import('../services/platformInbox.js');
+      await pushInbox({
+        category: 'users',
+        type: 'users.created',
+        title: 'New admin user',
+        body: `${admin.name} (${admin.email}) was created`,
+        href: `/superadmin/admins/${admin._id}`,
+        agencyId: agency?._id || null,
+        agencyName: agency?.name || admin.agencyName || '',
+        severity: 'info',
+      });
+    } catch {
+      /* inbox must never block admin creation */
+    }
 
     const fresh = await User.findById(admin._id);
     res.status(201).json({
@@ -859,15 +905,27 @@ export const getAgencyById = async (req, res) => {
     const owner = await User.findById(agency.primaryOwnerUserId)
       .select('-password')
       .lean();
-    const [cars, bookings, customers] = await Promise.all([
+    const [cars, bookings, customers, recentCars, recentBookings] = await Promise.all([
       Car.countDocuments({ agencyId: agency._id }),
       Booking.countDocuments({ agencyId: agency._id }),
       GuestCustomer.countDocuments({ agencyId: agency._id }),
+      Car.find({ agencyId: agency._id })
+        .select('brand model category pricePerDay isAvaliable createdAt')
+        .sort({ createdAt: -1 })
+        .limit(8)
+        .lean(),
+      Booking.find({ agencyId: agency._id })
+        .select('reservationId customerName status paymentStatus price pickupDate createdAt')
+        .sort({ createdAt: -1 })
+        .limit(8)
+        .lean(),
     ]);
     res.json({
       success: true,
       agency: sanitizeAgency(agency, owner),
       stats: { cars, bookings, customers },
+      recentCars,
+      recentBookings,
     });
   } catch (error) {
     console.error(error.message);
@@ -946,6 +1004,35 @@ export const setAgencyStatus = async (req, res) => {
       `Set agency ${agency.slug} status=${status}`,
       { agencyId: agency._id, status },
     );
+
+    try {
+      const { pushInbox } = await import('../services/platformInbox.js');
+      if (status === 'suspended') {
+        await pushInbox({
+          category: 'agency',
+          type: 'agency.suspended',
+          title: 'Agency suspended',
+          body: `${agency.name} can no longer access the workspace`,
+          href: `/superadmin/agencies/${agency._id}`,
+          agencyId: agency._id,
+          agencyName: agency.name,
+          severity: 'warn',
+        });
+      } else if (status === 'active') {
+        await pushInbox({
+          category: 'agency',
+          type: 'agency.reactivated',
+          title: 'Agency reactivated',
+          body: `${agency.name} is active again`,
+          href: `/superadmin/agencies/${agency._id}`,
+          agencyId: agency._id,
+          agencyName: agency.name,
+          severity: 'info',
+        });
+      }
+    } catch {
+      /* inbox must never block status changes */
+    }
 
     res.json({ success: true, message: `Agency ${status}`, agency: sanitizeAgency(agency) });
   } catch (error) {
@@ -1194,6 +1281,22 @@ export const setAdminPermissions = async (req, res) => {
       `Updated permissions for ${admin.email}`,
       { permissions: admin.permissions }
     );
+    if (permissionsChanged) {
+      try {
+        const { pushInbox } = await import('../services/platformInbox.js');
+        await pushInbox({
+          category: 'users',
+          type: 'users.role_changed',
+          title: 'Access changed',
+          body: `Permissions updated for ${admin.name || admin.email}`,
+          href: `/superadmin/admins/${admin._id}`,
+          agencyName: admin.agencyName || '',
+          severity: 'info',
+        });
+      } catch {
+        /* ignore */
+      }
+    }
 
     res.json({
       success: true,
@@ -1366,10 +1469,13 @@ export const manageLicense = async (req, res) => {
 
 export const getPlatformAuditLogs = async (req, res) => {
   try {
-    const { page = 1, limit = 30, search = '' } = req.query;
+    const { page = 1, limit = 30, search = '', agencyId = '' } = req.query;
     const pageNum = Math.max(1, Number(page) || 1);
     const lim = Math.min(100, Math.max(1, Number(limit) || 30));
     const filter = {};
+    if (agencyId && mongoose.isValidObjectId(agencyId)) {
+      filter.agencyId = agencyId;
+    }
 
     if (search.trim()) {
       const q = escapeRegex(search.trim());

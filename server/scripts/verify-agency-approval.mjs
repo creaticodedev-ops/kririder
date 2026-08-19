@@ -56,6 +56,7 @@ async function main() {
   const db = await connectDb();
   const { default: User } = await import('../models/User.js');
   const { default: Agency } = await import('../models/Agency.js');
+  const { default: PlatformNotification } = await import('../models/PlatformNotification.js');
   const { registerSelfServeAgency } = await import('../services/selfServeSignup.js');
   const { approveAgencyRequest, rejectAgencyRequest } = await import('../services/agencyApprovalService.js');
   const { buildOwnerDashboardUrl } = await import('../services/agencyAccessUrls.js');
@@ -77,6 +78,10 @@ async function main() {
   if (created.approvalPending && !created.token && created.agency?.status === 'pending') {
     pass('signup is pending without JWT');
   } else fail(`signup not pending: ${JSON.stringify(created.agency)}`);
+
+  const signupNote = await PlatformNotification.findOne({ type: 'agency.signup', agencyId: created.agency._id });
+  if (signupNote) pass('signup created a Super Admin inbox event');
+  else fail('missing agency.signup inbox event');
 
   const loginBlocked = mockRes();
   await loginUser({ body: { email, password: 'StrongPass9' } }, loginBlocked);
@@ -114,6 +119,18 @@ async function main() {
     pass(`whatsapp recorded as ${waStatus} (no API send claimed)`);
   } else fail(`whatsapp unexpected ${waStatus}`);
 
+  const approvedNote = await PlatformNotification.findOne({ type: 'agency.approved', agencyId: agency._id });
+  if (approvedNote) pass('approval created a Super Admin inbox event');
+  else fail('missing agency.approved inbox event');
+  const smtpNote = await PlatformNotification.findOne({
+    agencyId: agency._id,
+    type: { $in: ['system.email_failed', 'system.smtp_not_configured'] },
+  });
+  if (emailStatus === 'not_configured' || emailStatus === 'failed') {
+    if (smtpNote) pass('email delivery issue surfaced in Super Admin inbox');
+    else fail('missing SMTP/email failure inbox event');
+  }
+
   const loginOk = mockRes();
   await loginUser({ body: { email, password: 'StrongPass9' } }, loginOk);
   if (loginOk.statusCode === 200 && loginOk.body?.token && loginOk.body?.onboardingRequired === false) {
@@ -147,6 +164,9 @@ async function main() {
 
   await User.deleteMany({ email: { $in: [email, sa.email, `${tag2}@approval.test`] } });
   await Agency.deleteMany({ _id: { $in: [created.agency._id, rejectedSignup.agency._id] } });
+  await PlatformNotification.deleteMany({
+    agencyId: { $in: [created.agency._id, rejectedSignup.agency._id] },
+  });
   await db.stop();
   console.log('\nAgency approval E2E complete.');
 }

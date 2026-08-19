@@ -90,7 +90,7 @@ export const SaStat = ({ label, value, hint, accent }) => (
 )
 
 export const SaSkeleton = ({ className = '' }) => (
-  <div className={`animate-pulse rounded-[var(--sa-radius-sm)] bg-[var(--sa-border)] ${className}`} />
+  <div className={`sa-shimmer rounded-[var(--sa-radius-sm)] bg-[var(--sa-border)] ${className}`} />
 )
 
 export const SaEmpty = ({ title, description, action }) => (
@@ -100,6 +100,56 @@ export const SaEmpty = ({ title, description, action }) => (
     {action ? <div className="mt-4">{action}</div> : null}
   </div>
 )
+
+export const SaError = ({ title = 'Unable to load this view', description, onRetry }) => (
+  <div className={`${sa.card} ${sa.cardPad} flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between`}>
+    <div>
+      <p className="text-sm font-semibold text-[var(--sa-text)]">{title}</p>
+      {description ? <p className="mt-1 text-xs text-[var(--sa-text-muted)]">{description}</p> : null}
+    </div>
+    {onRetry ? (
+      <button type="button" onClick={onRetry} className={sa.btnSecondary}>
+        Retry
+      </button>
+    ) : null}
+  </div>
+)
+
+export const SaHealthDot = ({ status = 'operational', label }) => {
+  const map = {
+    operational: { color: 'var(--sa-success)', text: 'Operational' },
+    warning: { color: 'var(--sa-warn)', text: 'Warning' },
+    warn: { color: 'var(--sa-warn)', text: 'Warning' },
+    error: { color: 'var(--sa-danger)', text: 'Error' },
+    not_configured: { color: 'var(--sa-text-muted)', text: 'Not configured' },
+  }
+  const item = map[status] || map.operational
+  return (
+    <span className="inline-flex items-center gap-2 text-sm text-[var(--sa-text-secondary)]">
+      <span className="h-2 w-2 rounded-full" style={{ background: item.color }} aria-hidden />
+      <span className="sr-only">{status}</span>
+      {label || item.text}
+    </span>
+  )
+}
+
+export const formatRelativeTime = (value) => {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const minutes = Math.round((Date.now() - date.getTime()) / 60000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes} min ago`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return date.toLocaleString()
+}
+
+export const formatAuditAction = (action = '') =>
+  String(action)
+    .replace(/^superadmin\./, '')
+    .replace(/[._]/g, ' ')
 
 export const SaModal = ({ open, onClose, title, children, wide }) => {
   useEffect(() => {
@@ -214,13 +264,15 @@ export const SaField = ({ label, hint, children, className = '' }) => (
 )
 
 export const SaTabs = ({ tabs, active, onChange }) => (
-  <div className="flex gap-1 overflow-x-auto sa-scrollbar border-b border-[var(--sa-border)] pb-px -mb-px">
+  <div className="flex gap-1 overflow-x-auto sa-scrollbar border-b border-[var(--sa-border)] pb-px -mb-px" role="tablist">
     {tabs.map((tab) => {
       const isActive = active === tab.id
       return (
         <button
           key={tab.id}
           type="button"
+          role="tab"
+          aria-selected={isActive}
           onClick={() => onChange(tab.id)}
           className={`shrink-0 px-3 py-2.5 text-sm font-medium border-b-2 transition ${
             isActive
@@ -229,6 +281,15 @@ export const SaTabs = ({ tabs, active, onChange }) => (
           }`}
         >
           {tab.label}
+          {tab.count != null ? (
+            <span
+              className={`ml-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+                tab.priority ? 'bg-[var(--sa-warn-soft)] text-[var(--sa-warn)]' : 'bg-[var(--sa-surface-2)] text-[var(--sa-text-muted)]'
+              }`}
+            >
+              {tab.count}
+            </span>
+          ) : null}
         </button>
       )
     })}

@@ -52,7 +52,9 @@ const SuperAdminBilling = lazy(() => import('./pages/superadmin/Billing'))
 const SuperAdminAgencyDetail = lazy(() => import('./pages/superadmin/AgencyDetail'))
 const SuperAdminPermissions = lazy(() => import('./pages/superadmin/Permissions'))
 const SuperAdminActivity = lazy(() => import('./pages/superadmin/Activity'))
-const SuperAdminAudit = lazy(() => import('./pages/superadmin/AuditLogs'))
+const SuperAdminNotifications = lazy(() => import('./pages/superadmin/Notifications'))
+const SuperAdminHealth = lazy(() => import('./pages/superadmin/Health'))
+const SuperAdminSettings = lazy(() => import('./pages/superadmin/Settings'))
 const ActivateAccount = lazy(() => import('./pages/ActivateAccount'))
 const ActivateStaff = lazy(() => import('./pages/ActivateStaff'))
 const AgencySetup = lazy(() => import('./pages/AgencySetup'))
@@ -197,9 +199,12 @@ const App = () => {
               <Route path="billing" element={<SuperAdminBilling />} />
               <Route path="admins" element={<SuperAdminAdmins />} />
               <Route path="admins/:id" element={<SuperAdminAdminDetail />} />
+              <Route path="notifications" element={<SuperAdminNotifications />} />
               <Route path="permissions" element={<SuperAdminPermissions />} />
               <Route path="activity" element={<SuperAdminActivity />} />
-              <Route path="audit" element={<SuperAdminAudit />} />
+              <Route path="audit" element={<SuperAdminActivity />} />
+              <Route path="health" element={<SuperAdminHealth />} />
+              <Route path="settings" element={<SuperAdminSettings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

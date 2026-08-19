@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
-import { useI18n } from '../../i18n/I18nContext'
-import { summarizeAccess } from '../../utils/permissionMeta'
 import {
   SaBadge,
   SaEmpty,
@@ -28,10 +26,8 @@ const emptyForm = {
 
 const SuperAdminAdmins = () => {
   const { axios } = useSuperAdmin()
-  const { t } = useI18n()
   const [searchParams, setSearchParams] = useSearchParams()
   const [admins, setAdmins] = useState([])
-  const [catalog, setCatalog] = useState([])
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 })
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -57,7 +53,6 @@ const SuperAdminAdmins = () => {
         if (data.success) {
           setAdmins(data.admins)
           setPagination(data.pagination)
-          if (data.permissionCatalog) setCatalog(data.permissionCatalog)
         }
       } catch (error) {
         toast.error(saError(error))
@@ -100,11 +95,11 @@ const SuperAdminAdmins = () => {
   return (
     <div className={sa.page}>
       <SaPageHeader
-        title="Staff & admin accounts"
-        subtitle="Manage agency owners and legacy admin accounts across the platform."
+        title="Users"
+        subtitle="Agency owners across the platform. Passwords are never shown."
         action={
           <button type="button" onClick={() => setShowCreate(true)} className={sa.btnPrimary}>
-            Create admin
+            Create user
           </button>
         }
       />
@@ -190,19 +185,17 @@ const SuperAdminAdmins = () => {
           <table className="w-full text-left min-w-[720px]">
             <thead>
               <tr>
-                <th className={sa.th}>Admin</th>
+                <th className={sa.th}>User</th>
                 <th className={sa.th}>Agency</th>
-                <th className={sa.th}>Account</th>
-                <th className={sa.th}>License</th>
-                <th className={sa.th}>{t('superadmin.perms.nav')}</th>
+                <th className={sa.th}>Role</th>
+                <th className={sa.th}>Status</th>
+                <th className={sa.th}>Last activity</th>
                 <th className={sa.th}>Created</th>
                 <th className={sa.th} />
               </tr>
             </thead>
             <tbody>
-              {admins.map((admin) => {
-                const access = summarizeAccess(admin.permissions, catalog)
-                return (
+              {admins.map((admin) => (
                   <tr key={admin._id} className={sa.row}>
                     <td className={sa.td}>
                       <p className="font-medium text-[var(--sa-text)]">{admin.name}</p>
@@ -210,43 +203,24 @@ const SuperAdminAdmins = () => {
                     </td>
                     <td className={sa.td}>{admin.agencyName || '—'}</td>
                     <td className={sa.td}>
+                      <SaBadge tone="neutral">Owner</SaBadge>
+                    </td>
+                    <td className={sa.td}>
                       <SaBadge tone={statusBadgeTone(admin.accountStatus)}>{admin.accountStatus || 'active'}</SaBadge>
                     </td>
-                    <td className={sa.td}>
-                      <SaBadge tone={statusBadgeTone(admin.license?.licenseStatus)}>
-                        {admin.license?.licenseStatus}
-                      </SaBadge>
-                      {admin.license?.licenseStatus === 'trial' && admin.license?.daysRemaining != null ? (
-                        <span className="text-xs text-[var(--sa-text-muted)] ml-1">
-                          · {admin.license.daysRemaining}d left
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className={sa.td}>
-                      <Link
-                        to="/superadmin/permissions"
-                        className={sa.btnGhost}
-                        title={t('superadmin.perms.nav')}
-                      >
-                        {access.mode === 'full'
-                          ? t('superadmin.perms.badgeFull')
-                          : t('superadmin.perms.badgeCount', {
-                              granted: access.granted,
-                              total: access.total,
-                            })}
-                      </Link>
+                    <td className={`${sa.td} text-xs text-[var(--sa-text-muted)]`}>
+                      {admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleString() : '—'}
                     </td>
                     <td className={`${sa.td} text-xs text-[var(--sa-text-muted)]`}>
                       {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : '—'}
                     </td>
                     <td className={`${sa.td} text-right`}>
                       <Link to={`/superadmin/admins/${admin._id}`} className={sa.btnGhost}>
-                        Manage →
+                        View
                       </Link>
                     </td>
                   </tr>
-                )
-              })}
+              ))}
             </tbody>
           </table>
         )}

@@ -156,6 +156,23 @@ export const registerSelfServeAgency = async (body = {}) => {
     await user.save();
     clearPublicTenantCache();
 
+    try {
+      const { pushInbox } = await import('./platformInbox.js');
+      await pushInbox({
+        category: 'agency',
+        type: 'agency.signup',
+        title: 'New agency request',
+        body: `${agency.name} submitted a registration`,
+        href: `/superadmin/requests`,
+        agencyId: agency._id,
+        agencyName: agency.name,
+        severity: 'warn',
+        meta: { createdVia: 'self_serve' },
+      });
+    } catch {
+      /* inbox must never block signup */
+    }
+
     return {
       token: null,
       approvalPending: true,

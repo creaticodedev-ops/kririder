@@ -7,6 +7,8 @@ import {
   SaAvatar,
   SaBadge,
   SaCard,
+  SaEmpty,
+  SaError,
   SaField,
   SaPageHeader,
   SaSkeleton,
@@ -14,28 +16,39 @@ import {
   SaTabs,
   confirmDestructive,
   copyToClipboard,
+  formatRelativeTime,
   sa,
   statusBadgeTone,
 } from './saUi'
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'general', label: 'General' },
-  { id: 'branding', label: 'Branding' },
+  { id: 'users', label: 'Users' },
+  { id: 'usage', label: 'Usage' },
   { id: 'billing', label: 'Billing' },
-  { id: 'domains', label: 'Domains' },
-  { id: 'staff', label: 'Staff' },
+  { id: 'notifications', label: 'Notifications' },
   { id: 'activity', label: 'Activity' },
+  { id: 'settings', label: 'Settings' },
 ]
 
 const SuperAdminAgencyDetail = () => {
   const { id } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = searchParams.get('tab') || 'overview'
-  const { axios, navigate } = useSuperAdmin()
+  const rawTab = searchParams.get('tab') || 'overview'
+  const tab =
+    rawTab === 'staff'
+      ? 'users'
+      : ['general', 'branding', 'domains'].includes(rawTab)
+        ? 'settings'
+        : rawTab
+  const { axios } = useSuperAdmin()
   const [agency, setAgency] = useState(null)
   const [stats, setStats] = useState(null)
+  const [recentCars, setRecentCars] = useState([])
+  const [recentBookings, setRecentBookings] = useState([])
+  const [audit, setAudit] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [edit, setEdit] = useState({
     name: '',
     slug: '',
@@ -70,6 +83,8 @@ const SuperAdminAgencyDetail = () => {
   const applyAgency = (data) => {
     setAgency(data.agency)
     setStats(data.stats)
+    setRecentCars(data.recentCars || [])
+    setRecentBookings(data.recentBookings || [])
     setEdit({
       name: data.agency.name || '',
       slug: data.agency.slug || '',
@@ -94,16 +109,20 @@ const SuperAdminAgencyDetail = () => {
 
   const load = useCallback(async () => {
     setLoading(true)
+    setError('')
     try {
       const { data } = await axios.get(`/api/super-admin/agencies/${id}`)
       if (data.success) applyAgency(data)
-    } catch (error) {
-      toast.error(saError(error))
-      navigate('/superadmin/agencies')
+      else throw new Error(data.message || 'Unable to load agency')
+      const auditRes = await axios.get('/api/super-admin/audit-logs', { params: { agencyId: id, limit: 20 } }).catch(() => null)
+      if (auditRes?.data?.success) setAudit(auditRes.data.logs || [])
+    } catch (err) {
+      setError(saError(err))
+      toast.error(saError(err))
     } finally {
       setLoading(false)
     }
-  }, [axios, id, navigate])
+  }, [axios, id])
 
   useEffect(() => {
     load()
@@ -130,7 +149,7 @@ const SuperAdminAgencyDetail = () => {
     )
   }, [agency, owner])
 
-  if (loading || !agency) {
+  if (loading && !agency) {
     return (
       <div className={sa.page}>
         <SaSkeleton className="h-8 w-48" />
@@ -143,6 +162,20 @@ const SuperAdminAgencyDetail = () => {
       </div>
     )
   }
+
+  if (error && !agency) {
+    return (
+      <div className={sa.page}>
+        <SaPageHeader title="Agency" />
+        <SaError title="Unable to load this agency" description={error} onRetry={load} />
+        <Link to="/superadmin/agencies" className={sa.btnSecondary}>
+          Back to agencies
+        </Link>
+      </div>
+    )
+  }
+
+  if (!agency) return null
 
   const copyInviteLink = async () => {
     const result = await copyToClipboard(inviteUrl, 'Link copied')
@@ -169,7 +202,11 @@ const SuperAdminAgencyDetail = () => {
           </span>
         }
         subtitle={
-          <span className="font-mono text-xs">{agency.slug}</span>
+          <span className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-mono">{agency.slug}</span>
+            {agency.createdAt ? <span>· Created {new Date(agency.createdAt).toLocaleDateString()}</span> : null}
+            {agency.approvedAt ? <span>· Approved {new Date(agency.approvedAt).toLocaleDateString()}</span> : null}
+          </span>
         }
         action={
           <div className="flex flex-wrap gap-2">
@@ -280,15 +317,27 @@ const SuperAdminAgencyDetail = () => {
             )}
           </SaCard>
 
-          <SaCard title="Agency status" description="Suspending or disabling locks owner login. Data is never deleted.">
+          <SaCard title="Agency status" description="Suspend locks login. Disable is a stronger lock. Neither deletes data. Rejected is not the same as suspended.">
             <div className="flex flex-wrap gap-2">
+              {agency.status === 'pending' ? (
+                <Link to="/superadmin/requests" className={sa.btnPrimary}>
+                  Review request
+                </Link>
+              ) : null}
               {['active', 'suspended', 'disabled'].map((status) => (
                 <button
                   key={status}
                   type="button"
                   disabled={busy === `status-${status}` || agency.status === status}
                   onClick={() => {
-                    if (status !== 'active' && !confirmDestructive(`Set agency to ${status}?`)) return
+                    const label =
+                      status === 'suspended'
+                        ? 'Suspend this agency? The owner will lose dashboard access. Data is kept.'
+                        : status === 'disabled'
+                          ? 'Disable this agency? This is not a delete. Data is kept.'
+                          : 'Reactivate this agency?'
+                    if (status !== 'active' && !confirmDestructive(label)) return
+                    if (status === 'active' && agency.status !== 'active' && !confirmDestructive(label)) return
                     run(`status-${status}`, async () => {
                       const { data } = await axios.patch(`/api/super-admin/agencies/${id}/status`, { status })
                       if (!data.success) throw new Error(data.message || 'Status update failed')
@@ -299,10 +348,12 @@ const SuperAdminAgencyDetail = () => {
                   className={
                     agency.status === status
                       ? `${sa.btnPrimary} capitalize`
-                      : `${sa.btnSecondary} capitalize`
+                      : status === 'suspended' || status === 'disabled'
+                        ? `${sa.btnDanger} capitalize`
+                        : `${sa.btnSecondary} capitalize`
                   }
                 >
-                  {status}
+                  {status === 'active' ? 'Reactivate' : status}
                 </button>
               ))}
             </div>
@@ -310,6 +361,33 @@ const SuperAdminAgencyDetail = () => {
 
           <SaCard title="Identifiers">
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--sa-text-muted)]">Contact</dt>
+                <dd className="mt-1 text-[var(--sa-text-secondary)]">{agency.email || owner?.email || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--sa-text-muted)]">Phone</dt>
+                <dd className="mt-1 text-[var(--sa-text-secondary)]">{agency.phone || agency.whatsapp || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--sa-text-muted)]">Tenant / storefront</dt>
+                <dd className="mt-1 font-mono text-xs text-[var(--sa-text-secondary)]">
+                  {agency.access?.storefrontUrl || (agency.slug ? `/s/${agency.slug}` : '—')}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] uppercase tracking-wider text-[var(--sa-text-muted)]">Owner dashboard</dt>
+                <dd className="mt-1 flex items-center gap-2 font-mono text-xs text-[var(--sa-text-secondary)]">
+                  <span className="truncate">{agency.dashboardUrl || agency.access?.dashboardUrl || '—'}</span>
+                  <button
+                    type="button"
+                    className={sa.btnGhost}
+                    onClick={() => copyId(agency.dashboardUrl || agency.access?.dashboardUrl, 'Dashboard URL')}
+                  >
+                    Copy
+                  </button>
+                </dd>
+              </div>
               <div>
                 <dt className="text-[11px] uppercase tracking-wider text-[var(--sa-text-muted)]">Agency ID</dt>
                 <dd className="mt-1 flex items-center gap-2 font-mono text-xs text-[var(--sa-text-secondary)]">
@@ -342,7 +420,8 @@ const SuperAdminAgencyDetail = () => {
         </div>
       )}
 
-      {tab === 'general' && (
+      {tab === 'settings' && (
+        <>
         <SaCard title="General settings" className="mt-2">
           <div className="grid sm:grid-cols-2 gap-4">
             <SaField label="Agency name">
@@ -433,10 +512,8 @@ const SuperAdminAgencyDetail = () => {
             {busy === 'save' ? 'Saving…' : 'Save changes'}
           </button>
         </SaCard>
-      )}
 
-      {tab === 'branding' && (
-        <SaCard title="Branding" description="Visual identity shown on the agency storefront and documents." className="mt-2">
+        <SaCard title="Branding" description="Visual identity shown on the agency storefront and documents." className="mt-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <SaField label="Logo URL">
               <input
@@ -509,16 +586,7 @@ const SuperAdminAgencyDetail = () => {
             {busy === 'branding' ? 'Saving…' : 'Save branding'}
           </button>
         </SaCard>
-      )}
-
-      {tab === 'billing' && (
-        <SaCard title="Billing & subscription" className="mt-2">
-          <AgencyBillingPanel agencyId={id} axios={axios} busy={busy} run={run} />
-        </SaCard>
-      )}
-
-      {tab === 'domains' && (
-        <div className="mt-2">
+        <div className="mt-4">
           <AgencyDomainsPanel
             agency={agency}
             agencyId={id}
@@ -528,45 +596,114 @@ const SuperAdminAgencyDetail = () => {
             onRefresh={load}
           />
         </div>
+        </>
       )}
 
-      {tab === 'staff' && (
-        <SaCard title="Staff members" className="mt-2">
+      {tab === 'billing' && (
+        <SaCard title="Billing & subscription" className="mt-2">
+          <AgencyBillingPanel agencyId={id} axios={axios} busy={busy} run={run} />
+        </SaCard>
+      )}
+
+      {tab === 'users' && (
+        <SaCard title="Users" className="mt-2">
           <AgencyStaffPanel agencyId={id} axios={axios} busy={busy} run={run} />
+        </SaCard>
+      )}
+
+      {tab === 'usage' && (
+        <div className="grid gap-4 lg:grid-cols-2 mt-2">
+          <SaCard title="Fleet">
+            {recentCars.length ? (
+              <ul className="divide-y divide-[var(--sa-border)]">
+                {recentCars.map((car) => (
+                  <li key={car._id} className="py-2 text-sm">
+                    {car.brand} {car.model}
+                    <span className="block text-xs text-[var(--sa-text-muted)]">{car.category || '—'}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <SaEmpty title="No vehicles" description="This agency has no fleet records yet." />
+            )}
+          </SaCard>
+          <SaCard title="Bookings">
+            {recentBookings.length ? (
+              <ul className="divide-y divide-[var(--sa-border)]">
+                {recentBookings.map((booking) => (
+                  <li key={booking._id} className="py-2 text-sm">
+                    {booking.reservationId || booking.customerName}
+                    <span className="block text-xs text-[var(--sa-text-muted)]">
+                      {booking.status} · {booking.createdAt ? formatRelativeTime(booking.createdAt) : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <SaEmpty title="No bookings" description="Reservations will appear here when they exist." />
+            )}
+          </SaCard>
+        </div>
+      )}
+
+      {tab === 'notifications' && (
+        <SaCard title="Delivery status" className="mt-2" description="Retry never undoes approval or rejection.">
+          <dl className="space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt>Email</dt>
+              <dd>
+                <SaBadge tone={statusBadgeTone(agency.notifications?.email?.status)}>
+                  {agency.notifications?.email?.status || 'idle'}
+                </SaBadge>
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>WhatsApp</dt>
+              <dd>
+                <SaBadge tone={statusBadgeTone(agency.notifications?.whatsapp?.status)}>
+                  {agency.notifications?.whatsapp?.status || 'idle'}
+                </SaBadge>
+              </dd>
+            </div>
+          </dl>
+          {agency.notifications?.email?.error ? (
+            <p className="mt-3 text-xs text-[var(--sa-danger)]">{agency.notifications.email.error}</p>
+          ) : null}
+          {['active', 'rejected'].includes(agency.status) ? (
+            <button
+              type="button"
+              className={`${sa.btnSecondary} mt-4`}
+              disabled={busy === 'notify'}
+              onClick={() =>
+                run('notify', async () => {
+                  const { data } = await axios.post(`/api/super-admin/agencies/${id}/notify`)
+                  if (!data.success) throw new Error(data.message)
+                  toast.success('Notification retry complete')
+                  await load()
+                })
+              }
+            >
+              {busy === 'notify' ? 'Retrying…' : 'Retry'}
+            </button>
+          ) : null}
         </SaCard>
       )}
 
       {tab === 'activity' && (
         <div className="space-y-4 mt-2">
-          <SaCard title="Usage snapshot">
-            <ul className="text-sm text-[var(--sa-text-secondary)] space-y-2">
-              <li>{stats?.cars ?? 0} vehicles in fleet</li>
-              <li>{stats?.bookings ?? 0} total bookings</li>
-              <li>{stats?.customers ?? 0} guest customers</li>
-            </ul>
-          </SaCard>
-          <SaCard title="Timeline">
-            <ul className="text-sm space-y-3 text-[var(--sa-text-secondary)]">
-              <li>
-                <span className="text-[var(--sa-text-muted)]">Created</span>
-                <br />
-                {agency.createdAt ? new Date(agency.createdAt).toLocaleString() : '—'}
-              </li>
-              <li>
-                <span className="text-[var(--sa-text-muted)]">Onboarding completed</span>
-                <br />
-                {agency.onboardingCompletedAt
-                  ? new Date(agency.onboardingCompletedAt).toLocaleString()
-                  : 'Not yet'}
-              </li>
-              {agency.customDomainVerifiedAt ? (
-                <li>
-                  <span className="text-[var(--sa-text-muted)]">Domain verified</span>
-                  <br />
-                  {new Date(agency.customDomainVerifiedAt).toLocaleString()}
-                </li>
-              ) : null}
-            </ul>
+          <SaCard title="Agency timeline">
+            {audit.length ? (
+              <ol className="space-y-3 border-l border-[var(--sa-border)] pl-4">
+                {audit.map((log) => (
+                  <li key={log._id}>
+                    <p className="text-[11px] text-[var(--sa-text-muted)]">{formatRelativeTime(log.createdAt)}</p>
+                    <p className="text-sm">{log.actor?.name || log.actor?.email || 'System'} · {log.details || log.action}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <SaEmpty title="No agency audit yet" description="Approvals and status changes will appear here." />
+            )}
           </SaCard>
           <Link to="/superadmin/activity" className={sa.btnSecondary}>
             View platform-wide activity →

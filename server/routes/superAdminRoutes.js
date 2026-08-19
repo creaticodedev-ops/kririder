@@ -30,6 +30,16 @@ import {
   verifyAgencyDomain,
 } from '../controllers/superAdminController.js';
 import {
+  getControlSummary,
+  getInbox,
+  markInboxItemRead,
+  markInboxAllRead,
+  getNotificationDeliveryLog,
+  searchPlatform,
+  getHealth,
+  getSettingsSnapshot,
+} from '../controllers/superAdminControlController.js';
+import {
   getSuperAdminAgencyBilling,
   assignSuperAdminAgencyPlan,
   extendSuperAdminAgencyTrial,
@@ -59,6 +69,14 @@ const gate = [protect, requireSuperAdmin];
 
 superAdminRouter.get('/me', ...gate, getSuperAdminProfile);
 superAdminRouter.get('/overview', ...gate, getPlatformOverview);
+superAdminRouter.get('/summary', ...gate, getControlSummary);
+superAdminRouter.get('/search', ...gate, searchPlatform);
+superAdminRouter.get('/inbox', ...gate, getInbox);
+superAdminRouter.patch('/inbox/read-all', ...gate, markInboxAllRead);
+superAdminRouter.patch('/inbox/:id/read', ...gate, markInboxItemRead);
+superAdminRouter.get('/notification-log', ...gate, getNotificationDeliveryLog);
+superAdminRouter.get('/health', ...gate, getHealth);
+superAdminRouter.get('/settings', ...gate, getSettingsSnapshot);
 
 superAdminRouter.get('/agencies', ...gate, listAgencies);
 superAdminRouter.post('/agencies', ...gate, createAgency);

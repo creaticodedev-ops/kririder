@@ -13,6 +13,7 @@ import { clearPublicTenantCache } from './publicTenant.js';
 import { sendAgencyApprovedEmail, sendAgencyRejectedEmail } from './emailService.js';
 import { buildWaMeUrl } from './whatsappNotify.js';
 import { buildAgencyAccessUrls } from './agencyAccessUrls.js';
+import { pushInbox, notifyDeliveryOutcome } from './platformInbox.js';
 
 const fail = (status, message, code) => {
   const err = new Error(message);
@@ -252,6 +253,17 @@ export const approveAgencyRequest = async (agencyId, superAdmin) => {
   });
 
   const notify = await deliverApprovalNotifications(agency, owner, { notifyReject: false });
+  await pushInbox({
+    category: 'agency',
+    type: 'agency.approved',
+    title: 'Agency approved',
+    body: `${agency.name} is now active`,
+    href: `/superadmin/agencies/${agency._id}`,
+    agencyId: agency._id,
+    agencyName: agency.name,
+    severity: 'info',
+  });
+  await notifyDeliveryOutcome(agency, notify.notifications, { kind: 'approve' });
   return {
     alreadyApproved: false,
     agency,
@@ -286,6 +298,19 @@ export const rejectAgencyRequest = async (agencyId, superAdmin, reason = '') => 
   });
 
   const notify = await deliverApprovalNotifications(agency, owner, { notifyReject: true });
+  await pushInbox({
+    category: 'agency',
+    type: 'agency.rejected',
+    title: 'Agency rejected',
+    body: agency.rejectionReason
+      ? `${agency.name} — ${agency.rejectionReason}`
+      : `${agency.name} was not approved`,
+    href: `/superadmin/requests`,
+    agencyId: agency._id,
+    agencyName: agency.name,
+    severity: 'info',
+  });
+  await notifyDeliveryOutcome(agency, notify.notifications, { kind: 'reject' });
   return {
     agency,
     owner,
@@ -327,6 +352,16 @@ export const softDeleteAgencyRequest = async (agencyId, superAdmin) => {
   }
   clearPublicTenantCache();
   await audit(superAdmin, agency, 'superadmin.agency.soft_delete', `Soft-deleted agency request ${agency.slug}`);
+  await pushInbox({
+    category: 'agency',
+    type: 'agency.deleted',
+    title: 'Agency request deleted',
+    body: `${agency.name} was removed from the request queue`,
+    href: '/superadmin/requests',
+    agencyId: agency._id,
+    agencyName: agency.name,
+    severity: 'warn',
+  });
   return { agency, owner };
 };
 
@@ -340,6 +375,9 @@ export const retryAgencyNotifications = async (agencyId, superAdmin, { reject = 
     notifyReject: reject || agency.status === 'rejected',
   });
   await audit(superAdmin, agency, 'superadmin.agency.notify_retry', `Retried notifications for ${agency.slug}`);
+  await notifyDeliveryOutcome(agency, notify.notifications, {
+    kind: reject || agency.status === 'rejected' ? 'reject' : 'approve',
+  });
   return { agency, owner, urls: notify.urls, notifications: notify.notifications, whatsappUrl: notify.whatsappUrl };
 };
 

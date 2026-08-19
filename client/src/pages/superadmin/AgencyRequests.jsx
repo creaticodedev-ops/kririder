@@ -7,10 +7,12 @@ import {
   SaBadge,
   SaCard,
   SaEmpty,
+  SaError,
   SaModal,
   SaPageHeader,
   SaPagination,
   SaSkeleton,
+  SaTabs,
   copyToClipboard,
   sa,
   statusBadgeTone,
@@ -48,6 +50,8 @@ export const SuperAdminAgencyRequests = () => {
   const [search, setSearch] = useState('')
   const [debounced, setDebounced] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [counts, setCounts] = useState({ pending: 0, rejected: 0, active: 0 })
   const [selected, setSelected] = useState(null)
   const [busy, setBusy] = useState('')
   const [approveOpen, setApproveOpen] = useState(false)
@@ -60,6 +64,7 @@ export const SuperAdminAgencyRequests = () => {
   const load = useCallback(
     async (page = 1) => {
       setLoading(true)
+      setError('')
       try {
         const { data } = await axios.get('/api/super-admin/agencies', {
           params: {
@@ -72,9 +77,12 @@ export const SuperAdminAgencyRequests = () => {
         if (data.success) {
           setRows(data.agencies || [])
           setPagination(data.pagination || { page: 1, totalPages: 1, total: data.total || 0 })
+        } else {
+          throw new Error(data.message || 'Unable to load agency requests')
         }
-      } catch (error) {
-        toast.error(saError(error))
+      } catch (err) {
+        setError(saError(err, 'Unable to load agency requests'))
+        toast.error(saError(err))
       } finally {
         setLoading(false)
       }
@@ -90,6 +98,24 @@ export const SuperAdminAgencyRequests = () => {
   useEffect(() => {
     load(1)
   }, [load])
+
+  useEffect(() => {
+    let cancelled = false
+    axios
+      .get('/api/super-admin/overview')
+      .then(({ data }) => {
+        if (cancelled || !data.success) return
+        setCounts({
+          pending: data.overview?.pendingAgencies || 0,
+          rejected: data.overview?.rejectedAgencies || 0,
+          active: data.overview?.activeAgencies || 0,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [axios, rows.length])
 
   const inbox = useMemo(
     () => (status ? rows : rows.filter((row) => ['pending', 'rejected'].includes(row.status))),
@@ -129,35 +155,28 @@ export const SuperAdminAgencyRequests = () => {
   return (
     <div className={sa.page}>
       <SaPageHeader
-        title="Agency Approval Center"
+        title="Agency Requests"
         subtitle="Review self-serve registrations, approve workspaces, and notify owners. Approval is independent of email delivery."
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: 'pending', label: 'Pending' },
-            { id: 'rejected', label: 'Rejected' },
-            { id: 'active', label: 'Approved' },
-            { id: '', label: 'All' },
-          ].map((item) => (
-            <button
-              key={item.id || 'all'}
-              type="button"
-              onClick={() => setStatus(item.id)}
-              className={status === item.id ? sa.btnSmPrimary : sa.btnSmSecondary}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, email, city…"
-          className={`${sa.input} sm:max-w-xs`}
-        />
-      </div>
+      <SaTabs
+        tabs={[
+          { id: 'pending', label: 'Pending', count: counts.pending, priority: Boolean(counts.pending) },
+          { id: 'active', label: 'Approved', count: counts.active },
+          { id: 'rejected', label: 'Rejected', count: counts.rejected },
+        ]}
+        active={status || 'pending'}
+        onChange={setStatus}
+      />
+
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search name, email, phone, slug…"
+        className={`${sa.input} max-w-md`}
+      />
+
+      {error ? <SaError title="Unable to load agency requests" description={error} onRetry={() => load(pagination.page || 1)} /> : null}
 
       {loading ? (
         <div className="space-y-2">
@@ -165,15 +184,43 @@ export const SuperAdminAgencyRequests = () => {
             <SaSkeleton key={i} className="h-16" />
           ))}
         </div>
-      ) : (
-        <div className={sa.tableWrap}>
+      ) : !error ? (
+        <>
+          <div className="space-y-3 lg:hidden">
+            {inbox.map((agency) => (
+              <article
+                key={agency._id}
+                className={`${sa.card} ${sa.cardPad} ${agency.status === 'pending' ? 'border-[var(--sa-warn)]/40' : ''}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{agency.name}</p>
+                    <p className="text-xs text-[var(--sa-text-muted)]">{agency.primaryOwner?.name || '—'} · {agency.primaryOwner?.email || agency.email}</p>
+                    <p className="text-xs text-[var(--sa-text-muted)]">{agency.phone || '—'} · {agency.createdAt ? new Date(agency.createdAt).toLocaleDateString() : ''}</p>
+                  </div>
+                  <SaBadge tone={statusBadgeTone(agency.status)}>{displayStatus(agency.status)}</SaBadge>
+                </div>
+                <button type="button" className={`${sa.btnSmPrimary} mt-3`} onClick={() => open(agency)}>
+                  Review
+                </button>
+              </article>
+            ))}
+            {!inbox.length ? (
+              <SaEmpty
+                title={status === 'pending' ? 'No pending agency requests' : 'No agencies in this view'}
+                description="New agency registrations will appear here."
+              />
+            ) : null}
+          </div>
+        <div className={`${sa.tableWrap} hidden lg:block`}>
           <table className="w-full min-w-[720px]">
             <thead>
               <tr>
                 <th className={sa.th}>Agency</th>
                 <th className={sa.th}>Contact</th>
-                <th className={sa.th}>Location</th>
-                <th className={sa.th}>Submitted</th>
+                <th className={sa.th}>Email</th>
+                <th className={sa.th}>Phone</th>
+                <th className={sa.th}>Created</th>
                 <th className={sa.th}>Status</th>
                 <th className={sa.th} />
               </tr>
@@ -182,7 +229,7 @@ export const SuperAdminAgencyRequests = () => {
               {inbox.map((agency) => (
                 <tr
                   key={agency._id}
-                  className={`${sa.row} cursor-pointer`}
+                  className={`${sa.row} cursor-pointer ${agency.status === 'pending' ? 'bg-[var(--sa-warn-soft)]/35' : ''}`}
                   onClick={() => open(agency)}
                 >
                   <td className={sa.td}>
@@ -194,13 +241,9 @@ export const SuperAdminAgencyRequests = () => {
                       </div>
                     </div>
                   </td>
-                  <td className={sa.td}>
-                    <p>{agency.primaryOwner?.name || '—'}</p>
-                    <p className="text-xs text-[var(--sa-text-muted)]">{agency.primaryOwner?.email || agency.email}</p>
-                  </td>
-                  <td className={sa.td}>
-                    {[agency.city, agency.country].filter(Boolean).join(', ') || '—'}
-                  </td>
+                  <td className={sa.td}>{agency.primaryOwner?.name || '—'}</td>
+                  <td className={sa.td}>{agency.primaryOwner?.email || agency.email || '—'}</td>
+                  <td className={sa.td}>{agency.phone || agency.whatsapp || '—'}</td>
                   <td className={sa.td}>
                     {agency.createdAt ? new Date(agency.createdAt).toLocaleString() : '—'}
                   </td>
@@ -216,10 +259,10 @@ export const SuperAdminAgencyRequests = () => {
               ))}
               {!inbox.length ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <SaEmpty
                       title={status === 'pending' ? 'No pending agency requests' : 'No agencies in this view'}
-                      description="New self-serve registrations appear here until you approve or reject them."
+                      description="New agency registrations will appear here."
                     />
                   </td>
                 </tr>
@@ -227,7 +270,8 @@ export const SuperAdminAgencyRequests = () => {
             </tbody>
           </table>
         </div>
-      )}
+        </>
+      ) : null}
 
       <SaPagination
         page={pagination.page}
@@ -347,9 +391,8 @@ export const SuperAdminAgencyRequests = () => {
           <FieldRow label="Phone" value={selected?.phone || selected?.whatsapp} />
         </dl>
         <p className="mt-4 text-xs text-[var(--sa-text-muted)] leading-relaxed">
-          After approval the owner can sign in with their registered email and password. KRIRIDER will email the dashboard
-          link. WhatsApp is sent only if a wa.me link can be prepared — API sending is not configured. Notification failure
-          will not undo approval.
+          This will activate the agency and allow the owner to access the KRIRIDER workspace. KRIRIDER will email the dashboard
+          link. WhatsApp is a wa.me link only — API sending is not configured. Notification failure will not undo approval.
         </p>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button type="button" className={sa.btnSecondary} onClick={() => setApproveOpen(false)}>
@@ -403,7 +446,7 @@ export const SuperAdminAgencyRequests = () => {
                 if (!data.success) throw new Error(data.message)
                 toast.success('Request rejected')
                 setRejectOpen(false)
-                setSelected(null)
+                setSuccess({ ...data, rejected: true })
                 await load(pagination.page)
               })
             }
@@ -448,14 +491,25 @@ export const SuperAdminAgencyRequests = () => {
         </div>
       </SaModal>
 
-      <SaModal open={Boolean(success)} onClose={() => setSuccess(null)} title="Agency approved successfully">
+      <SaModal
+        open={Boolean(success)}
+        onClose={() => {
+          setSuccess(null)
+          setSelected(null)
+        }}
+        title={success?.rejected ? 'Request rejected' : 'Agency approved successfully'}
+      >
         <p className="text-sm text-[var(--sa-text-secondary)] leading-relaxed">
-          The agency has been successfully created and approved on KRIRIDER.
+          {success?.rejected
+            ? 'The request is kept in history. It was not deleted.'
+            : 'The agency is now active. The owner can access the KRIRIDER workspace.'}
         </p>
         <dl className="mt-4">
           <FieldRow label="Agency" value={success?.agency?.name} />
-          <FieldRow label="Status" value="Approved" />
-          <FieldRow label="Dashboard" value={success?.access?.dashboardUrl || success?.agency?.dashboardUrl} />
+          <FieldRow label="Status" value={success?.rejected ? 'Rejected' : 'Approved'} />
+          {!success?.rejected ? (
+            <FieldRow label="Dashboard" value={success?.access?.dashboardUrl || success?.agency?.dashboardUrl} />
+          ) : null}
           <FieldRow label="Email" value={notifyLabel(success?.notifications?.email)} />
           <FieldRow label="WhatsApp" value={notifyLabel(success?.notifications?.whatsapp)} />
         </dl>
@@ -463,6 +517,8 @@ export const SuperAdminAgencyRequests = () => {
           <p className="mt-3 text-xs text-[var(--sa-danger)]">{success.notifications.email.error}</p>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-2">
+          {!success?.rejected ? (
+            <>
           <a
             className={sa.btnPrimary}
             href={success?.access?.dashboardUrl || success?.agency?.dashboardUrl || '#'}
@@ -492,7 +548,16 @@ export const SuperAdminAgencyRequests = () => {
               Open WhatsApp
             </a>
           ) : null}
-          <button type="button" className={sa.btnGhost} onClick={() => setSuccess(null)}>
+            </>
+          ) : null}
+          <button
+            type="button"
+            className={sa.btnGhost}
+            onClick={() => {
+              setSuccess(null)
+              setSelected(null)
+            }}
+          >
             Close
           </button>
         </div>
