@@ -12,12 +12,24 @@ const StepLabel = ({ progress, steps }) => {
   return <em className="mkt-xp-live">{steps[index]}</em>
 }
 
+const clampUnit = (value) => Math.min(1, Math.max(0, value))
+
+/** WAAPI/Motion keyframe offsets must stay in [0, 1] and never decrease. */
+const unitKeyframes = (values) => {
+  const next = values.map(clampUnit)
+  for (let i = 1; i < next.length; i += 1) {
+    if (next[i] < next[i - 1]) next[i] = next[i - 1]
+  }
+  return next
+}
+
 const FilmCell = ({ progress, index, count, children }) => {
   const reduce = useReducedMotion()
   const span = 1 / Math.max(1, count - 1)
-  const mid = index * span
-  const opacity = useTransform(progress, [mid - span * 0.72, mid, mid + span * 0.72], [0.42, 1, 0.42])
-  const scale = useTransform(progress, [mid - span * 0.72, mid, mid + span * 0.72], [0.965, 1, 0.965])
+  const mid = clampUnit(index * span)
+  const stops = unitKeyframes([mid - span * 0.72, mid, mid + span * 0.72])
+  const opacity = useTransform(progress, stops, [0.42, 1, 0.42])
+  const scale = useTransform(progress, stops, [0.965, 1, 0.965])
   if (reduce) return <div className="mkt-xp-film-cell-wrap">{children}</div>
   return (
     <motion.div className="mkt-xp-film-cell-wrap" style={{ opacity, scale }}>

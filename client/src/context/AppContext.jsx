@@ -295,17 +295,21 @@ export const AppProvider = ({ children })=>{
     }, [storefrontProfile, storefrontSlug])
 
     useEffect(() => {
-      if (!storefrontProfile) return
-      const favicon = storefrontProfile.faviconUrl || storefrontProfile.logoUrl
-      if (!favicon) return
-      let link = document.querySelector("link[rel='icon'][data-agency-favicon='1']")
-      if (!link) {
-        link = document.createElement('link')
-        link.rel = 'icon'
-        link.setAttribute('data-agency-favicon', '1')
-        document.head.appendChild(link)
+      if (storefrontProfile) {
+        const favicon = storefrontProfile.faviconUrl || storefrontProfile.logoUrl
+        if (!favicon) return undefined
+        let link = document.querySelector("link[rel='icon'][data-agency-favicon='1']")
+        if (!link) {
+          link = document.createElement('link')
+          link.rel = 'icon'
+          link.setAttribute('data-agency-favicon', '1')
+          document.head.appendChild(link)
+        }
+        link.href = favicon
+        return undefined
       }
-      link.href = favicon
+      document.querySelector("link[rel='icon'][data-agency-favicon='1']")?.remove()
+      return undefined
     }, [storefrontProfile])
 
     useEffect(()=>{

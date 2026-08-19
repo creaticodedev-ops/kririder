@@ -194,15 +194,17 @@ export async function collectSeoPages() {
   pages.unshift(
     {
       path: '/',
-      title: 'HDN Car — Location de voiture au Maroc',
-      description: 'Location de voiture premium au Maroc. Réservez en ligne avec HDN Car.',
-      h1: 'Location de voiture au Maroc',
-      intro: 'Flotte récente, réservation simple.',
+      title: 'KRIRIDER — Car Rental Management Software',
+      description:
+        'KRIRIDER is an all-in-one car rental management platform for reservations, fleet, customers, contracts, accounting and daily operations.',
+      h1: 'KRIRIDER',
+      intro: 'Car rental management software.',
       sections: [],
       faqs: [],
       priority: '1.0',
       changefreq: 'weekly',
       skipBodyPrerender: true,
+      marketing: true,
     },
     {
       path: '/cars',
@@ -278,7 +280,13 @@ const buildPrerenderJsonLd = (page, canonical) => {
 }
 
 export function injectSeoIntoHtml(template, page) {
-  const title = escapeHtml(page.title.includes('HDN') ? page.title : `${page.title} | HDN Car`)
+  const title = escapeHtml(
+    page.marketing
+      ? page.title
+      : page.title.includes('HDN')
+        ? page.title
+        : `${page.title} | HDN Car`
+  )
   const desc = escapeHtml(page.description || '')
   const canonical = `${SITE_ORIGIN}${page.path === '/' ? '/' : page.path}`
   const body = page.skipBodyPrerender ? '' : renderPageBody(page)

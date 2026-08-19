@@ -18,13 +18,13 @@ const { pages } = await collectSeoPages()
 
 let count = 0
 for (const page of pages) {
-  const html = injectSeoIntoHtml(template, page)
-
   if (page.path === '/') {
-    fs.writeFileSync(templatePath, html, 'utf8')
-    count += 1
+    // Apex `/` is the KRIRIDER marketing site. Keep the Vite template
+    // (title, description, OG) instead of tenant rental SEO.
     continue
   }
+
+  const html = injectSeoIntoHtml(template, page)
 
   const outDir = path.join(distDir, ...page.path.replace(/^\//, '').split('/'))
   fs.mkdirSync(outDir, { recursive: true })

@@ -70,7 +70,7 @@ export const en = {
     client: 'Client',
     and: ' and ',
   },
-  caption: 'Real KRIRIDER workspace. Interface shown from HDN Car, a KRIRIDER client.',
+  caption: 'Real KRIRIDER workspace.',
   frames: {
     workspace: 'Owner workspace',
     dashboard: 'Dashboard',

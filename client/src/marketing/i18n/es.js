@@ -70,7 +70,7 @@ export const es = {
     client: 'Cliente',
     and: ' y ',
   },
-  caption: 'Espacio de trabajo KRIRIDER real. Interfaz mostrada desde HDN Car, un cliente de KRIRIDER.',
+  caption: 'Espacio de trabajo KRIRIDER real.',
   frames: {
     workspace: 'Espacio del propietario',
     dashboard: 'Panel',

@@ -16,7 +16,7 @@ export const BrandMark = ({ to = '/', className = '', variant = 'dark', size = '
         <source type="image/webp" srcSet={logoWebp} />
         <img
           src={logoPng}
-          alt=""
+          alt={BRAND}
           width={1024}
           height={168}
           decoding="async"

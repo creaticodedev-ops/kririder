@@ -37,10 +37,18 @@ export const parseStorefrontSlug = (pathname) => {
   return match ? normalizeAgencySlug(match[1]) : ''
 }
 
+const isLocalDevHost = (host) =>
+  host === 'localhost' ||
+  host === '127.0.0.1' ||
+  host === '0.0.0.0' ||
+  host === '::1' ||
+  host.endsWith('.localhost')
+
 /**
  * Detect tenant from browser Host (P3).
  * - `{slug}.{PLATFORM_BASE_DOMAIN}` → subdomain slug
  * - custom domain (not platform apex) → isCustomDomain
+ * - localhost / loopback → marketing apex (not a tenant)
  */
 export const detectHostTenant = (hostname = typeof window !== 'undefined' ? window.location.hostname : '') => {
   const host = String(hostname || '')
@@ -49,6 +57,11 @@ export const detectHostTenant = (hostname = typeof window !== 'undefined' ? wind
     .replace(/:\d+$/, '')
   const base = getPlatformBaseDomain()
   if (!host) return { slug: '', isCustomDomain: false, host: '', atRoot: false }
+
+  // Local preview/dev is the marketing apex, not a tenant custom domain.
+  if (isLocalDevHost(host)) {
+    return { slug: '', isCustomDomain: false, host, atRoot: false }
+  }
 
   if (base) {
     if (host === base || host === `www.${base}`) {

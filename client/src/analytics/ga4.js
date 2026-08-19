@@ -1,5 +1,5 @@
 /**
- * Google Analytics 4 helpers for the HDN Car SPA.
+ * Google Analytics 4 helpers for the KRIRIDER SPA.
  * - Manual page_view (send_page_view: false) to avoid duplicates with React Router
  * - Business events only; never send PII, tokens, passwords, payments, or contract HTML
  */
@@ -207,7 +207,7 @@ export const trackPageView = (pathname, search = '') => {
 
   const payload = withSendTo({
     page_path: pagePath,
-    page_title: document.title || 'HDN Car',
+    page_title: document.title || 'KRIRIDER',
     // Full browser URL (origin + path + safe query), not a reconstructed guess
     page_location: `${window.location.origin}${pagePath}`,
   })
