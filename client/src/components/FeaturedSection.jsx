@@ -24,7 +24,7 @@ const FeaturedSection = () => {
   }, [cars])
 
   return (
-    <section className="relative py-20 md:py-28 page-pad page-shell bg-light">
+    <section id="fleet" className="relative py-20 md:py-28 page-pad page-shell bg-light">
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-sand/60 to-transparent pointer-events-none" />
 
       <Motion.div

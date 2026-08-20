@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { HERO_IMAGE } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'framer-motion'
@@ -8,10 +8,42 @@ import CitySelect from './CitySelect'
 import toast from 'react-hot-toast'
 import { booking } from './ui/bookingUi'
 import { trackSearch } from '../analytics/ga4'
+import HeroHud from './hero/HeroHud'
+import { usePointerLook } from './hero/usePointerLook'
+import {
+  countryDisplayKey,
+  heroVehicleHint,
+  resolveHeroCity,
+  resolveHeroCountry,
+} from './hero/heroTelemetry'
+import './hero/heroStage.css'
+
+const fade = (reduce, delay) =>
+  reduce
+    ? { initial: false, animate: { opacity: 1 } }
+    : {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        transition: { duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] },
+      }
+
+const usePrefersReducedMotion = () => {
+  const [reduce, setReduce] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const sync = () => setReduce(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+  return reduce
+}
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState('')
   const { t } = useI18n()
+  const reduceMotion = usePrefersReducedMotion()
+  const stageRef = usePointerLook(!reduceMotion)
   const {
     pickupDate,
     setPickupDate,
@@ -21,6 +53,8 @@ const Hero = () => {
     pickupLocations,
     publicPath,
     storefrontProfile,
+    cars,
+    currency,
   } = useAppContext()
   const displayBrand = storefrontProfile?.name || ''
   const heroHeadline = storefrontProfile?.hero?.headline || ''
@@ -30,6 +64,16 @@ const Hero = () => {
   const cities = useMemo(() => {
     return [...new Set(pickupLocations.map((location) => location.city))].sort()
   }, [pickupLocations])
+
+  const originCity = useMemo(
+    () => resolveHeroCity(storefrontProfile, pickupLocations),
+    [storefrontProfile, pickupLocations],
+  )
+  const originCountry = useMemo(() => resolveHeroCountry(storefrontProfile), [storefrontProfile])
+  const countryLabel = countryDisplayKey(originCountry)
+    ? t('hero.morocco')
+    : originCountry
+  const vehicleHint = useMemo(() => heroVehicleHint(cars), [cars])
 
   const startISO = typeof pickupDate === 'string' ? pickupDate.slice(0, 10) : ''
   const endISO = typeof returnDate === 'string' ? returnDate.slice(0, 10) : ''
@@ -61,20 +105,34 @@ const Hero = () => {
     }).toString()}`)
   }
 
-  return (
-    <section className="relative min-h-[100svh] overflow-x-clip bg-light">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(143,31,31,0.12),transparent_55%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-sand/80 to-transparent" />
-      </div>
+  const exploreFleet = () => {
+    document.getElementById('fleet')?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
+  }
 
-      <div className="relative z-10 page-pad page-shell flex flex-col items-center pb-12 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:pb-16 sm:pt-28 md:pb-20 md:pt-32">
+  return (
+    <section ref={stageRef} className="hero-stage">
+      <div className="hero-atmosphere" aria-hidden="true">
         <Motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: 'easeOut' }}
-          className="w-full max-w-3xl text-center"
+          className="hero-atmosphere-inner"
+          initial={reduceMotion ? false : { opacity: 0.2 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
         >
+          <div className="hero-atmosphere-wash" />
+          <div className="hero-atmosphere-horizon" />
+          <div className="hero-atmosphere-curves" />
+          <div className="hero-atmosphere-haze" />
+          <div className="hero-atmosphere-road" />
+          <div className="hero-atmosphere-grain" />
+        </Motion.div>
+      </div>
+      <div className="hero-cursor-light" aria-hidden="true" />
+
+      <div className="relative z-10 page-pad page-shell flex flex-col items-center pb-10 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:pb-14 sm:pt-28 md:pb-16 md:pt-32">
+        <Motion.div className="hero-copy" {...fade(reduceMotion, 0.85)}>
           <div className="mb-4 flex justify-center sm:mb-5 md:mb-6">
             <div
               className="inline-flex max-w-[min(100%,22rem)] items-center gap-2 rounded-full border border-borderColor/70 bg-white/80 px-3 py-1.5 shadow-[0_1px_2px_rgba(22,18,16,0.05)] backdrop-blur-md sm:max-w-none sm:gap-2.5 sm:px-3.5 sm:py-[0.4rem]"
@@ -111,15 +169,16 @@ const Hero = () => {
         </Motion.div>
 
         <Motion.form
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.12, ease: 'easeOut' }}
           onSubmit={handleSearch}
           className="mt-8 w-full max-w-4xl sm:mt-10 md:mt-12"
+          {...fade(reduceMotion, 1.12)}
         >
-          <div className="overflow-visible rounded-[1.35rem] border border-borderColor/90 bg-white shadow-[0_18px_50px_-28px_rgba(22,18,16,0.35)] md:rounded-[1.75rem]">
+          <div className="hero-console">
             <div className="flex flex-col md:flex-row md:items-stretch">
-              <div className="min-w-0 border-b border-borderColor/80 md:flex-[1.05] md:border-b-0 md:border-r">
+              <div
+                data-filled={pickupLocation ? 'true' : 'false'}
+                className="min-w-0 border-b border-borderColor/80 md:flex-[1.05] md:border-b-0 md:border-r"
+              >
                 <CitySelect
                   value={pickupLocation}
                   onChange={setPickupLocation}
@@ -129,7 +188,10 @@ const Hero = () => {
                 />
               </div>
 
-              <div className="min-w-0 border-b border-borderColor/80 md:flex-[1.55] md:border-b-0 md:border-r">
+              <div
+                data-filled={startISO && endISO ? 'true' : 'false'}
+                className="min-w-0 border-b border-borderColor/80 md:flex-[1.55] md:border-b-0 md:border-r"
+              >
                 <DateRangePicker
                   startDate={startISO}
                   endDate={endISO}
@@ -141,46 +203,89 @@ const Hero = () => {
               </div>
 
               <div className="flex items-stretch p-3 md:p-2.5 md:pl-2">
-                <Motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.985 }}
+                <button
                   type="submit"
-                  className={`${booking.btnPrimary} booking-tap w-full md:w-[9.75rem]`}
+                  className={`${booking.btnPrimary} booking-tap hero-find w-full md:w-[9.75rem]`}
                 >
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                     <circle cx="11" cy="11" r="7" />
                     <path d="M20 20l-3.5-3.5" />
                   </svg>
                   {t('hero.search')}
-                </Motion.button>
+                </button>
               </div>
             </div>
           </div>
 
-          <p className="mt-3.5 px-2 text-center text-xs leading-relaxed tracking-wide text-muted sm:text-sm">
+          <p className="mt-3.5 px-2 text-center text-[11px] leading-relaxed tracking-[0.04em] text-muted sm:text-xs">
             {t('hero.trustLine')}
           </p>
         </Motion.form>
 
-        <Motion.div
-          initial={{ opacity: 0, y: 36 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.22, ease: 'easeOut' }}
-          className="mt-8 flex w-full max-w-3xl justify-center px-2 sm:mt-10 md:mt-14"
-        >
-          <picture>
-            <source srcSet={HERO_IMAGE.webp} type="image/webp" />
-            <img
-              src={HERO_IMAGE.webp}
-              alt={`${displayBrand} premium rental`}
-              width={900}
-              height={506}
-              decoding="async"
-              fetchPriority="high"
-              className="max-h-[200px] w-full select-none object-contain drop-shadow-[0_30px_60px_rgba(22,18,16,0.18)] sm:max-h-[280px] md:max-h-[340px]"
+        <div className="hero-scene mt-8 px-2 sm:mt-10 md:mt-12">
+          {originCity && countryLabel ? (
+            <Motion.div className="hero-journey" {...fade(reduceMotion, 1.45)}>
+              <div className="hero-journey-row">
+                <span className="hero-journey-label">
+                  <strong>{originCity}</strong>
+                </span>
+                <span className="hero-journey-line" />
+                <span className="hero-journey-label">{countryLabel}</span>
+              </div>
+            </Motion.div>
+          ) : null}
+
+          <Motion.div className="hero-hud-slot" {...fade(reduceMotion, 1.4)}>
+            <HeroHud
+              city={originCity}
+              timeZone={storefrontProfile?.timezone || 'Africa/Casablanca'}
             />
-          </picture>
-        </Motion.div>
+          </Motion.div>
+
+          <div className="hero-car-frame">
+            <Motion.div
+              className="hero-car-intro"
+              initial={reduceMotion ? false : { scale: 1.22 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 2.15, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="hero-car">
+                <picture>
+                  <source srcSet={HERO_IMAGE.webp} type="image/webp" />
+                  <img
+                    src={HERO_IMAGE.webp}
+                    alt={`${displayBrand} premium rental`}
+                    width={900}
+                    height={506}
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
+                <div className="hero-car-shine" aria-hidden="true" />
+              </div>
+            </Motion.div>
+          </div>
+        </div>
+
+        {vehicleHint ? (
+          <Motion.div className="hero-vehicle-meta" {...fade(reduceMotion, 1.5)}>
+            <p className="hero-vehicle-kicker">{vehicleHint.category}</p>
+            <p className="hero-vehicle-price">
+              {t('hero.fromPerDay', { price: `${currency}${vehicleHint.from}` })}
+            </p>
+          </Motion.div>
+        ) : null}
+
+        <Motion.button
+          type="button"
+          className="hero-explore"
+          onClick={exploreFleet}
+          aria-label={t('hero.exploreFleet')}
+          {...fade(reduceMotion, 1.65)}
+        >
+          <span>{t('hero.exploreFleet')}</span>
+          <i aria-hidden="true" />
+        </Motion.button>
       </div>
     </section>
   )
