@@ -31,9 +31,8 @@ import {
 import SeoHead from '../seo/SeoHead'
 import { uniqueCarSlug } from '../seo/slugify'
 import { vehicleProductJsonLd } from '../seo/jsonLd'
-import { SITE_ORIGIN } from '../seo/constants'
+import { SITE_NAME } from '../seo/constants'
 import PromotionBadge from '../components/PromotionBadge'
-import { vehicleGallery, vehicleImage } from '../storefront/theme'
 
 const toDateTimeLocal = (value) => {
   if (!value) return ''
@@ -61,8 +60,6 @@ const CarDetails = () => {
     pickupLocations,
     carsLoading,
     publicPath,
-    storefrontProfile,
-    storefrontSlug,
   } = useAppContext()
 
   const navigate = useNavigate()
@@ -88,12 +85,9 @@ const CarDetails = () => {
   const [bookingRules, setBookingRules] = useState(null)
   const [unavailablePeriods, setUnavailablePeriods] = useState([])
   const [rulesLoading, setRulesLoading] = useState(true)
-  const [galleryIndex, setGalleryIndex] = useState(0)
-  const [showMobileBook, setShowMobileBook] = useState(true)
 
-  const currency = storefrontProfile?.currency
-    ? `${storefrontProfile.currency} `
-    : (import.meta.env.VITE_CURRENCY || 'MAD ')
+  const currency = import.meta.env.VITE_CURRENCY || 'MAD '
+  const fallbackImage = assets.car_image1
   const minRentalDays = bookingRules
     ? Math.max(1, Number(bookingRules.minRentalDays) || 1)
     : null
@@ -229,24 +223,6 @@ const CarDetails = () => {
 
   useEffect(() => {
     if (car?._id) trackCarView(car)
-  }, [car?._id])
-
-  useEffect(() => {
-    if (!car?._id) return undefined
-    let observer
-    const frame = window.requestAnimationFrame(() => {
-      const el = document.getElementById('booking-panel')
-      if (!el) return
-      observer = new IntersectionObserver(
-        ([entry]) => setShowMobileBook(!entry.isIntersecting),
-        { threshold: 0.16 },
-      )
-      observer.observe(el)
-    })
-    return () => {
-      window.cancelAnimationFrame(frame)
-      observer?.disconnect()
-    }
   }, [car?._id])
 
   const pickupLoc = useMemo(
@@ -718,57 +694,24 @@ const CarDetails = () => {
   if (!car) return <Loader />
 
   const specs = [
-    car.seating_capacity ? { icon: assets.users_icon, text: t('carDetails.seats', { count: car.seating_capacity }) } : null,
-    car.fuel_type ? { icon: assets.fuel_icon, text: car.fuel_type } : null,
-    car.transmission ? { icon: assets.car_icon, text: car.transmission } : null,
-    formatLocationsDisplay(car) ? { icon: assets.location_icon, text: formatLocationsDisplay(car) } : null,
-  ].filter(Boolean)
+    { icon: assets.users_icon, text: t('carDetails.seats', { count: car.seating_capacity }) },
+    { icon: assets.fuel_icon, text: car.fuel_type },
+    { icon: assets.car_icon, text: car.transmission },
+    { icon: assets.location_icon, text: formatLocationsDisplay(car) },
+  ]
 
-  const shots = vehicleGallery(car)
-  const activeShot = shots[Math.min(galleryIndex, Math.max(shots.length - 1, 0))] || vehicleImage(car)
   const seoSlug = uniqueCarSlug(car, cars)
-  const detailsPath = publicPath?.(`/car-details/${car._id}`) || `/car-details/${car._id}`
-  const seoPath = seoSlug ? (publicPath?.(`/cars/${seoSlug}`) || `/cars/${seoSlug}`) : detailsPath
+  const seoPath = seoSlug ? `/cars/${seoSlug}` : `/car-details/${car._id}`
   const carName = `${car.brand || ''} ${car.model || ''}`.trim()
-  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
-  const brandName = storefrontProfile?.name || ''
-  const origin = storefrontProfile?.storefrontUrl
-    ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
-    : (typeof window !== 'undefined' ? window.location.origin : SITE_ORIGIN)
-  const realFeatures = Array.isArray(car.features) ? car.features.filter(Boolean) : []
-  const conditionLines = []
-  if (minRentalDays != null) {
-    conditionLines.push(t('storefront.conditionsMin', { days: minRentalDays }))
-    if (maxRentalDays != null && maxRentalDays < 365) {
-      conditionLines.push(t('storefront.conditionsMax', { days: maxRentalDays }))
-    }
-    conditionLines.push(t('storefront.conditionsPickupHours', { start: pickupHoursStart, end: pickupHoursEnd }))
-    conditionLines.push(t('storefront.conditionsReturnHours', { start: returnHoursStart, end: returnHoursEnd }))
-  }
-
-  const scrollToBooking = () => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    document.getElementById('booking-panel')?.scrollIntoView({
-      behavior: reduce ? 'auto' : 'smooth',
-      block: 'start',
-    })
-  }
 
   return (
-    <div className={`page-pad page-shell mt-4 overflow-x-clip bg-[var(--sf-paper,#f8f6f5)] sm:mt-8 md:mt-10 ${booking.pageBottom}`}>
+    <div className={`page-pad page-shell mt-4 overflow-x-clip bg-gradient-to-b from-white via-white to-sand/40 sm:mt-8 md:mt-10 ${booking.pageBottom}`}>
       <SeoHead
-        title={carName}
-        description={
-          brandName
-            ? `${carName} — ${brandName}. ${t('storefront.fromPrice', { price: `${currency}${car.pricePerDay}` })}`
-            : carName
-        }
-        path={detailsPath}
-        image={activeShot || undefined}
-        siteName={isTenant ? brandName || undefined : undefined}
-        origin={origin}
-        faviconUrl={storefrontProfile?.faviconUrl || storefrontProfile?.logoUrl || ''}
-        jsonLd={[vehicleProductJsonLd(car, seoPath, storefrontProfile)]}
+        title={`Location ${carName} Maroc`}
+        description={`Louez ${carName} avec ${SITE_NAME}. Réservation en ligne.`}
+        path={seoPath}
+        image={car.image || undefined}
+        jsonLd={[vehicleProductJsonLd(car, seoPath)]}
       />
       <button
         type="button"
@@ -779,70 +722,31 @@ const CarDetails = () => {
         {t('carDetails.back')}
       </button>
 
-      <ol className="mb-6 flex gap-2 overflow-x-auto text-[11px] font-semibold uppercase tracking-[0.12em] text-muted sm:mb-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {[
-          t('storefront.stepVehicle'),
-          t('storefront.stepDates'),
-          t('storefront.stepDetails'),
-          t('storefront.stepConfirm'),
-        ].map((label, i) => (
-          <li key={label} className={`flex shrink-0 items-center gap-2 ${i === 0 ? 'text-ink' : ''}`}>
-            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${i === 0 ? 'bg-ink text-white' : 'bg-white text-muted ring-1 ring-borderColor'}`}>
-              {i + 1}
-            </span>
-            {label}
-            {i < 3 ? <span className="text-borderColor" aria-hidden>→</span> : null}
-          </li>
-        ))}
-      </ol>
-
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-12 lg:gap-10 xl:gap-14">
-        <div className="order-1 min-w-0 lg:col-span-7 xl:col-span-8">
+        <div className="order-2 min-w-0 lg:order-1 lg:col-span-7 xl:col-span-8">
           <Motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
-            <div className="relative overflow-hidden bg-[#ece7e1]">
-              {activeShot ? (
-                <img
-                  src={activeShot}
-                  alt={`${car.brand} ${car.model}`}
-                  width={1280}
-                  height={720}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="aspect-[16/10] w-full object-cover sm:aspect-[16/9]"
-                />
-              ) : (
-                <div className="flex aspect-[16/10] items-center justify-center text-sm uppercase tracking-[0.16em] text-muted sm:aspect-[16/9]">
-                  {carName}
-                </div>
-              )}
+            <div className="relative overflow-hidden rounded-[1.35rem] bg-sand/40 shadow-sm ring-1 ring-borderColor/70 sm:rounded-3xl">
+              <img
+                src={car.image || car.images?.[0] || fallbackImage}
+                onError={(e) => { e.currentTarget.src = fallbackImage }}
+                alt={`${car.brand} ${car.model}`}
+                width={1280}
+                height={720}
+                fetchPriority="high"
+                decoding="async"
+                className="aspect-[16/10] w-full object-cover sm:aspect-[16/9]"
+              />
               {car.displayPromotion ? (
                 <PromotionBadge promotion={car.displayPromotion} currency={currency} />
               ) : null}
             </div>
-            {shots.length > 1 ? (
-              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {shots.map((src, i) => (
-                  <button
-                    key={src}
-                    type="button"
-                    onClick={() => setGalleryIndex(i)}
-                    className={`h-16 w-[4.5rem] shrink-0 overflow-hidden ring-1 transition ${
-                      i === galleryIndex ? 'ring-ink' : 'ring-borderColor opacity-80 hover:opacity-100'
-                    }`}
-                    aria-label={`${t('storefront.gallery')} ${i + 1}`}
-                  >
-                    <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
-                  </button>
-                ))}
-              </div>
-            ) : null}
 
             <div className="mt-6 sm:mt-8">
-              {car.category ? <p className={booking.eyebrow}>{car.category}</p> : null}
+              <p className={booking.eyebrow}>{car.category}</p>
               <h1 className="font-display mt-1.5 text-[1.75rem] font-medium leading-tight text-ink sm:text-3xl lg:text-4xl">
                 {car.brand} {car.model}
               </h1>
-              {car.year ? <p className="mt-1.5 text-sm text-muted">{car.year}</p> : null}
+              <p className="mt-1.5 text-sm text-muted">{car.year}</p>
               {car.displayPromotion ? (
                 <div className="mt-4 max-w-lg">
                   <PromotionBadge
@@ -852,39 +756,30 @@ const CarDetails = () => {
                     showPrice
                   />
                 </div>
-              ) : (
-                <p className="mt-4 font-display text-2xl text-ink">
-                  {t('storefront.fromPrice', { price: `${currency}${car.pricePerDay}` })}
-                </p>
-              )}
+              ) : null}
             </div>
 
-            {specs.length ? (
             <div className="mt-5 flex flex-wrap gap-2 sm:mt-6">
               {specs.map(({ icon, text }) => (
                 <span
                   key={text}
-                  className="inline-flex items-center gap-2 border border-borderColor/80 bg-white px-3.5 py-2 text-xs font-medium text-ink/80"
+                  className="inline-flex items-center gap-2 rounded-full border border-borderColor/80 bg-white px-3.5 py-2 text-xs font-medium text-ink/80 shadow-sm"
                 >
                   <img src={icon} alt="" className="h-4 w-4 opacity-70" />
                   {text}
                 </span>
               ))}
             </div>
-            ) : null}
 
             <div className="mt-9 grid gap-8 sm:mt-10 sm:grid-cols-2 sm:gap-10">
-              {car.description ? (
               <section>
                 <h2 className={booking.label}>{t('carDetails.description')}</h2>
                 <p className="mt-3 text-sm leading-relaxed text-ink/75">{car.description}</p>
               </section>
-              ) : null}
-              {realFeatures.length ? (
               <section>
-                <h2 className={booking.label}>{t('storefront.included')}</h2>
+                <h2 className={booking.label}>{t('carDetails.features')}</h2>
                 <ul className="mt-3 space-y-2.5">
-                  {realFeatures.map((item) => (
+                  {(car.features?.length ? car.features : ['360 Camera', 'Bluetooth', 'GPS', 'Heated Seats']).map((item) => (
                     <li key={item} className="flex items-center gap-2.5 text-sm text-ink/75">
                       <img src={assets.check_icon} className="h-4 w-4 shrink-0 opacity-80" alt="" />
                       {item}
@@ -892,22 +787,11 @@ const CarDetails = () => {
                   ))}
                 </ul>
               </section>
-              ) : null}
-              {conditionLines.length ? (
-              <section className={car.description || realFeatures.length ? '' : 'sm:col-span-2'}>
-                <h2 className={booking.label}>{t('storefront.conditions')}</h2>
-                <ul className="mt-3 space-y-2 text-sm text-ink/75">
-                  {conditionLines.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              </section>
-              ) : null}
             </div>
           </Motion.div>
         </div>
 
-        <div className="order-2 lg:col-span-5 xl:col-span-4 min-w-0">
+        <div className="order-1 lg:order-2 lg:col-span-5 xl:col-span-4 min-w-0">
           <ReservationPanel
             car={car}
             form={form}
@@ -941,14 +825,6 @@ const CarDetails = () => {
           />
         </div>
       </div>
-
-      {showMobileBook ? (
-        <div className="sf-mobile-book lg:hidden">
-          <button type="button" onClick={scrollToBooking} className={`${booking.btnPrimary} booking-tap w-full`}>
-            {t('storefront.bookVehicle')}
-          </button>
-        </div>
-      ) : null}
     </div>
   )
 }

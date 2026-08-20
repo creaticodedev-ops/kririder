@@ -7,7 +7,6 @@ import { getPublishedCities } from '../seo/data/cities'
 import { SEO_CATEGORIES } from '../seo/data/categories'
 import { useAppContext } from '../context/AppContext'
 import { airportsFromLocations } from '../seo/data/airports'
-import { PLATFORM_NAME } from '../constants/brand'
 import { NAP } from '../seo/constants'
 
 const fadeUp = (delay = 0) => ({
@@ -38,7 +37,7 @@ const Footer = () => {
     ? contactAddress
     : (showPlatformNap ? `${NAP.streetAddress}, ${NAP.addressLocality}` : contactAddress)
   const localityLine = isTenant
-    ? [storefrontProfile?.city, storefrontProfile?.country].filter(Boolean).join(', ')
+    ? [storefrontProfile?.city, storefrontProfile?.country || 'Maroc'].filter(Boolean).join(', ')
     : (showPlatformNap ? `${NAP.addressLocality}, Maroc` : '')
   const phoneHref = isTenant
     ? contactPhone
@@ -75,9 +74,7 @@ const Footer = () => {
           ) : null}
 
           <Motion.p {...fadeUp(0.3)} className="leading-relaxed">
-            {isTenant && brandLabel
-              ? t('storefront.journeyFallback')
-              : t('footer.description')}
+            {t('footer.description')}
           </Motion.p>
 
           <Motion.div {...fadeUp(0.4)} className="flex items-center gap-4 mt-6">
@@ -208,12 +205,9 @@ const Footer = () => {
         {...fadeUp(0.5)}
         className="flex flex-col md:flex-row gap-3 items-center justify-between py-6 text-gray-600 text-center md:text-left"
       >
-        <p className="text-xs sm:text-sm">
-          © {new Date().getFullYear()} {isTenant ? (brandLabel || t('storefront.thisAgency')) : PLATFORM_NAME}. {t('footer.rights')}
-        </p>
+        <p className="text-xs sm:text-sm">© {new Date().getFullYear()} ZAKARIA DOUAMI. {t('footer.rights')}</p>
 
         <div className="flex flex-col items-center gap-2 md:items-end">
-          {!isTenant ? (
           <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm">
             <li>
               <Link className="hover:text-gray-800 transition" to="/guide/documents-location-voiture-maroc">
@@ -233,7 +227,6 @@ const Footer = () => {
               </Link>
             </li>
           </ul>
-          ) : null}
           <Link
             to="/owner"
             className="text-[10px] text-gray-400/70 hover:text-gray-500 transition tracking-wide"

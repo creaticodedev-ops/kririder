@@ -7,7 +7,6 @@ import { resolveOwnerPermissions, ownerHasPermission } from '../utils/ownerPermi
 import { resolveStorefrontSlug, storefrontPath, detectHostTenant } from '../utils/storefront';
 
 import { resolveApiBaseUrl } from '../utils/apiBase';
-import { applyStorefrontBrand } from '../storefront/theme'
 
 const API_BASE_URL = resolveApiBaseUrl();
 axios.defaults.baseURL = API_BASE_URL
@@ -287,8 +286,9 @@ export const AppProvider = ({ children })=>{
     }, [needsPublicCatalog, storefrontSlug, hostTenant.atRoot, hostTenant.host, fetchCars, fetchPickupLocations, fetchStorefrontProfile])
 
     useEffect(() => {
-      if (storefrontProfile?.agencyId || storefrontProfile?.primaryBrandColor) {
-        applyStorefrontBrand(storefrontProfile)
+      const color = storefrontProfile?.primaryBrandColor
+      if (color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+        document.documentElement.style.setProperty('--color-primary', color)
       } else if (!storefrontProfile?.agencyId) {
         document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
       }

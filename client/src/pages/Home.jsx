@@ -58,16 +58,14 @@ const Home = () => {
         <FeaturedSection />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
-        <WhyChoose />
-      </Suspense>
-      <Suspense fallback={<SectionFallback />}>
         <Banner />
       </Suspense>
-      {!isTenant ? (
-        <Suspense fallback={<SectionFallback />}>
-          <Testimonial />
-        </Suspense>
-      ) : null}
+      <Suspense fallback={<SectionFallback />}>
+        <Testimonial />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <WhyChoose />
+      </Suspense>
       {!isTenant ? (
         <Suspense fallback={<SectionFallback />}>
           <SeoHomeModule />

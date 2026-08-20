@@ -45,6 +45,7 @@ const StorefrontShell = () => {
 
   return (
     <>
+      <NoIndexHead />
       {storefrontProfile?.name ? (
         <span className="sr-only">{storefrontProfile.name} storefront</span>
       ) : null}

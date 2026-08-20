@@ -8,11 +8,9 @@ import CitySelect from './CitySelect'
 import toast from 'react-hot-toast'
 import { booking } from './ui/bookingUi'
 import { trackSearch } from '../analytics/ga4'
-import { vehicleImage } from '../storefront/theme'
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState('')
-  const [returnLocation, setReturnLocation] = useState('')
   const { t } = useI18n()
   const {
     pickupDate,
@@ -23,31 +21,22 @@ const Hero = () => {
     pickupLocations,
     publicPath,
     storefrontProfile,
-    cars,
   } = useAppContext()
-
   const displayBrand = storefrontProfile?.name || ''
-  const heroHeadline = storefrontProfile?.hero?.headline || t('storefront.journeyHeadline')
-  const heroSub = storefrontProfile?.hero?.subheadline || t('storefront.journeyFallback')
-  const heroBadge = storefrontProfile?.hero?.badgeText || displayBrand
+  const heroHeadline = storefrontProfile?.hero?.headline || ''
+  const heroSub = storefrontProfile?.hero?.subheadline || ''
+  const heroBadge = storefrontProfile?.hero?.badgeText || ''
 
   const cities = useMemo(() => {
     return [...new Set(pickupLocations.map((location) => location.city))].sort()
   }, [pickupLocations])
-
-  const heroSrc = useMemo(() => {
-    if (storefrontProfile?.hero?.imageUrl) return storefrontProfile.hero.imageUrl
-    const featured = cars.find((c) => vehicleImage(c))
-    return vehicleImage(featured) || HERO_IMAGE.webp
-  }, [storefrontProfile, cars])
 
   const startISO = typeof pickupDate === 'string' ? pickupDate.slice(0, 10) : ''
   const endISO = typeof returnDate === 'string' ? returnDate.slice(0, 10) : ''
 
   const handleSearch = (e) => {
     e.preventDefault()
-    const pickup = pickupLocation || cities[0] || ''
-    if (!pickup) {
+    if (!pickupLocation) {
       toast.error(t('hero.selectLocation'))
       return
     }
@@ -60,116 +49,87 @@ const Hero = () => {
       return
     }
     trackSearch({
-      location: pickup,
+      location: pickupLocation,
       has_dates: true,
       source: 'hero',
     })
     const carsBase = publicPath?.('/cars') || '/cars'
-    const params = {
-      pickupLocation: pickup,
+    navigate(`${carsBase}?${new URLSearchParams({
+      pickupLocation,
       pickupDate: startISO,
       returnDate: endISO,
-    }
-    if (returnLocation) params.returnLocation = returnLocation
-    navigate(`${carsBase}?${new URLSearchParams(params).toString()}`)
+    }).toString()}`)
   }
 
   return (
-    <section className="relative min-h-[100svh] overflow-x-clip bg-[var(--sf-night,#0c0b0a)] text-[#f7f3ee]">
+    <section className="relative min-h-[100svh] overflow-x-clip bg-light">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-8%,var(--sf-wash,rgba(143,31,31,0.28)),transparent_58%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
-        <div className="sf-trails sf-motion" aria-hidden />
-        <div className="sf-road sf-motion" aria-hidden>
-          <span className="sf-centerline" />
-        </div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(143,31,31,0.12),transparent_55%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-sand/80 to-transparent" />
       </div>
 
-      <div className="relative z-10 page-pad page-shell flex min-h-[100svh] flex-col pb-8 pt-[max(5.25rem,calc(env(safe-area-inset-top)+4.25rem))] sm:pb-12">
+      <div className="relative z-10 page-pad page-shell flex flex-col items-center pb-12 pt-[max(5.5rem,calc(env(safe-area-inset-top)+4.5rem))] sm:pb-16 sm:pt-28 md:pb-20 md:pt-32">
         <Motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto w-full max-w-4xl text-center"
+          transition={{ duration: 0.65, ease: 'easeOut' }}
+          className="w-full max-w-3xl text-center"
         >
-          {storefrontProfile?.logoUrl ? (
-            <img
-              src={storefrontProfile.logoUrl}
-              alt={displayBrand}
-              width={180}
-              height={48}
-              decoding="async"
-              className="mx-auto mb-6 h-10 w-auto max-h-10 object-contain sm:h-12 sm:max-h-12"
-            />
-          ) : displayBrand ? (
-            <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/55">{displayBrand}</p>
-          ) : null}
+          <div className="mb-4 flex justify-center sm:mb-5 md:mb-6">
+            <div
+              className="inline-flex max-w-[min(100%,22rem)] items-center gap-2 rounded-full border border-borderColor/70 bg-white/80 px-3 py-1.5 shadow-[0_1px_2px_rgba(22,18,16,0.05)] backdrop-blur-md sm:max-w-none sm:gap-2.5 sm:px-3.5 sm:py-[0.4rem]"
+              role="status"
+            >
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted/70"
+                aria-hidden="true"
+              />
+              <span className="min-w-0 truncate text-[10px] font-semibold uppercase leading-none tracking-[0.08em] text-ink sm:text-[11px] sm:tracking-[0.09em]">
+                {heroBadge || t('hero.badge')}
+              </span>
+              <span
+                className="inline-flex shrink-0 translate-y-[0.5px] items-center text-[11px] leading-none sm:text-[12px]"
+                role="img"
+                aria-label="Morocco"
+              >
+                🇲🇦
+              </span>
+            </div>
+          </div>
 
-          {heroBadge ? (
-            <p className="mb-4 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-              {heroBadge}
+          {displayBrand ? (
+            <p className="font-display text-5xl font-medium leading-none tracking-tight text-primary sm:text-6xl md:text-7xl">
+              {displayBrand}
             </p>
           ) : null}
-
-          <h1 className="font-display text-[2.35rem] font-medium leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[4.25rem]">
-            {heroHeadline}
+          <h1 className="mt-3 font-display text-3xl font-medium leading-tight text-ink sm:mt-4 sm:text-4xl md:text-5xl">
+            {heroHeadline || t('hero.title')}
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm font-light leading-relaxed text-white/70 sm:mt-5 sm:text-base md:text-lg">
-            {heroSub}
+          <p className="mx-auto mt-3 max-w-xl text-sm font-light leading-relaxed text-muted sm:mt-4 sm:text-base md:text-lg">
+            {heroSub || t('hero.subtitle')}
           </p>
         </Motion.div>
 
-        <Motion.div
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mx-auto mt-8 flex w-full max-w-5xl flex-1 items-end justify-center sm:mt-10"
-        >
-          <img
-            src={heroSrc}
-            alt={displayBrand ? `${displayBrand} fleet` : 'Rental vehicle'}
-            width={1280}
-            height={720}
-            decoding="async"
-            fetchPriority="high"
-            className="sf-hero-car sf-motion max-h-[min(42vh,420px)] w-full select-none object-contain object-bottom"
-            onError={(e) => {
-              e.currentTarget.src = HERO_IMAGE.webp
-            }}
-          />
-        </Motion.div>
-
         <Motion.form
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.65, delay: 0.12, ease: 'easeOut' }}
           onSubmit={handleSearch}
-          className="sf-hero-search relative z-20 mx-auto mt-6 w-full max-w-5xl sm:mt-8"
+          className="mt-8 w-full max-w-4xl sm:mt-10 md:mt-12"
         >
-          <div className="overflow-visible rounded-[1.35rem] border border-white/12 bg-[rgba(18,16,14,0.72)] shadow-[0_24px_60px_-28px_rgba(0,0,0,0.65)] backdrop-blur-xl md:rounded-[1.6rem]">
-            <div className="flex flex-col lg:flex-row lg:items-stretch">
-              <div className="min-w-0 border-b border-white/10 lg:flex-1 lg:border-b-0 lg:border-r">
+          <div className="overflow-visible rounded-[1.35rem] border border-borderColor/90 bg-white shadow-[0_18px_50px_-28px_rgba(22,18,16,0.35)] md:rounded-[1.75rem]">
+            <div className="flex flex-col md:flex-row md:items-stretch">
+              <div className="min-w-0 border-b border-borderColor/80 md:flex-[1.05] md:border-b-0 md:border-r">
                 <CitySelect
                   value={pickupLocation}
-                  onChange={(v) => {
-                    setPickupLocation(v)
-                    if (!returnLocation) setReturnLocation(v)
-                  }}
+                  onChange={setPickupLocation}
                   options={cities}
                   label={t('hero.pickupLocation')}
                   placeholder={t('hero.selectLocation')}
                 />
               </div>
-              <div className="min-w-0 border-b border-white/10 lg:flex-1 lg:border-b-0 lg:border-r">
-                <CitySelect
-                  value={returnLocation || pickupLocation}
-                  onChange={setReturnLocation}
-                  options={cities}
-                  label={t('hero.returnLocation')}
-                  placeholder={t('hero.selectLocation')}
-                />
-              </div>
-              <div className="min-w-0 border-b border-white/10 lg:flex-[1.35] lg:border-b-0 lg:border-r">
+
+              <div className="min-w-0 border-b border-borderColor/80 md:flex-[1.55] md:border-b-0 md:border-r">
                 <DateRangePicker
                   startDate={startISO}
                   endDate={endISO}
@@ -179,17 +139,48 @@ const Hero = () => {
                   }}
                 />
               </div>
-              <div className="flex items-stretch p-3 lg:p-2.5">
-                <button type="submit" className={`${booking.btnPrimary} booking-tap w-full lg:w-[11.5rem]`}>
-                  {t('hero.searchVehicles')}
-                </button>
+
+              <div className="flex items-stretch p-3 md:p-2.5 md:pl-2">
+                <Motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.985 }}
+                  type="submit"
+                  className={`${booking.btnPrimary} booking-tap w-full md:w-[9.75rem]`}
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M20 20l-3.5-3.5" />
+                  </svg>
+                  {t('hero.search')}
+                </Motion.button>
               </div>
             </div>
           </div>
-          <p className="mt-3 px-2 text-center text-xs tracking-wide text-white/45 sm:text-sm">
+
+          <p className="mt-3.5 px-2 text-center text-xs leading-relaxed tracking-wide text-muted sm:text-sm">
             {t('hero.trustLine')}
           </p>
         </Motion.form>
+
+        <Motion.div
+          initial={{ opacity: 0, y: 36 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.22, ease: 'easeOut' }}
+          className="mt-8 flex w-full max-w-3xl justify-center px-2 sm:mt-10 md:mt-14"
+        >
+          <picture>
+            <source srcSet={HERO_IMAGE.webp} type="image/webp" />
+            <img
+              src={HERO_IMAGE.webp}
+              alt={`${displayBrand} premium rental`}
+              width={900}
+              height={506}
+              decoding="async"
+              fetchPriority="high"
+              className="max-h-[200px] w-full select-none object-contain drop-shadow-[0_30px_60px_rgba(22,18,16,0.18)] sm:max-h-[280px] md:max-h-[340px]"
+            />
+          </picture>
+        </Motion.div>
       </div>
     </section>
   )
