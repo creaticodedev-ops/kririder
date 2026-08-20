@@ -23,7 +23,7 @@ export const booking = {
 
   /** CTAs */
   btnPrimary:
-    'inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-[15px] font-semibold text-white transition hover:bg-primary-dull active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55',
+    'inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-[15px] font-semibold text-[color:var(--color-on-primary,#fff)] transition hover:bg-primary-dull active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55',
   btnSecondary:
     'inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-borderColor/90 bg-white px-6 text-[15px] font-semibold text-ink transition hover:bg-light active:scale-[0.99]',
   btnGhost:

@@ -77,6 +77,7 @@ const Navbar = () => {
   }, [open])
 
   const solid = !isHome || scrolled || open
+  const onDark = isHome && !solid
 
   return (
     <Motion.header
@@ -86,7 +87,7 @@ const Navbar = () => {
       className={`fixed top-0 inset-x-0 z-40 border-b transition-all duration-300 pt-[env(safe-area-inset-top)] ${
         solid
           ? 'bg-white/95 backdrop-blur-md border-borderColor text-ink'
-          : 'bg-transparent border-transparent text-ink'
+          : 'bg-transparent border-transparent text-white'
       }`}
     >
       {/* —— Mobile: [Menu][IG] · logo centered · [Search][FR] —— */}
@@ -94,7 +95,9 @@ const Navbar = () => {
         <div className="relative z-10 flex items-center -ml-1.5">
           <button
             type="button"
-            className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/80 transition-opacity active:opacity-55 cursor-pointer"
+            className={`booking-tap flex h-11 w-11 shrink-0 items-center justify-center transition-opacity active:opacity-55 cursor-pointer ${
+              onDark ? 'text-white' : 'text-ink/80'
+            }`}
             aria-label="Menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
@@ -102,7 +105,7 @@ const Navbar = () => {
             <img
               src={open ? assets.close_icon : assets.menu_icon}
               alt=""
-              className="block h-5 w-5 object-contain"
+              className={`block h-5 w-5 object-contain ${onDark && !open ? 'invert' : ''}`}
             />
           </button>
 
@@ -111,7 +114,9 @@ const Navbar = () => {
             href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/70 transition-opacity hover:text-ink hover:opacity-100 active:opacity-55"
+            className={`booking-tap flex h-11 w-11 shrink-0 items-center justify-center transition-opacity hover:opacity-100 active:opacity-55 ${
+              onDark ? 'text-white/80 hover:text-white' : 'text-ink/70 hover:text-ink'
+            }`}
             aria-label={`${brandLabel || 'Agency'} Instagram`}
           >
             <InstagramGlyph />
@@ -131,10 +136,10 @@ const Navbar = () => {
               width={140}
               height={36}
               decoding="async"
-              className="block h-8 w-auto max-h-8 object-contain"
+              className={`block h-8 w-auto max-h-8 object-contain ${onDark ? 'drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]' : ''}`}
             />
           ) : (
-            <span className="text-sm font-semibold text-ink whitespace-nowrap">{brandLabel || 'Home'}</span>
+            <span className={`text-sm font-semibold whitespace-nowrap ${onDark ? 'text-white' : 'text-ink'}`}>{brandLabel || 'Home'}</span>
           )}
         </Link>
 
@@ -142,12 +147,14 @@ const Navbar = () => {
           <button
             type="button"
             onClick={() => navigate(carsPath)}
-            className="booking-tap flex h-11 w-11 shrink-0 items-center justify-center text-ink/70 transition-opacity hover:text-ink active:opacity-55 cursor-pointer"
+            className={`booking-tap flex h-11 w-11 shrink-0 items-center justify-center transition-opacity hover:opacity-100 active:opacity-55 cursor-pointer ${
+              onDark ? 'text-white/80 hover:text-white' : 'text-ink/70 hover:text-ink'
+            }`}
             aria-label={t('nav.cars')}
           >
-            <img src={assets.search_icon} alt="" className="block h-[18px] w-[18px] object-contain opacity-80" />
+            <img src={assets.search_icon} alt="" className={`block h-[18px] w-[18px] object-contain opacity-80 ${onDark ? 'invert' : ''}`} />
           </button>
-          <LanguageSwitcher variant="bare" className="shrink-0" />
+          <LanguageSwitcher variant={onDark ? 'bareLight' : 'bare'} className="shrink-0" />
         </div>
       </div>
 
@@ -162,10 +169,10 @@ const Navbar = () => {
               width={160}
               height={40}
               decoding="async"
-              className="block h-8 sm:h-9 lg:h-10 w-auto max-h-9 lg:max-h-10 object-contain"
+              className={`block h-8 sm:h-9 lg:h-10 w-auto max-h-9 lg:max-h-10 object-contain ${onDark ? 'drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]' : ''}`}
             />
           ) : (
-            <span className="text-base font-semibold text-ink">{brandLabel || 'Home'}</span>
+            <span className={`text-base font-semibold ${onDark ? 'text-white' : 'text-ink'}`}>{brandLabel || 'Home'}</span>
           )}
         </Link>
 
@@ -174,18 +181,22 @@ const Navbar = () => {
             <Link
               key={index}
               to={link.path === '/' ? homePath : carsPath}
-              className="text-sm tracking-wide text-muted hover:text-ink transition-colors whitespace-nowrap"
+              className={`text-sm tracking-wide whitespace-nowrap transition-colors ${
+                onDark ? 'text-white/70 hover:text-white' : 'text-muted hover:text-ink'
+              }`}
             >
               {navLabels[link.name] || link.name}
             </Link>
           ))}
-          <LanguageSwitcher />
+          <LanguageSwitcher variant={onDark ? 'light' : 'default'} />
           {isOwner ? (
             <>
               <button
                 type="button"
                 onClick={() => navigate('/owner')}
-                className="cursor-pointer text-sm text-muted hover:text-ink whitespace-nowrap"
+                className={`cursor-pointer text-sm whitespace-nowrap ${
+                  onDark ? 'text-white/70 hover:text-white' : 'text-muted hover:text-ink'
+                }`}
               >
                 {t('nav.dashboard')}
               </button>

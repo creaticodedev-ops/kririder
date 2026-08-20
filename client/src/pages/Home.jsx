@@ -1,22 +1,67 @@
-import React, { lazy, Suspense } from 'react'
-import Hero from '../components/Hero'
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import SeoHead from '../seo/SeoHead'
 import { localBusinessJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd'
 import { useAppContext } from '../context/AppContext'
 import { SITE_ORIGIN } from '../seo/constants'
+import HomeHero from '../storefrontHome/HomeHero'
+import { buildCategoryShowcase, featuredVehicles } from '../storefrontHome/fleetShowcase'
+import { usePrefersReducedMotion } from '../storefrontHome/usePrefersReducedMotion'
+import '../storefrontHome/storefrontHome.css'
 
-const FeaturedSection = lazy(() => import('../components/FeaturedSection'))
-const Banner = lazy(() => import('../components/Banner'))
-const Testimonial = lazy(() => import('../components/Testimonial'))
-const WhyChoose = lazy(() => import('../components/WhyChoose'))
-const SeoHomeModule = lazy(() => import('../components/SeoHomeModule'))
+const HomeCategories = lazy(() => import('../storefrontHome/HomeCategories'))
+const HomeFleet = lazy(() => import('../storefrontHome/HomeFleet'))
+const HomeWhy = lazy(() => import('../storefrontHome/HomeWhy'))
+const HomeLocations = lazy(() => import('../storefrontHome/HomeLocations'))
+const HomeCta = lazy(() => import('../storefrontHome/HomeCta'))
 
 const SectionFallback = () => (
-  <div className="min-h-[12rem] w-full" aria-hidden />
+  <div className="min-h-[10rem] w-full" aria-hidden />
 )
 
 const Home = () => {
-  const { storefrontProfile, storefrontSlug, publicPath } = useAppContext()
+  const { storefrontProfile, storefrontSlug, publicPath, cars } = useAppContext()
+  const reduceMotion = usePrefersReducedMotion()
+  const categories = useMemo(() => buildCategoryShowcase(cars), [cars])
+  const vehicles = useMemo(() => featuredVehicles(cars), [cars])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [cyclePaused, setCyclePaused] = useState(false)
+
+  useEffect(() => {
+    if (activeIndex >= categories.length) setActiveIndex(0)
+  }, [categories.length, activeIndex])
+
+  useEffect(() => {
+    if (reduceMotion || cyclePaused || categories.length < 2) return undefined
+    let id = 0
+    const tick = () => setActiveIndex((current) => (current + 1) % categories.length)
+    const start = () => {
+      window.clearInterval(id)
+      id = window.setInterval(tick, 5800)
+    }
+    const stop = () => window.clearInterval(id)
+    const onVis = () => {
+      if (document.hidden) stop()
+      else start()
+    }
+    if (!document.hidden) start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [categories.length, reduceMotion, cyclePaused])
+
+  useEffect(() => {
+    if (!cyclePaused) return undefined
+    const id = window.setTimeout(() => setCyclePaused(false), 12000)
+    return () => window.clearTimeout(id)
+  }, [cyclePaused, activeIndex])
+
+  const selectCategory = (index) => {
+    setActiveIndex(index)
+    setCyclePaused(true)
+  }
+
   const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
   const brandName = storefrontProfile?.name || ''
   const title = storefrontProfile?.seo?.title ||
@@ -28,9 +73,10 @@ const Home = () => {
     ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
     : (typeof window !== 'undefined' ? window.location.origin : SITE_ORIGIN)
   const ogImage = storefrontProfile?.seo?.ogImageUrl || storefrontProfile?.logoUrl || undefined
+  const ctaImage = categories[0]?.image || vehicles[0]?.image || vehicles[0]?.images?.[0] || ''
 
   return (
-    <>
+    <div className="sf-home">
       <SeoHead
         title={title}
         description={description}
@@ -53,25 +99,30 @@ const Home = () => {
               ]
         }
       />
-      <Hero />
+      <HomeHero
+        categories={categories}
+        activeIndex={activeIndex}
+      />
       <Suspense fallback={<SectionFallback />}>
-        <FeaturedSection />
+        <HomeCategories
+          categories={categories}
+          activeIndex={activeIndex}
+          onSelectCategory={selectCategory}
+        />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
-        <Banner />
+        <HomeFleet vehicles={vehicles} />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
-        <Testimonial />
+        <HomeWhy />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
-        <WhyChoose />
+        <HomeLocations />
       </Suspense>
-      {!isTenant ? (
-        <Suspense fallback={<SectionFallback />}>
-          <SeoHomeModule />
-        </Suspense>
-      ) : null}
-    </>
+      <Suspense fallback={<SectionFallback />}>
+        <HomeCta image={ctaImage} />
+      </Suspense>
+    </div>
   )
 }
 

@@ -7,11 +7,10 @@ import { resolveOwnerPermissions, ownerHasPermission } from '../utils/ownerPermi
 import { resolveStorefrontSlug, storefrontPath, detectHostTenant } from '../utils/storefront';
 
 import { resolveApiBaseUrl } from '../utils/apiBase';
+import { applyBrandCssVars, resetBrandCssVars } from '../storefrontHome/brandTheme';
 
 const API_BASE_URL = resolveApiBaseUrl();
 axios.defaults.baseURL = API_BASE_URL
-
-const DEFAULT_PRIMARY = '#8F1F1F'
 
 export const AppContext = createContext();
 
@@ -288,9 +287,9 @@ export const AppProvider = ({ children })=>{
     useEffect(() => {
       const color = storefrontProfile?.primaryBrandColor
       if (color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
-        document.documentElement.style.setProperty('--color-primary', color)
+        applyBrandCssVars(color)
       } else if (!storefrontProfile?.agencyId) {
-        document.documentElement.style.setProperty('--color-primary', DEFAULT_PRIMARY)
+        resetBrandCssVars()
       }
     }, [storefrontProfile, storefrontSlug])
 

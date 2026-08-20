@@ -4,6 +4,9 @@
 @theme {
   --color-primary: #8F1F1F;
   --color-primary-dull: #6B1515;
+  --color-on-primary: #FFFFFF;
+  --color-primary-rgb: 143, 31, 31;
+  --color-brand-glow-rgb: 143, 31, 31;
   --color-light: #F8F6F5;
   --color-borderColor: #E2D9D6;
   --color-ink: #161210;
