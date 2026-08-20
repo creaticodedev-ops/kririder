@@ -23,7 +23,7 @@ export const booking = {
 
   /** CTAs */
   btnPrimary:
-    'inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-[15px] font-semibold text-white transition hover:bg-primary-dull active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55',
+    'inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-[15px] font-semibold text-[var(--sf-on-primary,#fff)] transition hover:bg-primary-dull active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55',
   btnSecondary:
     'inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-borderColor/90 bg-white px-6 text-[15px] font-semibold text-ink transition hover:bg-light active:scale-[0.99]',
   btnGhost:
@@ -33,7 +33,7 @@ export const booking = {
     'inline-flex h-10 items-center justify-center rounded-full border px-4 text-xs sm:text-sm font-medium transition-colors',
   chipActive: 'bg-ink text-white border-ink',
   chipIdle: 'bg-white/90 text-muted border-borderColor hover:border-ink/25 hover:text-ink',
-  chipPrimaryActive: 'bg-primary text-white border-primary',
+  chipPrimaryActive: 'bg-primary text-[var(--sf-on-primary,#fff)] border-primary',
 
   pageBottom: 'pb-[max(5rem,calc(env(safe-area-inset-bottom)+4rem))] sm:pb-24',
 }

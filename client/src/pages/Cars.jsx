@@ -12,6 +12,8 @@ import { VEHICLE_CATEGORIES, groupCarsByCategory } from '../utils/vehicleCategor
 import { getCarLocations } from '../utils/carLocations'
 import { booking } from '../components/ui/bookingUi'
 import { trackSearch } from '../analytics/ga4'
+import SeoHead from '../seo/SeoHead'
+import { SITE_ORIGIN } from '../seo/constants'
 
 const Cars = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -21,7 +23,7 @@ const Cars = () => {
   const categoryParam = searchParams.get('category') || ''
   const { t } = useI18n()
 
-  const { cars, carsLoading, axios, setPickupDate, setReturnDate } = useAppContext()
+  const { cars, carsLoading, axios, setPickupDate, setReturnDate, storefrontProfile, storefrontSlug, publicPath } = useAppContext()
 
   const [input, setInput] = useState('')
   const isSearchData = pickupLocation && urlPickupDate && urlReturnDate
@@ -119,23 +121,38 @@ const Cars = () => {
   }
 
   const resultCount = sections.reduce((n, s) => n + s.cars.length, 0)
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  const brandName = storefrontProfile?.name || ''
+  const catalogPath = publicPath?.('/cars') || '/cars'
+  const origin = storefrontProfile?.storefrontUrl
+    ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
+    : (typeof window !== 'undefined' ? window.location.origin : SITE_ORIGIN)
 
   return (
     <div className={booking.pageBottom}>
+      <SeoHead
+        title={brandName ? `${t('cars.title')} — ${brandName}` : t('cars.title')}
+        description={storefrontProfile?.seo?.description || t('cars.subtitle')}
+        path={catalogPath}
+        image={storefrontProfile?.seo?.ogImageUrl || storefrontProfile?.logoUrl || undefined}
+        siteName={isTenant ? brandName || undefined : undefined}
+        origin={origin}
+        faviconUrl={storefrontProfile?.faviconUrl || storefrontProfile?.logoUrl || ''}
+      />
       <Motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="relative flex flex-col items-center overflow-hidden px-0 py-14 sm:py-16 md:py-20"
         style={{
-          background: 'linear-gradient(180deg, #EDE8E4 0%, #F8F6F5 55%, #F8F6F5 100%)',
+          background: 'linear-gradient(180deg, var(--sf-paper, #EDE8E4) 0%, #F8F6F5 55%, #F8F6F5 100%)',
         }}
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(143,31,31,0.12), transparent 60%)',
+              'radial-gradient(ellipse 70% 50% at 50% -10%, var(--sf-wash, rgba(143,31,31,0.12)), transparent 60%)',
           }}
         />
         <div className="relative z-10 page-pad page-shell flex w-full flex-col items-center">
@@ -231,7 +248,7 @@ const Cars = () => {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
+                <div className="sf-fleet-grid grid grid-cols-1 gap-7 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
                   {section.cars.map((car, index) => (
                     <Motion.div
                       key={car._id}

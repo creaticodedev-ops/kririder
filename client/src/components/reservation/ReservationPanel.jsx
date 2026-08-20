@@ -210,9 +210,10 @@ export default function ReservationPanel({
 
   return (
     <Motion.div
+      id="booking-panel"
       initial="hidden"
       animate="show"
-      className="lg:sticky lg:top-24 lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2"
+      className="lg:sticky lg:top-24 lg:max-h-[calc(100svh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pb-2 scroll-mt-24"
     >
       <div className={`${booking.card} overflow-hidden`}>
         {/* Header */}
@@ -226,16 +227,12 @@ export default function ReservationPanel({
             <p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted">{t('carDetails.bookingSubtitle')}</p>
           </Motion.div>
 
-          <Motion.ul variants={fade} custom={1} className="relative mt-5 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {[t('carDetails.trustNoCard'), t('carDetails.trustInstant'), t('carDetails.trustSupport')].map((item) => (
-              <li
-                key={item}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-light px-3 py-1.5 text-[11px] font-medium text-ink/75 ring-1 ring-borderColor/80"
-              >
-                <svg className="h-3 w-3 text-primary" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                  <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                </svg>
+          <Motion.ul variants={fade} custom={1} className="relative mt-5 flex items-center gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {[t('storefront.stepDates'), t('storefront.stepDetails'), t('storefront.stepConfirm')].map((item, i) => (
+              <li key={item} className="flex shrink-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink/70">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-ink text-[10px] text-white">{i + 1}</span>
                 {item}
+                {i < 2 ? <span className="text-borderColor" aria-hidden>→</span> : null}
               </li>
             ))}
           </Motion.ul>

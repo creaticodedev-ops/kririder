@@ -1,0 +1,223 @@
+/* Tenant storefront only — never applied on the KRIRIDER marketing site. */
+.sf-app {
+  --sf-paper: #f4f1ec;
+  --sf-paper-2: #fffdf9;
+  --sf-night: #0c0b0a;
+  --sf-night-2: #161311;
+  --sf-fog: rgba(244, 241, 236, 0.72);
+}
+
+.sf-app body,
+.sf-app {
+  background: var(--sf-paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-app .sf-motion,
+  .sf-app .sf-road,
+  .sf-app .sf-trails,
+  .sf-app .sf-shimmer,
+  .sf-app .sf-hero-car {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.sf-road {
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.55;
+}
+
+.sf-road::before,
+.sf-road::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 2px;
+  height: 140%;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.45), transparent);
+  transform-origin: bottom center;
+}
+
+.sf-road::before {
+  transform: translateX(-120px) perspective(120px) rotateX(58deg) scaleY(1.4);
+}
+
+.sf-road::after {
+  transform: translateX(120px) perspective(120px) rotateX(58deg) scaleY(1.4);
+}
+
+.sf-centerline {
+  position: absolute;
+  left: 50%;
+  bottom: -10%;
+  width: 4px;
+  height: 160%;
+  transform: translateX(-50%) perspective(140px) rotateX(58deg);
+  background: repeating-linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.55) 0 18px,
+    transparent 18px 36px
+  );
+  animation: sf-dash 1.8s linear infinite;
+}
+
+@keyframes sf-dash {
+  to {
+    background-position: 0 36px;
+  }
+}
+
+.sf-trails {
+  position: absolute;
+  inset: 18% 0 auto;
+  height: 40%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 22% 70%, color-mix(in srgb, var(--sf-primary, #8f1f1f) 35%, transparent), transparent 42%),
+    radial-gradient(ellipse at 78% 65%, rgba(255, 214, 170, 0.18), transparent 40%);
+  filter: blur(18px);
+  animation: sf-pulse 5.5s ease-in-out infinite;
+}
+
+@keyframes sf-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.04);
+  }
+}
+
+.sf-hero-car {
+  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.45));
+  animation: sf-glide 8s ease-in-out infinite;
+}
+
+@keyframes sf-glide {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(10px, -6px, 0);
+  }
+}
+
+.sf-hscroll {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.75rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sf-hscroll::-webkit-scrollbar {
+  display: none;
+}
+
+.sf-hscroll > * {
+  scroll-snap-align: start;
+  flex: 0 0 min(84vw, 22rem);
+}
+
+@media (min-width: 768px) {
+  .sf-hscroll > * {
+    flex-basis: min(38vw, 26rem);
+  }
+}
+
+.sf-mobile-book {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  padding: 0.75rem max(1rem, env(safe-area-inset-left)) calc(0.75rem + env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-right));
+  background: color-mix(in srgb, var(--sf-night, #0c0b0a) 88%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sf-app .sf-nav-home:not(.sf-nav-solid) {
+  color: #f7f3ee;
+}
+
+.sf-app .sf-nav-home:not(.sf-nav-solid) .sf-nav-muted {
+  color: rgba(247, 243, 238, 0.72);
+}
+
+.sf-app .sf-nav-home:not(.sf-nav-solid) .sf-nav-icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.88;
+}
+
+.sf-app .sf-hero-search .text-muted,
+.sf-app .sf-hero-search .text-muted\/55 {
+  color: rgba(247, 243, 238, 0.52) !important;
+}
+
+.sf-app .sf-hero-search .text-ink,
+.sf-app .sf-hero-search .font-medium.text-ink {
+  color: #f7f3ee !important;
+}
+
+.sf-app .sf-hero-search button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sf-app .sf-hero-search .divide-borderColor\/80,
+.sf-app .sf-hero-search .divide-x {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sf-app .sf-fleet-grid {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.75rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.sf-app .sf-fleet-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.sf-app .sf-fleet-grid > * {
+  scroll-snap-align: start;
+  flex: 0 0 min(84vw, 22rem);
+}
+
+@media (min-width: 640px) {
+  .sf-app .sf-fleet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    gap: 2rem;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+
+  .sf-app .sf-fleet-grid > * {
+    flex: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sf-app .sf-fleet-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

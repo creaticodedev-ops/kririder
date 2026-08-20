@@ -1,99 +1,143 @@
-import React, { useMemo } from 'react'
-import Title from './Title'
-import { assets } from '../assets/assets'
-import CarCard from './CarCard'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
+import CarCard from './CarCard'
 import { groupCarsByCategory } from '../utils/vehicleCategories'
+import { vehicleImage } from '../storefront/theme'
+import { booking } from './ui/bookingUi'
 
 const FeaturedSection = () => {
   const navigate = useNavigate()
-  const { cars, publicPath } = useAppContext()
+  const { cars, publicPath, storefrontProfile } = useAppContext()
   const { t } = useI18n()
   const carsPath = publicPath?.('/cars') || '/cars'
+  const currency = storefrontProfile?.currency || import.meta.env.VITE_CURRENCY || 'MAD '
+  const [category, setCategory] = useState('')
 
-  const sections = useMemo(() => {
+  const categories = useMemo(() => {
     const grouped = groupCarsByCategory(cars)
-    // Home: up to 3 categories, 3 cars each — keeps the page premium, not crowded
-    return grouped.slice(0, 3).map((s) => ({
-      ...s,
-      cars: s.cars.slice(0, 3),
-    }))
+    return grouped.map((s) => s.category)
   }, [cars])
 
+  const visible = useMemo(() => {
+    if (!category) return cars
+    return cars.filter((c) => String(c.category || '').toLowerCase() === category.toLowerCase())
+  }, [cars, category])
+
+  const lead = visible[0]
+  const rest = visible.slice(1)
+
+  if (!cars.length) return null
+
   return (
-    <section className="relative py-20 md:py-28 page-pad page-shell bg-light">
-      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-sand/60 to-transparent pointer-events-none" />
-
-      <Motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <Title
-          eyebrow={t('featured.eyebrow')}
-          title={t('featured.title')}
-          subTitle={t('featured.subtitle')}
-        />
-      </Motion.div>
-
-      <div className="mt-14 md:mt-16 space-y-14 md:space-y-16">
-        {sections.map((section) => (
-          <div key={section.category}>
-            <div className="flex items-end justify-between gap-3 mb-6">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-primary/70 mb-1">
-                  {t('cars.categoryLabel')}
-                </p>
-                <h3 className="font-display text-2xl sm:text-3xl text-ink">{section.category}</h3>
-              </div>
+    <section className="relative bg-[var(--sf-paper,#f4f1ec)] py-16 sm:py-20 md:py-28">
+      <div className="page-pad page-shell">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">{t('featured.eyebrow')}</p>
+            <h2 className="mt-2 font-display text-3xl font-medium text-ink sm:text-4xl md:text-5xl">{t('featured.title')}</h2>
+            <p className="mt-3 text-sm font-light leading-relaxed text-muted sm:text-base">{t('featured.subtitle')}</p>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button
+              type="button"
+              onClick={() => setCategory('')}
+              className={`${booking.chip} booking-tap shrink-0 ${!category ? booking.chipPrimaryActive : booking.chipIdle}`}
+            >
+              {t('cars.allCategories')}
+            </button>
+            {categories.map((cat) => (
               <button
+                key={cat}
                 type="button"
-                onClick={() => {
-                  navigate(`${carsPath}?category=${encodeURIComponent(section.category)}`)
-                  window.scrollTo(0, 0)
-                }}
-                className="booking-tap inline-flex h-10 shrink-0 items-center text-xs text-primary hover:underline sm:text-sm"
+                onClick={() => setCategory(cat)}
+                className={`${booking.chip} booking-tap shrink-0 ${
+                  category.toLowerCase() === cat.toLowerCase() ? booking.chipPrimaryActive : booking.chipIdle
+                }`}
               >
-                {t('featured.viewCategory')}
+                {cat}
               </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-              {section.cars.map((car, index) => (
-                <Motion.div
-                  key={car._id}
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.5, delay: Math.min(index * 0.08, 0.32), ease: 'easeOut' }}
+            ))}
+          </div>
+        </div>
+
+        {lead ? (
+          <Motion.article
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            className="mt-10 grid overflow-hidden rounded-[1.5rem] bg-ink text-white lg:grid-cols-12"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                navigate(publicPath?.(`/car-details/${lead._id}`) || `/car-details/${lead._id}`)
+                window.scrollTo(0, 0)
+              }}
+              className="relative aspect-[16/10] overflow-hidden lg:col-span-7 lg:aspect-auto lg:min-h-[28rem]"
+            >
+              {vehicleImage(lead) ? (
+              <img
+                src={vehicleImage(lead)}
+                alt={`${lead.brand} ${lead.model}`}
+                className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                loading="eager"
+                decoding="async"
+              />
+              ) : (
+                <div className="flex h-full min-h-[16rem] items-center justify-center text-sm uppercase tracking-[0.16em] text-white/40">
+                  {lead.brand} {lead.model}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-black/40" />
+            </button>
+            <div className="flex flex-col justify-center px-6 py-8 sm:px-10 lg:col-span-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">{t('storefront.featuredLead')}</p>
+              <h3 className="mt-3 font-display text-3xl font-medium sm:text-4xl">
+                {lead.brand} {lead.model}
+              </h3>
+              <p className="mt-3 text-sm text-white/65">
+                {[
+                  lead.transmission,
+                  lead.seating_capacity ? t('carDetails.seats', { count: lead.seating_capacity }) : null,
+                  lead.fuel_type,
+                ].filter(Boolean).join(' · ')}
+              </p>
+              <p className="mt-6 font-display text-2xl">
+                {t('storefront.fromPrice', { price: `${currency}${lead.pricePerDay}` })}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className={booking.btnPrimary}
+                  onClick={() => {
+                    navigate(publicPath?.(`/car-details/${lead._id}`) || `/car-details/${lead._id}`)
+                    window.scrollTo(0, 0)
+                  }}
                 >
-                  <CarCard car={car} />
-                </Motion.div>
+                  {t('storefront.viewVehicle')}
+                </button>
+                <button type="button" className={booking.btnSecondary} onClick={() => navigate(carsPath)}>
+                  {t('featured.exploreAll')}
+                </button>
+              </div>
+            </div>
+          </Motion.article>
+        ) : null}
+
+        {rest.length ? (
+          <div className="mt-10">
+            <p className="mb-4 text-xs uppercase tracking-[0.16em] text-muted lg:hidden">{t('storefront.scrollFleet')}</p>
+            <div className="sf-hscroll">
+              {rest.map((car) => (
+                <CarCard key={car._id} car={car} />
               ))}
             </div>
           </div>
-        ))}
+        ) : null}
       </div>
-
-      <Motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="flex justify-center mt-14 md:mt-16"
-      >
-        <button
-          type="button"
-          onClick={() => { navigate(carsPath); window.scrollTo(0, 0) }}
-          className="group booking-tap inline-flex h-12 items-center gap-2 rounded-2xl border border-ink/15 px-7 text-[15px] font-medium tracking-wide transition-all duration-300 hover:border-primary hover:text-primary cursor-pointer"
-        >
-          {t('featured.exploreAll')}
-          <img src={assets.arrow_icon} alt="" className="h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-        </button>
-      </Motion.div>
     </section>
   )
 }

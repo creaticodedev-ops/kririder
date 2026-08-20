@@ -4,13 +4,19 @@ import SeoPageShell from './SeoPageShell'
 import { getCategoryBySlug } from '../../seo/data/categories'
 import { getPublishedCities } from '../../seo/data/cities'
 import { useAppContext } from '../../context/AppContext'
-import { uniqueCarSlug } from '../../seo/slugify'
 import { breadcrumbJsonLd, faqJsonLd } from '../../seo/jsonLd'
+import { SITE_ORIGIN } from '../../seo/constants'
 
 const CategoryPage = () => {
   const { slug } = useParams()
   const data = getCategoryBySlug(slug)
-  const { cars } = useAppContext()
+  const { cars, publicPath, storefrontProfile, storefrontSlug } = useAppContext()
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  const brand = storefrontProfile?.name || ''
+  const origin = storefrontProfile?.storefrontUrl
+    ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
+    : SITE_ORIGIN
+  const carsPath = publicPath?.('/cars') || '/cars'
 
   const matched = useMemo(() => {
     if (!data) return []
@@ -22,67 +28,71 @@ const CategoryPage = () => {
     })
   }, [cars, data])
 
-  if (!data) return <Navigate to="/cars" replace />
+  if (!data) return <Navigate to={carsPath} replace />
 
-  const path = `/cars/${data.slug}`
+  const path = publicPath?.(`/cars/${data.slug}`) || `/cars/${data.slug}`
   const breadcrumbs = [
-    { name: 'Accueil', path: '/' },
-    { name: 'Véhicules', path: '/cars' },
+    { name: 'Accueil', path: publicPath?.('/') || '/' },
+    { name: 'Véhicules', path: carsPath },
     { name: data.name, path },
   ]
 
   const ctaTo =
     data.filterType === 'transmission'
-      ? '/cars'
-      : `/cars?category=${encodeURIComponent(data.filterValue)}`
+      ? carsPath
+      : `${carsPath}?category=${encodeURIComponent(data.filterValue)}`
+
+  const title = isTenant && brand ? `${data.name} — ${brand}` : data.title
+  const description = isTenant && brand
+    ? `${matched.length} ${data.name}. ${brand}.`
+    : data.description
 
   return (
     <SeoPageShell
-      title={data.title}
-      description={data.description}
+      title={title}
+      description={description}
       path={path}
-      h1={data.h1}
-      intro={data.intro}
-      sections={data.sections}
-      faqs={data.faqs}
+      h1={isTenant ? data.name : data.h1}
+      intro={isTenant ? brand : data.intro}
+      sections={isTenant ? [] : data.sections}
+      faqs={isTenant ? [] : data.faqs}
       breadcrumbs={breadcrumbs}
       ctaTo={ctaTo}
-      ctaLabel={`Voir les ${data.name.toLowerCase()} disponibles`}
-      jsonLd={[breadcrumbJsonLd(breadcrumbs), faqJsonLd(data.faqs)]}
-      related={[
-        {
-          title: 'Villes',
-          links: getPublishedCities()
-            .filter((c) => (data.relatedCities || []).includes(c.slug))
-            .map((c) => ({ to: `/location-voiture/${c.slug}`, label: c.name })),
-        },
-        {
-          title: 'Guides',
-          links: (data.relatedGuides || []).map((g) => ({
-            to: `/guide/${g}`,
-            label: g.replace(/-/g, ' '),
-          })),
-        },
-      ]}
+      ctaLabel={`${data.name}`}
+      siteName={brand || undefined}
+      origin={origin}
+      jsonLd={[breadcrumbJsonLd(breadcrumbs, origin), isTenant ? null : faqJsonLd(data.faqs)]}
+      related={
+        isTenant
+          ? []
+          : [
+              {
+                title: 'Villes',
+                links: getPublishedCities()
+                  .filter((c) => (data.relatedCities || []).includes(c.slug))
+                  .map((c) => ({ to: `/location-voiture/${c.slug}`, label: c.name })),
+              },
+              {
+                title: 'Guides',
+                links: (data.relatedGuides || []).map((g) => ({
+                  to: `/guide/${g}`,
+                  label: g.replace(/-/g, ' '),
+                })),
+              },
+            ]
+      }
     >
       {matched.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-xl font-semibold text-ink">Modèles disponibles</h2>
+          <h2 className="text-xl font-semibold text-ink">{data.name}</h2>
           <ul className="mt-3 space-y-2">
-            {matched.slice(0, 12).map((car) => {
-              const seoSlug = uniqueCarSlug(car, cars)
-              return (
+            {matched.slice(0, 12).map((car) => (
                 <li key={car._id}>
-                  <Link className="text-primary hover:underline" to={`/cars/${seoSlug}`}>
+                  <Link className="text-primary hover:underline" to={publicPath?.(`/car-details/${car._id}`) || `/car-details/${car._id}`}>
                     {car.brand} {car.model}
                   </Link>
-                  <span className="text-muted"> — </span>
-                  <Link className="text-sm text-muted hover:underline" to={`/car-details/${car._id}`}>
-                    réserver
-                  </Link>
                 </li>
-              )
-            })}
+              ))}
           </ul>
         </section>
       )}

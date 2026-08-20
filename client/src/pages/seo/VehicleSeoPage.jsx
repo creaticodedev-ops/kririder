@@ -5,10 +5,15 @@ import { useAppContext } from '../../context/AppContext'
 import { uniqueCarSlug } from '../../seo/slugify'
 import { SEO_CATEGORIES } from '../../seo/data/categories'
 import { breadcrumbJsonLd, vehicleProductJsonLd } from '../../seo/jsonLd'
-import { SITE_NAME } from '../../seo/constants'
+import { SITE_ORIGIN } from '../../seo/constants'
 
 const VehicleSeoPage = ({ slug }) => {
-  const { cars, carsLoading } = useAppContext()
+  const { cars, carsLoading, publicPath, storefrontProfile, storefrontSlug } = useAppContext()
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  const brand = storefrontProfile?.name || ''
+  const origin = storefrontProfile?.storefrontUrl
+    ? storefrontProfile.storefrontUrl.replace(/\/s\/[^/]+\/?$/, '') || SITE_ORIGIN
+    : SITE_ORIGIN
 
   const car = useMemo(() => {
     if (!cars?.length) return null
@@ -19,30 +24,39 @@ const VehicleSeoPage = ({ slug }) => {
     return <div className="page-shell page-pad py-16 text-center text-muted">Chargement…</div>
   }
 
-  if (!car) return <Navigate to="/cars" replace />
+  const carsPath = publicPath?.('/cars') || '/cars'
+  if (!car) return <Navigate to={carsPath} replace />
 
-  const path = `/cars/${slug}`
+  const path = publicPath?.(`/cars/${slug}`) || `/cars/${slug}`
+  const detailsPath = publicPath?.(`/car-details/${car._id}`) || `/car-details/${car._id}`
   const name = `${car.brand} ${car.model}`.trim()
-  const cat = SEO_CATEGORIES.find(
-    (c) => c.filterType === 'category' && c.filterValue.toLowerCase() === String(car.category || '').toLowerCase()
-  )
-  const title = `Location ${name} Maroc`
-  const description = `Louez une ${name}${car.category ? ` (${car.category})` : ''} au Maroc avec ${SITE_NAME}. Réservation en ligne, tarifs au jour.`
+  const cat = !isTenant
+    ? SEO_CATEGORIES.find(
+        (c) => c.filterType === 'category' && c.filterValue.toLowerCase() === String(car.category || '').toLowerCase(),
+      )
+    : null
+  const title = brand ? `${name} — ${brand}` : `Location ${name}`
+  const description = brand
+    ? `${name}${car.category ? ` (${car.category})` : ''}. ${brand}.`
+    : `${name}`
   const breadcrumbs = [
-    { name: 'Accueil', path: '/' },
-    { name: 'Véhicules', path: '/cars' },
-    ...(cat ? [{ name: cat.name, path: `/cars/${cat.slug}` }] : []),
+    { name: 'Accueil', path: publicPath?.('/') || '/' },
+    { name: 'Véhicules', path: carsPath },
+    ...(cat ? [{ name: cat.name, path: publicPath?.(`/cars/${cat.slug}`) || `/cars/${cat.slug}` }] : []),
     { name, path },
   ]
 
   const sections = [
     {
-      heading: `Pourquoi louer une ${name} ?`,
-      body: `La ${name} fait partie de notre flotte active. Consultez disponibilité, transmission (${car.transmission || '—'}) et tarif journalier sur la fiche réservation.`,
-    },
-    {
-      heading: 'Location au Maroc',
-      body: `Idéale pour vos trajets ville ou inter-villes. Combinez avec une prise en charge aéroport active (Casablanca CMN, Marrakech RAK) ou un point ville selon le calendrier.`,
+      heading: name,
+      body: [
+        car.transmission,
+        car.fuel_type,
+        car.seating_capacity,
+        car.category,
+      ]
+        .filter(Boolean)
+        .join(' · '),
     },
   ]
 
@@ -51,43 +65,45 @@ const VehicleSeoPage = ({ slug }) => {
       title={title}
       description={description}
       path={path}
-      h1={`Location ${name} au Maroc`}
-      intro={`Réservez une ${name} avec ${SITE_NAME}. Page informative ; la réservation se finalise sur la fiche véhicule.`}
+      h1={name}
+      intro={brand ? `${brand}` : ''}
       sections={sections}
       breadcrumbs={breadcrumbs}
-      ctaTo={`/car-details/${car._id}`}
+      ctaTo={detailsPath}
       ctaLabel={`Réserver — ${name}`}
+      siteName={brand || undefined}
+      origin={origin}
+      image={car.image || undefined}
       jsonLd={[
-        breadcrumbJsonLd(breadcrumbs),
-        vehicleProductJsonLd(car, path),
+        breadcrumbJsonLd(breadcrumbs, origin),
+        vehicleProductJsonLd(car, path, storefrontProfile),
       ]}
-      related={[
-        {
-          title: 'Catégories',
-          links: [
-            ...(cat ? [{ to: `/cars/${cat.slug}`, label: cat.name }] : []),
-            ...SEO_CATEGORIES.filter((c) => c.slug !== cat?.slug)
-              .slice(0, 3)
-              .map((c) => ({ to: `/cars/${c.slug}`, label: c.name })),
-          ],
-        },
-      ]}
+      related={
+        cat
+          ? [
+              {
+                title: 'Catégories',
+                links: [
+                  { to: publicPath?.(`/cars/${cat.slug}`) || `/cars/${cat.slug}`, label: cat.name },
+                ],
+              },
+            ]
+          : []
+      }
     >
-      <section className="mt-8 rounded-2xl border border-borderColor/80 bg-white p-4 text-sm text-muted">
+      <section className="mt-8 border border-borderColor/80 bg-white p-4 text-sm text-muted">
         <p>
-          Catégorie : <strong className="text-ink">{car.category || '—'}</strong>
-          {' · '}
-          Transmission : <strong className="text-ink">{car.transmission || '—'}</strong>
+          {car.category ? <><strong className="text-ink">{car.category}</strong>{' · '}</> : null}
+          {car.transmission ? <><strong className="text-ink">{car.transmission}</strong>{' · '}</> : null}
           {typeof car.pricePerDay === 'number' ? (
             <>
-              {' · '}
-              À partir de <strong className="text-ink">{car.pricePerDay} MAD</strong>/jour
+              <strong className="text-ink">{car.pricePerDay} {storefrontProfile?.currency || 'MAD'}</strong>/jour
             </>
           ) : null}
         </p>
         <p className="mt-2">
-          <Link to={`/car-details/${car._id}`} className="text-primary hover:underline">
-            Ouvrir la fiche complète et réserver
+          <Link to={detailsPath} className="text-primary hover:underline">
+            {name}
           </Link>
         </p>
       </section>

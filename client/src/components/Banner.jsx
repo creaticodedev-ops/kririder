@@ -1,59 +1,62 @@
-import React from 'react'
-import { assets } from '../assets/assets'
+import React, { useMemo } from 'react'
 import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext'
+import { vehicleImage } from '../storefront/theme'
+import { bannerCopyAllowed } from '../storefront/trustPoints'
+import { booking } from './ui/bookingUi'
 
 const Banner = () => {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { publicPath } = useAppContext()
+  const { publicPath, cars, pickupLocations, storefrontProfile } = useAppContext()
+  const { hasAirport, cities } = bannerCopyAllowed({ locations: pickupLocations })
+  const heroCar = cars.find((c) => vehicleImage(c))
+  const image = storefrontProfile?.hero?.imageUrl || vehicleImage(heroCar)
+  const line = useMemo(() => {
+    if (hasAirport) return t('storefront.ctaAirport')
+    if (cities.length) return t('storefront.ctaBody')
+    return t('storefront.ctaBody')
+  }, [hasAirport, cities.length, t])
+
+  if (!image) return null
 
   return (
-    <section className="page-pad page-shell py-8 md:py-12">
-      <Motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative overflow-hidden rounded-2xl bg-ink min-h-[280px] md:min-h-[320px] flex flex-col md:flex-row items-stretch"
-      >
-        <div className="absolute inset-0">
+    <section className="bg-[var(--sf-paper,#f4f1ec)] py-8 md:py-12">
+      <div className="page-pad page-shell">
+        <Motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          className="relative min-h-[280px] overflow-hidden rounded-[1.5rem] bg-ink md:min-h-[340px]"
+        >
           <img
-            src={assets.banner_car_image}
+            src={image}
             alt=""
             width={1600}
             height={900}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover object-center opacity-40 md:opacity-50"
+            className="absolute inset-0 h-full w-full object-cover opacity-45"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/90 to-ink/40" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(143,31,31,0.35),transparent_55%)]" />
-        </div>
-
-        <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-8 md:px-14 md:py-16 max-w-xl">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/50 mb-3 font-medium">
-            {t('banner.eyebrow')}
-          </p>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-white font-medium leading-tight">
-            {t('banner.title')}
-          </h2>
-          <p className="mt-4 text-white/65 text-sm md:text-base leading-relaxed font-light max-w-md">
-            {t('banner.line1')}
-          </p>
-          <Motion.button
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.98 }}
-            type="button"
-            onClick={() => navigate(publicPath?.('/cars') || '/cars')}
-            className="booking-tap mt-7 inline-flex h-12 items-center self-start rounded-2xl bg-primary px-6 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-primary-dull cursor-pointer"
-          >
-            {t('banner.cta')}
-          </Motion.button>
-        </div>
-      </Motion.div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/25" />
+          <div className="relative z-10 flex max-w-xl flex-col justify-center px-6 py-12 sm:px-10 md:py-16">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-white/50">{t('banner.eyebrow')}</p>
+            <h2 className="font-display text-3xl font-medium leading-tight text-white md:text-5xl">
+              {t('storefront.ctaTitle')}
+            </h2>
+            <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-white/65 md:text-base">{line}</p>
+            <button
+              type="button"
+              onClick={() => navigate(publicPath?.('/cars') || '/cars')}
+              className={`${booking.btnPrimary} booking-tap mt-7 self-start`}
+            >
+              {t('banner.cta')}
+            </button>
+          </div>
+        </Motion.div>
+      </div>
     </section>
   )
 }

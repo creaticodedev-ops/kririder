@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import SeoHead from '../../seo/SeoHead'
 import { booking } from '../../components/ui/bookingUi'
+import { useAppContext } from '../../context/AppContext'
 
 const FaqList = ({ faqs = [] }) => {
   if (!faqs.length) return null
@@ -62,9 +63,25 @@ const SeoPageShell = ({
   ctaLabel = 'Voir les véhicules disponibles',
   related = [],
   children,
-}) => (
+  siteName,
+  origin,
+  image,
+}) => {
+  const { storefrontSlug, storefrontProfile } = useAppContext()
+  const isTenant = Boolean(storefrontSlug || storefrontProfile?.agencyId)
+  return (
   <article className="page-shell page-pad mx-auto max-w-3xl pb-16 pt-8 sm:pt-10">
-    <SeoHead title={title} description={description} path={path} jsonLd={jsonLd} lang="fr" />
+    <SeoHead
+      title={title}
+      description={description}
+      path={path}
+      jsonLd={jsonLd}
+      lang="fr"
+      siteName={siteName || storefrontProfile?.name || undefined}
+      origin={origin}
+      image={image}
+      faviconUrl={storefrontProfile?.faviconUrl || storefrontProfile?.logoUrl || ''}
+    />
 
     {breadcrumbs.length > 0 && (
       <nav aria-label="Fil d’Ariane" className="mb-6 text-xs text-muted sm:text-sm">
@@ -94,9 +111,11 @@ const SeoPageShell = ({
       <Link to={ctaTo} className={booking.btnPrimary}>
         {ctaLabel}
       </Link>
-      <Link to="/location-voiture-maroc" className={booking.btnSecondary}>
-        Location voiture Maroc
-      </Link>
+      {!isTenant ? (
+        <Link to="/location-voiture-maroc" className={booking.btnSecondary}>
+          Location voiture Maroc
+        </Link>
+      ) : null}
     </div>
 
     {sections.map((section) => (
@@ -114,5 +133,6 @@ const SeoPageShell = ({
     ))}
   </article>
 )
+}
 
 export default SeoPageShell
