@@ -4,8 +4,8 @@ import { useAppContext } from '../context/AppContext'
 import { motion as Motion } from 'framer-motion'
 import { useI18n } from '../i18n/I18nContext'
 import CarCard from './CarCard'
+import { groupCarsByCategory } from '../utils/vehicleCategories'
 import { vehicleImage } from '../storefront/theme'
-import { buildCategoryShowcase, categoryCurrency, formatFromAmount } from '../storefront/categoryShowcase'
 import { booking } from './ui/bookingUi'
 
 const FeaturedSection = () => {
@@ -13,10 +13,13 @@ const FeaturedSection = () => {
   const { cars, publicPath, storefrontProfile } = useAppContext()
   const { t } = useI18n()
   const carsPath = publicPath?.('/cars') || '/cars'
-  const currency = categoryCurrency(storefrontProfile)
+  const currency = storefrontProfile?.currency || import.meta.env.VITE_CURRENCY || 'MAD '
   const [category, setCategory] = useState('')
 
-  const showcase = useMemo(() => buildCategoryShowcase(cars), [cars])
+  const categories = useMemo(() => {
+    const grouped = groupCarsByCategory(cars)
+    return grouped.map((s) => s.category)
+  }, [cars])
 
   const visible = useMemo(() => {
     if (!category) return cars
@@ -45,21 +48,16 @@ const FeaturedSection = () => {
             >
               {t('cars.allCategories')}
             </button>
-            {showcase.map((item) => (
+            {categories.map((cat) => (
               <button
-                key={item.id}
+                key={cat}
                 type="button"
-                onClick={() => setCategory(item.category)}
+                onClick={() => setCategory(cat)}
                 className={`${booking.chip} booking-tap shrink-0 ${
-                  category.toLowerCase() === item.category.toLowerCase() ? booking.chipPrimaryActive : booking.chipIdle
+                  category.toLowerCase() === cat.toLowerCase() ? booking.chipPrimaryActive : booking.chipIdle
                 }`}
               >
-                <span>{item.category}</span>
-                {item.fromPrice != null ? (
-                  <span className="ml-1.5 font-normal opacity-70">
-                    {formatFromAmount(item.fromPrice, currency)}
-                  </span>
-                ) : null}
+                {cat}
               </button>
             ))}
           </div>
@@ -108,9 +106,7 @@ const FeaturedSection = () => {
                 ].filter(Boolean).join(' · ')}
               </p>
               <p className="mt-6 font-display text-2xl">
-                {Number(lead.pricePerDay) > 0
-                  ? t('storefront.fromPrice', { price: formatFromAmount(lead.pricePerDay, currency) })
-                  : null}
+                {t('storefront.fromPrice', { price: `${currency}${lead.pricePerDay}` })}
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <button

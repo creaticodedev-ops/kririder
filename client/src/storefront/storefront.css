@@ -17,9 +17,7 @@
   .sf-app .sf-road,
   .sf-app .sf-trails,
   .sf-app .sf-shimmer,
-  .sf-app .sf-hero-car,
-  .sf-app .sf-hero-shot,
-  .sf-app .sf-cat-progress > span {
+  .sf-app .sf-hero-car {
     animation: none !important;
     transition: none !important;
   }
@@ -77,146 +75,40 @@
 
 .sf-trails {
   position: absolute;
-  inset: 22% 0 auto;
-  height: 36%;
+  inset: 18% 0 auto;
+  height: 40%;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 24% 72%, color-mix(in srgb, var(--sf-primary, #8f1f1f) 22%, transparent), transparent 48%),
-    radial-gradient(ellipse at 76% 68%, rgba(255, 214, 170, 0.1), transparent 44%);
-  filter: blur(22px);
-  animation: sf-pulse 8s ease-in-out infinite;
+    radial-gradient(ellipse at 22% 70%, color-mix(in srgb, var(--sf-primary, #8f1f1f) 35%, transparent), transparent 42%),
+    radial-gradient(ellipse at 78% 65%, rgba(255, 214, 170, 0.18), transparent 40%);
+  filter: blur(18px);
+  animation: sf-pulse 5.5s ease-in-out infinite;
 }
 
 @keyframes sf-pulse {
   0%,
   100% {
-    opacity: 0.4;
+    opacity: 0.45;
     transform: scale(1);
   }
   50% {
-    opacity: 0.65;
-    transform: scale(1.03);
+    opacity: 0.8;
+    transform: scale(1.04);
   }
 }
 
-.sf-hero-stage {
-  isolation: isolate;
-  overflow: hidden;
-  --sf-px: 0;
-  --sf-py: 0;
+.sf-hero-car {
+  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.45));
+  animation: sf-glide 8s ease-in-out infinite;
 }
 
-.sf-hero-atmosphere {
-  position: absolute;
-  inset: auto 8% 6%;
-  height: 28%;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 70%);
-  filter: blur(12px);
-}
-
-.sf-hero-shot {
-  display: block;
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: auto;
-  min-height: min(44vh, 380px);
-  max-height: min(58vh, 620px);
-  margin: 0 auto;
-  object-fit: contain;
-  object-position: center bottom;
-  will-change: transform, opacity;
-  animation: sf-hero-enter 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.sf-hero-stage.is-live .sf-hero-shot {
-  animation:
-    sf-hero-enter 1.05s cubic-bezier(0.22, 1, 0.36, 1) both,
-    sf-hero-drift 14s ease-in-out infinite alternate;
-}
-
-.sf-hero-shot.is-static {
-  animation: none;
-  opacity: 1;
-  transform: none;
-}
-
-@keyframes sf-hero-enter {
-  0% {
-    opacity: 0;
-    transform: translate3d(20px, 0, 0) scale(1.025);
-  }
+@keyframes sf-glide {
+  0%,
   100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
-}
-
-@keyframes sf-hero-drift {
-  from {
-    transform: translate3d(calc(var(--sf-px) * 10px), calc(var(--sf-py) * -6px), 0) scale(1);
-  }
-  to {
-    transform: translate3d(calc(var(--sf-px) * 10px - 8px), calc(var(--sf-py) * -6px), 0) scale(1.025);
-  }
-}
-
-.sf-cat-progress {
-  width: 100%;
-  min-width: 3.25rem;
-  height: 2px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.sf-cat-progress > span {
-  display: block;
-  height: 100%;
-  width: 100%;
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: currentColor;
-}
-
-.sf-cat-progress.is-active > span {
-  animation: sf-cat-fill 7s linear forwards;
-}
-
-.sf-cat-progress.is-paused > span {
-  animation-play-state: paused;
-}
-
-.sf-cat-progress.is-static > span,
-.sf-cat-progress:not(.is-active) > span {
-  animation: none;
-}
-
-.sf-cat-progress.is-active.is-static > span {
-  transform: scaleX(1);
-}
-
-@keyframes sf-cat-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.sf-app .sf-hero-search .sf-hero-field > button,
-.sf-app .sf-hero-search .sf-hero-field button {
-  min-height: 4.5rem;
-}
-
-.sf-hero-search > div {
-  border-radius: 1.25rem;
-}
-
-@media (min-width: 1024px) {
-  .sf-hero-search > div {
-    border-radius: 1.35rem;
+  50% {
+    transform: translate3d(10px, -6px, 0);
   }
 }
 
@@ -281,7 +173,7 @@
   color: #f7f3ee !important;
 }
 
-.sf-app .sf-hero-search .sf-hero-field button:hover {
+.sf-app .sf-hero-search button:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
