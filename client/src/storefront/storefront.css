@@ -17,7 +17,9 @@
   .sf-app .sf-road,
   .sf-app .sf-trails,
   .sf-app .sf-shimmer,
-  .sf-app .sf-hero-car {
+  .sf-app .sf-hero-car,
+  .sf-app .sf-hero-shot,
+  .sf-app .sf-cat-progress > span {
     animation: none !important;
     transition: none !important;
   }
@@ -97,18 +99,100 @@
   }
 }
 
-.sf-hero-car {
-  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.45));
-  animation: sf-glide 8s ease-in-out infinite;
+.sf-hero-stage {
+  isolation: isolate;
+  overflow: hidden;
 }
 
-@keyframes sf-glide {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
+.sf-hero-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: min(40vh, 340px);
+  max-height: min(54vh, 580px);
+  margin: 0 auto;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.5));
+  will-change: transform, opacity;
+  animation: sf-hero-enter 6.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sf-hero-shot.is-static {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes sf-hero-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(36px, 8px, 0) scale(1.06);
   }
-  50% {
-    transform: translate3d(10px, -6px, 0);
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(-6px, 0, 0) scale(1);
+  }
+}
+
+.sf-cat-progress {
+  width: 100%;
+  min-width: 3.25rem;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.sf-cat-progress > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: currentColor;
+}
+
+.sf-cat-progress.is-active > span {
+  animation: sf-cat-fill 6.5s linear forwards;
+}
+
+.sf-cat-progress.is-paused > span {
+  animation-play-state: paused;
+}
+
+.sf-cat-progress.is-static > span,
+.sf-cat-progress:not(.is-active) > span {
+  animation: none;
+}
+
+.sf-cat-progress.is-active.is-static > span {
+  transform: scaleX(1);
+}
+
+@keyframes sf-cat-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.sf-app .sf-hero-search .sf-hero-field > button,
+.sf-app .sf-hero-search .sf-hero-field button {
+  min-height: 4.5rem;
+}
+
+.sf-hero-search > div {
+  border-radius: 1.6rem;
+}
+
+@media (min-width: 1024px) {
+  .sf-hero-search > div {
+    border-radius: 1.85rem;
   }
 }
 
@@ -173,7 +257,7 @@
   color: #f7f3ee !important;
 }
 
-.sf-app .sf-hero-search button:hover {
+.sf-app .sf-hero-search .sf-hero-field button:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
