@@ -5,12 +5,10 @@ const LanguageSwitcher = ({ className = '', variant = 'default' }) => {
   const { language, setLanguage, t, languages } = useI18n()
   const [open, setOpen] = useState(false)
 
-  const isLight = variant === 'light' || variant === 'bareLight'
-  const isBare = variant === 'bare' || variant === 'bareLight'
+  const isLight = variant === 'light'
+  const isBare = variant === 'bare'
   const btnClass = isBare
-    ? isLight
-      ? 'border-transparent text-white/85 hover:text-white min-h-11 min-w-11 justify-center px-1.5'
-      : 'border-transparent text-ink/80 hover:text-ink min-h-11 min-w-11 justify-center px-1.5'
+    ? 'border-transparent text-ink/80 hover:text-ink min-h-11 min-w-11 justify-center px-1.5'
     : isLight
       ? 'border-white/25 text-white/90 hover:bg-white/10'
       : 'border-borderColor text-ink hover:bg-sand/80'

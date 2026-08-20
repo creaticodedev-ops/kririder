@@ -3,7 +3,7 @@ import SeoHead from '../seo/SeoHead'
 import { localBusinessJsonLd, organizationJsonLd, websiteJsonLd } from '../seo/jsonLd'
 import { useAppContext } from '../context/AppContext'
 import { SITE_ORIGIN } from '../seo/constants'
-import HomeHero from '../storefrontHome/HomeHero'
+import Hero from '../components/Hero'
 import { buildCategoryShowcase, featuredVehicles } from '../storefrontHome/fleetShowcase'
 import { usePrefersReducedMotion } from '../storefrontHome/usePrefersReducedMotion'
 import '../storefrontHome/storefrontHome.css'
@@ -99,10 +99,7 @@ const Home = () => {
               ]
         }
       />
-      <HomeHero
-        categories={categories}
-        activeIndex={activeIndex}
-      />
+      <Hero />
       <Suspense fallback={<SectionFallback />}>
         <HomeCategories
           categories={categories}
