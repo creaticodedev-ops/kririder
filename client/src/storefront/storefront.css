@@ -77,45 +77,63 @@
 
 .sf-trails {
   position: absolute;
-  inset: 18% 0 auto;
-  height: 40%;
+  inset: 22% 0 auto;
+  height: 36%;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 22% 70%, color-mix(in srgb, var(--sf-primary, #8f1f1f) 35%, transparent), transparent 42%),
-    radial-gradient(ellipse at 78% 65%, rgba(255, 214, 170, 0.18), transparent 40%);
-  filter: blur(18px);
-  animation: sf-pulse 5.5s ease-in-out infinite;
+    radial-gradient(ellipse at 24% 72%, color-mix(in srgb, var(--sf-primary, #8f1f1f) 22%, transparent), transparent 48%),
+    radial-gradient(ellipse at 76% 68%, rgba(255, 214, 170, 0.1), transparent 44%);
+  filter: blur(22px);
+  animation: sf-pulse 8s ease-in-out infinite;
 }
 
 @keyframes sf-pulse {
   0%,
   100% {
-    opacity: 0.45;
+    opacity: 0.4;
     transform: scale(1);
   }
   50% {
-    opacity: 0.8;
-    transform: scale(1.04);
+    opacity: 0.65;
+    transform: scale(1.03);
   }
 }
 
 .sf-hero-stage {
   isolation: isolate;
   overflow: hidden;
+  --sf-px: 0;
+  --sf-py: 0;
+}
+
+.sf-hero-atmosphere {
+  position: absolute;
+  inset: auto 8% 6%;
+  height: 28%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08), transparent 70%);
+  filter: blur(12px);
 }
 
 .sf-hero-shot {
   display: block;
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: auto;
-  min-height: min(40vh, 340px);
-  max-height: min(54vh, 580px);
+  min-height: min(44vh, 380px);
+  max-height: min(58vh, 620px);
   margin: 0 auto;
   object-fit: contain;
   object-position: center bottom;
-  filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.5));
   will-change: transform, opacity;
-  animation: sf-hero-enter 6.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sf-hero-enter 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sf-hero-stage.is-live .sf-hero-shot {
+  animation:
+    sf-hero-enter 1.05s cubic-bezier(0.22, 1, 0.36, 1) both,
+    sf-hero-drift 14s ease-in-out infinite alternate;
 }
 
 .sf-hero-shot.is-static {
@@ -127,14 +145,20 @@
 @keyframes sf-hero-enter {
   0% {
     opacity: 0;
-    transform: translate3d(36px, 8px, 0) scale(1.06);
-  }
-  16% {
-    opacity: 1;
+    transform: translate3d(20px, 0, 0) scale(1.025);
   }
   100% {
     opacity: 1;
-    transform: translate3d(-6px, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes sf-hero-drift {
+  from {
+    transform: translate3d(calc(var(--sf-px) * 10px), calc(var(--sf-py) * -6px), 0) scale(1);
+  }
+  to {
+    transform: translate3d(calc(var(--sf-px) * 10px - 8px), calc(var(--sf-py) * -6px), 0) scale(1.025);
   }
 }
 
@@ -156,7 +180,7 @@
 }
 
 .sf-cat-progress.is-active > span {
-  animation: sf-cat-fill 6.5s linear forwards;
+  animation: sf-cat-fill 7s linear forwards;
 }
 
 .sf-cat-progress.is-paused > span {
@@ -187,12 +211,12 @@
 }
 
 .sf-hero-search > div {
-  border-radius: 1.6rem;
+  border-radius: 1.25rem;
 }
 
 @media (min-width: 1024px) {
   .sf-hero-search > div {
-    border-radius: 1.85rem;
+    border-radius: 1.35rem;
   }
 }
 

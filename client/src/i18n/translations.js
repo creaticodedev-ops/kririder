@@ -37,6 +37,9 @@ export const en = {
     noCities: 'No cities found',
     returnLocation: 'Return',
     searchVehicles: 'Search vehicles',
+    statVehicles: '{{count}} vehicles',
+    exploreFleet: 'Explore the fleet',
+    featuredModel: 'Now showing',
   },
   storefront: {
     journeyHeadline: 'Your journey starts here.',
@@ -464,6 +467,9 @@ export const fr = {
     noCities: 'Aucune ville trouvée',
     returnLocation: 'Retour',
     searchVehicles: 'Rechercher des véhicules',
+    statVehicles: '{{count}} véhicules',
+    exploreFleet: 'Voir la flotte',
+    featuredModel: 'Véhicule présenté',
   },
   storefront: {
     journeyHeadline: 'Votre voyage commence ici.',
@@ -890,6 +896,9 @@ export const es = {
     noCities: 'No se encontraron ciudades',
     returnLocation: 'Devolución',
     searchVehicles: 'Buscar vehículos',
+    statVehicles: '{{count}} vehículos',
+    exploreFleet: 'Ver la flota',
+    featuredModel: 'Vehículo en pantalla',
   },
   storefront: {
     journeyHeadline: 'Tu viaje empieza aquí.',
