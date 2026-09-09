@@ -18,6 +18,7 @@ export const fr = {
     features: 'Fonctionnalités',
     product: 'Produit',
     pricing: 'Tarifs',
+    faq: 'FAQ',
     about: 'À propos',
     login: 'Connexion',
     logout: 'Déconnexion',

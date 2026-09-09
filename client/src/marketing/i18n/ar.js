@@ -18,6 +18,7 @@ export const ar = {
     features: 'الميزات',
     product: 'المنتج',
     pricing: 'الأسعار',
+    faq: 'الأسئلة',
     about: 'من نحن',
     login: 'تسجيل الدخول',
     logout: 'تسجيل الخروج',

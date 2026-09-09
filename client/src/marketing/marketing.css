@@ -1,16 +1,16 @@
 .mkt {
-  --mkt-bg: #f6f3ef;
+  --mkt-bg: #ffffff;
   --mkt-paper: #ffffff;
-  --mkt-ink: #1a1412;
-  --mkt-muted: #6b635c;
-  --mkt-line: rgba(26, 20, 18, 0.1);
-  --mkt-accent: #8f1f1f;
-  --mkt-accent-hover: #a52626;
-  --mkt-soft: rgba(143, 31, 31, 0.08);
-  --mkt-hero: #0b0908;
-  --mkt-hero-ink: #f6efe8;
-  --mkt-shadow: 0 28px 64px -28px rgba(20, 12, 10, 0.45);
-  --mkt-radius: 12px;
+  --mkt-ink: #0a0a0a;
+  --mkt-muted: #5a5a5a;
+  --mkt-line: rgba(10, 10, 10, 0.1);
+  --mkt-accent: #e10600;
+  --mkt-accent-hover: #c00500;
+  --mkt-soft: rgba(225, 6, 0, 0.07);
+  --mkt-hero: #0a0a0a;
+  --mkt-hero-ink: #f5f5f5;
+  --mkt-shadow: 0 24px 60px -28px rgba(10, 10, 10, 0.28);
+  --mkt-radius: 10px;
   color: var(--mkt-ink);
   background: var(--mkt-bg);
   font-family: var(--font-sans);
@@ -309,20 +309,22 @@
   position: sticky;
   top: 0;
   z-index: 80;
-  background: #0b0908;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid transparent;
   padding-top: env(safe-area-inset-top);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .mkt-nav.is-solid {
-  background: rgba(11, 9, 8, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom-color: var(--mkt-line);
+  box-shadow: none;
 }
 
 .mkt-nav.is-open {
-  background: #0b0908;
-  border-bottom-color: transparent;
+  background: #ffffff;
+  border-bottom-color: var(--mkt-line);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -348,14 +350,14 @@
 }
 
 .mkt-nav-links a {
-  color: rgba(246, 239, 232, 0.62);
+  color: var(--mkt-muted);
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
 }
 
 .mkt-nav-links a:hover {
-  color: #fff;
+  color: var(--mkt-ink);
 }
 
 .mkt-nav-cta {
@@ -366,8 +368,8 @@
 }
 
 .mkt-nav-cta .mkt-btn-ghost {
-  color: rgba(246, 239, 232, 0.88);
-  border: 0;
+  color: var(--mkt-ink);
+  border: 1px solid var(--mkt-line);
   min-height: 2.5rem;
 }
 
@@ -383,10 +385,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(246, 239, 232, 0.14);
+  border: 1px solid var(--mkt-line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #f6efe8;
+  background: #fff;
+  color: var(--mkt-ink);
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
@@ -395,9 +397,9 @@
 
 .mkt-burger:hover,
 .mkt-burger.is-open {
-  color: #fff;
-  border-color: rgba(246, 239, 232, 0.28);
-  background: rgba(255, 255, 255, 0.08);
+  color: var(--mkt-ink);
+  border-color: var(--mkt-line-strong, rgba(10, 10, 10, 0.16));
+  background: var(--saas-surface, #f7f7f7);
 }
 
 .mkt-burger-lines {
@@ -482,8 +484,8 @@
   z-index: 79;
   display: none;
   flex-direction: column;
-  background: #0b0908;
-  color: #f6efe8;
+  background: #ffffff;
+  color: var(--mkt-ink);
   padding-top: calc(4.45rem + env(safe-area-inset-top));
   overflow: hidden;
 }
@@ -507,7 +509,7 @@
   width: min(28rem, 88vw);
   height: min(28rem, 70vh);
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(143, 31, 31, 0.38), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(225, 6, 0, 0.12), transparent 68%);
 }
 
 .mkt-menu-line {
@@ -516,7 +518,7 @@
   top: 1.4rem;
   bottom: 12%;
   width: 1px;
-  background: linear-gradient(to bottom, rgba(143, 31, 31, 0.55), rgba(246, 239, 232, 0.08) 55%, transparent);
+  background: linear-gradient(to bottom, rgba(225, 6, 0, 0.55), rgba(10, 10, 10, 0.08) 55%, transparent);
 }
 
 .mkt-menu-body {
@@ -542,7 +544,7 @@
   align-items: baseline;
   gap: 0.85rem;
   padding: 0.55rem 0;
-  color: #f6efe8;
+  color: var(--mkt-ink);
   text-decoration: none;
   font-family: var(--font-display);
   font-size: clamp(1.85rem, 8vw, 2.55rem);
@@ -556,13 +558,13 @@
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  color: rgba(232, 180, 176, 0.72);
+  color: var(--mkt-accent);
   min-width: 1.4rem;
 }
 
 .mkt-menu-link:hover,
 .mkt-menu-link:focus-visible {
-  color: #fff;
+  color: var(--mkt-accent);
 }
 
 .mkt-menu-actions {
@@ -577,7 +579,7 @@
   background: none;
   border: 0;
   padding: 0;
-  color: rgba(246, 239, 232, 0.62);
+  color: var(--mkt-muted);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 500;
@@ -586,19 +588,19 @@
 }
 
 .mkt-menu-login:hover {
-  color: #fff;
+  color: var(--mkt-ink);
 }
 
 .mkt-menu-cta {
   width: 100%;
   min-height: 3.15rem;
   font-size: 0.95rem;
-  box-shadow: 0 16px 40px -18px rgba(143, 31, 31, 0.55);
+  box-shadow: 0 16px 40px -18px rgba(225, 6, 0, 0.4);
 }
 
 .mkt-menu-note {
   margin: 1.15rem 0 0;
-  color: rgba(246, 239, 232, 0.38);
+  color: var(--mkt-muted);
   font-size: 0.78rem;
 }
 

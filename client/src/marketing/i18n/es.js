@@ -18,6 +18,7 @@ export const es = {
     features: 'Funciones',
     product: 'Producto',
     pricing: 'Precios',
+    faq: 'FAQ',
     about: 'Nosotros',
     login: 'Iniciar sesión',
     logout: 'Cerrar sesión',

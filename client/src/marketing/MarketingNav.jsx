@@ -18,10 +18,10 @@ export const MarketingNav = () => {
   const [solid, setSolid] = useState(false)
 
   const links = [
-    { href: '/#features', label: t('nav.features') },
     { href: '/#product', label: t('nav.product') },
+    { href: '/#features', label: t('nav.features') },
     { href: '/#pricing', label: t('nav.pricing') },
-    { href: '/about', label: t('nav.about') },
+    { href: '/#faq', label: t('nav.faq') },
   ]
 
   useEffect(() => {

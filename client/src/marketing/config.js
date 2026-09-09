@@ -12,7 +12,7 @@ export const BRAND = 'KRIRIDER'
 export const SEO = {
   title: 'KRIRIDER — Car Rental Management Software',
   description:
-    'KRIRIDER is an all-in-one car rental management platform for reservations, fleet, customers, contracts, accounting and daily operations.',
+    'KRIRIDER helps car rental companies manage reservations, fleet, customers, contracts, invoices and daily operations from one workspace.',
 }
 
 export const CONTACT_EMAIL = String(import.meta.env.VITE_PLATFORM_SUPPORT_EMAIL || '').trim()

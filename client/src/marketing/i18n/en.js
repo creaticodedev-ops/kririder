@@ -18,6 +18,7 @@ export const en = {
     features: 'Features',
     product: 'Product',
     pricing: 'Pricing',
+    faq: 'FAQ',
     about: 'About',
     login: 'Log in',
     logout: 'Log out',
@@ -52,7 +53,7 @@ export const en = {
     built: 'Built for car rental businesses.',
   },
   hero: {
-    badge: 'Car rental operating system',
+    badge: 'Car rental management software',
     titleBefore: 'The operating system for ',
     titleEm: 'modern car rental',
     titleAfter: ' businesses.',
@@ -62,6 +63,181 @@ export const en = {
     p2: 'Keep the fleet visible',
     p3: 'Close the rental digitally',
     note: '{{days}}-day free trial — one per agency. No payment to start.',
+  },
+  saas: {
+    heroBefore: 'Run your car rental business ',
+    heroEm: 'smarter',
+    heroAfter: '.',
+    floatDesk: 'One desk for every booking',
+    floatFleet: 'Every vehicle in view',
+    trustChips: [
+      'Reservations',
+      'Fleet',
+      'Customers',
+      'Contracts',
+      'Invoices',
+      'Finance',
+    ],
+    problemKicker: 'The problem',
+    problemTitle: 'Rental operations fall apart when tools are scattered.',
+    problemLead:
+      'WhatsApp threads, paper contracts, and disconnected spreadsheets slow the desk and hide the real state of the business.',
+    problemPanel: 'What agencies struggle with',
+    problems: [
+      'Reservations scattered across WhatsApp and calls',
+      'Manual paperwork and retyped contracts',
+      'Hard-to-track fleet status and availability',
+      'Customer files spread across notebooks and chats',
+      'Payment and invoice follow-up that slips',
+      'No clear view of revenue and occupancy',
+    ],
+    solutionKicker: 'The solution',
+    solutionPanel: 'KRIRIDER centralizes the operation',
+    solutions: [
+      'One workspace for desk, fleet and documents',
+      'Walk-in and online reservations in the same flow',
+      'Digital contracts and signature requests',
+      'Customer records tied to every rental',
+      'Revenue, invoices and reports in context',
+      'A branded storefront for your agency',
+    ],
+    featuresKicker: 'Capabilities',
+    featuresTitle: 'Everything your rental business needs. In one place.',
+    featuresLead:
+      'KRIRIDER covers the desk, the fleet, the customer file and the financial trail — without turning your team into software administrators.',
+    feat: {
+      operations: {
+        title: 'Operations',
+        body: 'Run the day from one screen — from walk-ins to the calendar.',
+        items: ['Reservations', 'Walk-ins', 'Calendar', 'Fleet', 'Maintenance'],
+      },
+      customers: {
+        title: 'Customers',
+        body: 'Keep renter profiles, documents and history with the booking.',
+        items: ['Customer records', 'Documents', 'Driver details'],
+      },
+      documents: {
+        title: 'Documents',
+        body: 'Generate contracts and invoices from the rental — not from scratch.',
+        items: ['Contracts', 'Signatures', 'Invoices', 'Templates'],
+      },
+      finance: {
+        title: 'Finance',
+        body: 'See what was earned, paid and still outstanding.',
+        items: ['Revenues', 'Payments', 'Accounting'],
+      },
+      insights: {
+        title: 'Business intelligence',
+        body: 'Understand occupancy, vehicle performance and trends.',
+        items: ['Analytics', 'Reports', 'Vehicle stats'],
+      },
+      storefront: {
+        title: 'Public storefront',
+        body: 'Let customers discover and book on your agency brand.',
+        items: ['Subdomain', 'Custom domain', 'Online booking'],
+      },
+    },
+    showcaseKicker: 'Product',
+    showcaseTitle: 'See the real KRIRIDER workspace.',
+    showcaseLead:
+      'These are product screens from the platform — the same tools your team would use every day.',
+    show: {
+      reservations: {
+        label: 'Reservations',
+        title: 'Reservations under control',
+        body: 'Track walk-ins and online bookings in one list, with the calendar as the operational view.',
+      },
+      fleet: {
+        label: 'Fleet',
+        title: 'Every vehicle, clearly statused',
+        body: 'Plates, branches, availability and maintenance stay attached to the physical asset.',
+      },
+      customers: {
+        label: 'Customers',
+        title: 'Customer files that travel with the rental',
+        body: 'Stop rebuilding renter information for every contract.',
+      },
+      contracts: {
+        label: 'Contracts',
+        title: 'Contracts generated from the booking',
+        body: 'PDF contracts and signature requests return to the same reservation.',
+      },
+      finance: {
+        label: 'Finance',
+        title: 'Money in context',
+        body: 'Revenues and invoices sit next to the work that produced them.',
+      },
+    },
+    outcomesKicker: 'Business value',
+    outcomesTitle: 'Outcomes, not feature lists.',
+    outcomesLead: 'KRIRIDER is built to reduce friction at the desk and give owners a clearer operating picture.',
+    outcome: {
+      time: { title: 'Save time', body: 'Fewer handoffs between chat, paper and spreadsheets.' },
+      desk: { title: 'Centralize the desk', body: 'Reservations, walk-ins and the calendar share one truth.' },
+      fleet: { title: 'Track every vehicle', body: 'Know what is free, rented or in maintenance.' },
+      docs: { title: 'Professional documents', body: 'Contracts and invoices from the rental itself.' },
+      money: { title: 'Understand revenue', body: 'Paid, unpaid and booking-derived income in one place.' },
+      one: { title: 'One platform', body: 'Operate the rental company from a single workspace.' },
+    },
+    stepsKicker: 'How it works',
+    stepsTitle: 'From signup to operations in four steps.',
+    stepsLead: 'Start with a trial workspace, then grow into the plan that matches your fleet.',
+    steps: [
+      {
+        title: 'Create your workspace',
+        body: 'Register your agency and open a KRIRIDER owner account.',
+      },
+      {
+        title: 'Add fleet and customers',
+        body: 'Import vehicles, locations and the people you already serve.',
+      },
+      {
+        title: 'Manage reservations',
+        body: 'Take walk-ins, online bookings and calendar planning in one flow.',
+      },
+      {
+        title: 'Run the business',
+        body: 'Contracts, invoices, revenues and reports stay attached to the work.',
+      },
+    ],
+    faqKicker: 'FAQ',
+    faqTitle: 'Questions rental owners ask first.',
+    faqLead: 'Straight answers about what KRIRIDER is — and what it is not.',
+    faq: [
+      {
+        q: 'What is KRIRIDER?',
+        a: 'KRIRIDER is car rental management software. It is the platform agencies use to run reservations, fleet, customers, contracts, invoices and reporting. It is not a rental company website.',
+      },
+      {
+        q: 'Who is it designed for?',
+        a: 'Independent and growing car rental businesses that need one operational system instead of scattered chats, paper and spreadsheets.',
+      },
+      {
+        q: 'Can I manage multiple vehicles?',
+        a: 'Yes. Plans define vehicle and staff limits. Starter supports up to 15 vehicles; Professional up to 50; Business is custom.',
+      },
+      {
+        q: 'Can I manage reservations and walk-ins?',
+        a: 'Yes. Desk walk-ins and online reservations live in the same workspace with a shared calendar view.',
+      },
+      {
+        q: 'Can I generate contracts and collect signatures?',
+        a: 'Yes. Contracts are generated as PDF from the rental, and signature requests can return to the same booking.',
+      },
+      {
+        q: 'Can I manage invoices and payments?',
+        a: 'Yes. Invoices and revenue views sit next to the bookings that produced them so follow-up stays operational.',
+      },
+      {
+        q: 'Can I change plans later?',
+        a: 'Yes. Start on the trial, then continue on Starter, Professional or Business according to your fleet and needs.',
+      },
+      {
+        q: 'How do I get started?',
+        a: 'Create an account to open a free trial workspace, or contact the team if you need a demo for an established fleet.',
+      },
+    ],
+    finalTitle: 'Ready to run your rental business differently?',
   },
   proof: {
     label: 'Customers',
@@ -143,7 +319,7 @@ export const en = {
     lead: 'Dashboard, desk, documents, money and the public storefront share the same agency account.',
   },
   pricing: {
-    kicker: 'Configuration',
+    kicker: 'Pricing',
     title: 'Simple, transparent plans.',
     lead: 'Start free. After {{days}} days, continue on Starter, Professional or Business. No card during registration.',
     popular: 'Most popular',
@@ -189,7 +365,7 @@ export const en = {
     },
   },
   final: {
-    kicker: 'Departure',
+    kicker: 'Get started',
     title: 'Run your rental business with KRIRIDER.',
     lead: 'Create an account in minutes. {{days}}-day free trial — one per agency. No payment during registration.',
   },

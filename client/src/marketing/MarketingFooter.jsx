@@ -17,9 +17,10 @@ export const MarketingFooter = () => {
           </div>
           <div>
             <h2>{t('footer.product')}</h2>
+            <Link to="/#product">{t('nav.product')}</Link>
             <Link to="/#features">{t('nav.features')}</Link>
             <Link to="/#pricing">{t('nav.pricing')}</Link>
-            <Link to="/#product">{t('footer.workspace')}</Link>
+            <Link to="/#faq">{t('nav.faq')}</Link>
           </div>
           <div>
             <h2>{t('footer.company')}</h2>
