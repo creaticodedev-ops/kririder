@@ -152,7 +152,7 @@ const SeoHomeModule = () => {
 
   return (
     <section className="relative overflow-x-clip border-t border-borderColor/60 bg-gradient-to-b from-light via-sand/35 to-light">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_rgba(143,31,31,0.06),_transparent_60%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,_rgba(165, 22, 36,0.06),_transparent_60%)]" aria-hidden />
       <MoroccoMotif side="left" />
       <MoroccoMotif side="right" />
 
@@ -183,7 +183,7 @@ const SeoHomeModule = () => {
           <Motion.div variants={fadeUp} custom={3} className="mt-7 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link
               to="/location-voiture-maroc"
-              className={`${booking.btnPrimary} w-full sm:w-auto shadow-[0_14px_32px_-18px_rgba(143,31,31,0.65)]`}
+              className={`${booking.btnPrimary} w-full sm:w-auto shadow-[0_14px_32px_-18px_rgba(165, 22, 36,0.65)]`}
             >
               <BookIcon />
               Guide location voiture Maroc
@@ -206,7 +206,7 @@ const SeoHomeModule = () => {
             className="flex min-w-0 flex-col rounded-[1.5rem] border border-borderColor/70 bg-white p-4 shadow-[0_24px_60px_-42px_rgba(22,18,16,0.45)] sm:p-6"
           >
             <header className="mb-4 flex items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_-14px_rgba(143,31,31,0.8)]">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_-14px_rgba(165, 22, 36,0.8)]">
                 <PinIcon />
               </span>
               <div className="min-w-0">
@@ -287,7 +287,7 @@ const SeoHomeModule = () => {
             className="flex min-w-0 flex-col rounded-[1.5rem] border border-borderColor/70 bg-white p-4 shadow-[0_24px_60px_-42px_rgba(22,18,16,0.45)] sm:p-6"
           >
             <header className="mb-4 flex items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_-14px_rgba(143,31,31,0.8)]">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_-14px_rgba(165, 22, 36,0.8)]">
                 <CarGlyph />
               </span>
               <div className="min-w-0">

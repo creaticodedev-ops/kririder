@@ -367,7 +367,7 @@ const CompleteBooking = () => {
       />
 
       <div className="relative overflow-hidden bg-ink text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(143,31,31,0.35),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_40%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(165, 22, 36,0.35),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.08),transparent_40%)]" />
         <div className="relative page-pad py-12 md:py-16">
           <div className="max-w-3xl mx-auto">
             <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">{t('completion.eyebrow')}</p>
@@ -575,7 +575,7 @@ const CompleteBooking = () => {
                         // saveCompletionDetails already handles feedback
                       }
                     }}
-                    className="w-full py-3.5 rounded-2xl bg-primary text-white text-sm font-semibold cursor-pointer shadow-[0_12px_28px_-16px_rgba(143,31,31,0.8)]"
+                    className="w-full py-3.5 rounded-2xl bg-primary text-white text-sm font-semibold cursor-pointer shadow-[0_12px_28px_-16px_rgba(165, 22, 36,0.8)]"
                   >
                     {t('completion.continueSign')}
                   </button>

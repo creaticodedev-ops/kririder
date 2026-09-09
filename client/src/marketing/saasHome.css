@@ -7,9 +7,9 @@
   --mkt-muted: #5a5a5a;
   --mkt-line: rgba(10, 10, 10, 0.1);
   --mkt-line-strong: rgba(10, 10, 10, 0.16);
-  --mkt-accent: #e10600;
-  --mkt-accent-hover: #c00500;
-  --mkt-soft: rgba(225, 6, 0, 0.07);
+  --mkt-accent: #A51624;
+  --mkt-accent-hover: #8C131F;
+  --mkt-soft: rgba(165, 22, 36, 0.07);
   --mkt-hero: #ffffff;
   --mkt-hero-ink: #0a0a0a;
   --mkt-shadow: 0 24px 60px -28px rgba(10, 10, 10, 0.28);
@@ -153,7 +153,7 @@
   overflow: clip;
   padding: 1.5rem 0 3.5rem;
   background:
-    radial-gradient(ellipse 70% 50% at 85% 0%, rgba(225, 6, 0, 0.07), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 0%, rgba(165, 22, 36, 0.07), transparent 55%),
     linear-gradient(180deg, #fff 0%, #fafafa 100%);
 }
 
@@ -273,7 +273,7 @@
 }
 
 .saas-device-bar span:first-child {
-  background: #e10600;
+  background: #A51624;
 }
 
 .saas-device img {
@@ -505,7 +505,7 @@
 }
 
 .saas-feat:hover {
-  border-color: rgba(225, 6, 0, 0.35);
+  border-color: rgba(165, 22, 36, 0.35);
   transform: translateY(-2px);
 }
 
@@ -750,7 +750,7 @@
 
 .saas-plan.is-pop {
   border-color: var(--mkt-accent);
-  box-shadow: 0 20px 50px -30px rgba(225, 6, 0, 0.45);
+  box-shadow: 0 20px 50px -30px rgba(165, 22, 36, 0.45);
 }
 
 .saas-plan-badge {
@@ -892,7 +892,7 @@
   overflow: hidden;
   padding-block: clamp(4rem, 10vw, 7rem);
   background:
-    radial-gradient(ellipse 60% 80% at 100% 50%, rgba(225, 6, 0, 0.28), transparent 55%),
+    radial-gradient(ellipse 60% 80% at 100% 50%, rgba(165, 22, 36, 0.28), transparent 55%),
     var(--saas-black);
   color: #fff;
   text-align: center;

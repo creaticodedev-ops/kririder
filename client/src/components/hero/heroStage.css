@@ -1,7 +1,7 @@
 .hero-stage {
   --hx: 0;
   --hy: 0;
-  --hero-burgundy: rgba(143, 31, 31, 0.12);
+  --hero-burgundy: rgba(165, 22, 36, 0.12);
   position: relative;
   isolation: isolate;
   min-height: 100svh;
@@ -46,10 +46,10 @@
   position: absolute;
   inset: 12% 6% 10%;
   border-radius: 50% 50% 46% 46%;
-  border: 1px solid rgba(143, 31, 31, 0.06);
+  border: 1px solid rgba(165, 22, 36, 0.06);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 0 80px rgba(143, 31, 31, 0.04);
+    0 0 80px rgba(165, 22, 36, 0.04);
   transform: rotateX(62deg) scale(1.12);
   transform-origin: 50% 80%;
 }
@@ -79,7 +79,7 @@
   transform: translateX(-50%);
   background:
     linear-gradient(to top, rgba(22, 18, 16, 0.045), transparent 72%),
-    linear-gradient(90deg, transparent 0%, rgba(143, 31, 31, 0.045) 50%, transparent 100%);
+    linear-gradient(90deg, transparent 0%, rgba(165, 22, 36, 0.045) 50%, transparent 100%);
   clip-path: polygon(8% 100%, 50% 0%, 92% 100%);
   opacity: 0.85;
 }
@@ -99,7 +99,7 @@
   z-index: 1;
   background: radial-gradient(
     ellipse 42% 34% at calc(50% + var(--hx) * 16%) calc(38% + var(--hy) * 10%),
-    rgba(143, 31, 31, 0.09),
+    rgba(165, 22, 36, 0.09),
     transparent 68%
   );
 }
@@ -131,26 +131,26 @@
   border-color: color-mix(in srgb, var(--color-primary) 28%, var(--color-borderColor));
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.85) inset,
-    0 0 0 3px rgba(143, 31, 31, 0.07),
+    0 0 0 3px rgba(165, 22, 36, 0.07),
     0 22px 56px -28px rgba(22, 18, 16, 0.42);
 }
 
 .hero-console [data-filled='true'] {
-  box-shadow: inset 0 -1px 0 rgba(143, 31, 31, 0.12);
+  box-shadow: inset 0 -1px 0 rgba(165, 22, 36, 0.12);
 }
 
 .hero-find {
   letter-spacing: 0.01em;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 12px 26px -14px rgba(143, 31, 31, 0.62);
+    0 12px 26px -14px rgba(165, 22, 36, 0.62);
   transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
 }
 
 .hero-find:hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 16px 32px -14px rgba(143, 31, 31, 0.72);
+    0 16px 32px -14px rgba(165, 22, 36, 0.72);
 }
 
 .hero-find:active {
@@ -280,7 +280,7 @@
 
 .hero-hud-track {
   fill: none;
-  stroke: rgba(143, 31, 31, 0.28);
+  stroke: rgba(165, 22, 36, 0.28);
   stroke-width: 1.15;
   stroke-linecap: round;
 }
@@ -292,7 +292,7 @@
 }
 
 .hero-hud-tick-major {
-  stroke: rgba(143, 31, 31, 0.45);
+  stroke: rgba(165, 22, 36, 0.45);
   stroke-width: 0.95;
 }
 
@@ -346,7 +346,7 @@
   height: 0.28rem;
   border-radius: 999px;
   background: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(143, 31, 31, 0.12);
+  box-shadow: 0 0 0 3px rgba(165, 22, 36, 0.12);
   animation: hero-live 2.8s ease-in-out infinite;
 }
 
@@ -401,7 +401,7 @@
   position: relative;
   width: 3.25rem;
   height: 1px;
-  background: linear-gradient(90deg, rgba(143, 31, 31, 0.08), rgba(143, 31, 31, 0.55));
+  background: linear-gradient(90deg, rgba(165, 22, 36, 0.08), rgba(165, 22, 36, 0.55));
   overflow: hidden;
 }
 

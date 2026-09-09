@@ -534,7 +534,7 @@ const SuperAdminAgencyDetail = () => {
                 <input
                   value={branding.primaryBrandColor}
                   onChange={(e) => setBranding((f) => ({ ...f, primaryBrandColor: e.target.value }))}
-                  placeholder="#8F1F1F"
+                  placeholder="#A51624"
                   className={`${sa.input} font-mono`}
                 />
                 {branding.primaryBrandColor ? (

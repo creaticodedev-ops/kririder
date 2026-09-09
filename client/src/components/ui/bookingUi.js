@@ -15,7 +15,7 @@ export const booking = {
 
   /** Field chrome used on reservation + search */
   fieldShell:
-    'flex h-12 w-full items-center gap-3 rounded-2xl border border-borderColor/80 bg-white px-3.5 text-[15px] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition duration-200 focus-within:border-primary/35 focus-within:shadow-[0_0_0_3px_rgba(143,31,31,0.08)]',
+    'flex h-12 w-full items-center gap-3 rounded-2xl border border-borderColor/80 bg-white px-3.5 text-[15px] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition duration-200 focus-within:border-primary/35 focus-within:shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)]',
 
   label: 'text-[11px] font-semibold uppercase tracking-[0.12em] text-muted',
   eyebrow: 'text-[11px] font-semibold uppercase tracking-[0.16em] text-primary',

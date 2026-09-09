@@ -1,5 +1,5 @@
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
-export const DEFAULT_PRIMARY = '#8F1F1F'
+export const DEFAULT_PRIMARY = '#A51624'
 
 const parseHex = (value) => {
   const raw = String(value || '').trim()

@@ -73,9 +73,9 @@ export const saThemeStyles = `
   --sa-text: #1c140f;
   --sa-text-secondary: #5c534c;
   --sa-text-muted: #7a716a;
-  --sa-accent: #8F1F1F;
-  --sa-accent-hover: #6f1818;
-  --sa-accent-soft: rgba(143,31,31,0.1);
+  --sa-accent: #A51624;
+  --sa-accent-hover: #8C131F;
+  --sa-accent-soft: rgba(165, 22, 36,0.1);
   --sa-danger: #b42318;
   --sa-danger-soft: rgba(180,35,24,0.08);
   --sa-warn: #b45309;
@@ -87,7 +87,7 @@ export const saThemeStyles = `
   --sa-sidebar: #ffffff;
   --sa-overlay: rgba(28,18,14,0.42);
   --sa-shadow: 0 12px 32px rgba(28,18,14,0.08);
-  --sa-chart-1: #8F1F1F;
+  --sa-chart-1: #A51624;
   --sa-chart-2: #0369a1;
   --sa-chart-3: #047857;
   --sa-chart-4: #b45309;

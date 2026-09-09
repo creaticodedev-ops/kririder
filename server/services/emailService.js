@@ -1,4 +1,4 @@
-﻿import nodemailer from "nodemailer";
+import nodemailer from "nodemailer";
 import { PLATFORM_NAME } from "../utils/brand.js";
 
 let transporter = null;
@@ -370,7 +370,7 @@ const escapeHtml = (value) =>
     .replace(/"/g, "&quot;");
 
 const platformEmailShell = ({ title, bodyHtml, ctaLabel, ctaHref, footerNote }) => {
-  const accent = "#8F1F1F";
+  const accent = "#A51624";
   const cta = ctaHref
     ? `<p style="margin:28px 0 8px"><a href="${escapeHtml(ctaHref)}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:600">${escapeHtml(ctaLabel || "Open")}</a></p>`
     : "";

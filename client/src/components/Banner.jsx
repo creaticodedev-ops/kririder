@@ -30,7 +30,7 @@ const Banner = () => {
             className="h-full w-full object-cover object-center opacity-40 md:opacity-50"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/90 to-ink/40" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(143,31,31,0.35),transparent_55%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_50%,rgba(165, 22, 36,0.35),transparent_55%)]" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-8 md:px-14 md:py-16 max-w-xl">

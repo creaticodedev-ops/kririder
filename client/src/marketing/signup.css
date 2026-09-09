@@ -5,7 +5,7 @@
 }
 
 .onboard {
-  --ob-accent: #8f1f1f;
+  --ob-accent: #A51624;
   --ob-ink: #f4eee8;
   --ob-muted: rgba(244, 238, 232, 0.58);
   --ob-line: rgba(255, 255, 255, 0.1);
@@ -23,8 +23,8 @@
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 70% 55% at 18% 0%, rgba(143, 31, 31, 0.28), transparent 62%),
-    radial-gradient(ellipse 50% 45% at 88% 80%, rgba(143, 31, 31, 0.16), transparent 70%),
+    radial-gradient(ellipse 70% 55% at 18% 0%, rgba(165, 22, 36, 0.28), transparent 62%),
+    radial-gradient(ellipse 50% 45% at 88% 80%, rgba(165, 22, 36, 0.16), transparent 70%),
     radial-gradient(ellipse 40% 30% at 60% 40%, rgba(255, 255, 255, 0.03), transparent 70%);
 }
 
@@ -43,7 +43,7 @@
   right: -8%;
   top: -20%;
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(143, 31, 31, 0.18), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(165, 22, 36, 0.18), transparent 68%);
   animation: onboard-haze 22s ease-in-out infinite alternate;
 }
 
@@ -297,7 +297,7 @@
 }
 
 .onboard-progress button.is-done b {
-  background: rgba(143, 31, 31, 0.35);
+  background: rgba(165, 22, 36, 0.35);
   border-color: transparent;
 }
 
@@ -369,7 +369,7 @@
 .onboard-field select:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--ob-accent) 80%, #fff);
-  box-shadow: 0 0 0 3px rgba(143, 31, 31, 0.28);
+  box-shadow: 0 0 0 3px rgba(165, 22, 36, 0.28);
   background: rgba(255, 255, 255, 0.045);
 }
 

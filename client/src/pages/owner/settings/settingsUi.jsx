@@ -11,11 +11,11 @@ export const settingsUi = {
   title: 'font-display text-xl sm:text-2xl font-medium text-ink leading-tight',
   subtitle: 'text-sm text-muted leading-relaxed',
   input:
-    'w-full max-w-full min-h-12 min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(143,31,31,0.08)] disabled:bg-light disabled:text-muted',
+    'w-full max-w-full min-h-12 min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)] disabled:bg-light disabled:text-muted',
   textarea:
-    'w-full max-w-full min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(143,31,31,0.08)] resize-y min-h-[6.5rem]',
+    'w-full max-w-full min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)] resize-y min-h-[6.5rem]',
   select:
-    'w-full max-w-full min-h-12 min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(143,31,31,0.08)]',
+    'w-full max-w-full min-h-12 min-w-0 rounded-2xl border border-borderColor/80 bg-white px-3.5 py-3 text-[15px] text-ink outline-none transition focus:border-primary/40 focus:shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)]',
   btnPrimary:
     'inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-[15px] font-semibold text-white transition hover:bg-primary-dull active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55',
   btnSecondary:

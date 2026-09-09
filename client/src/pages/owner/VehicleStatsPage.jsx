@@ -93,7 +93,7 @@ const ProgressRing = ({ value }) => {
       <div className='relative flex h-24 w-24 items-center justify-center'>
         <svg viewBox='0 0 100 100' className='h-24 w-24 -rotate-90'>
           <circle cx='50' cy='50' r={radius} stroke='#e5e7eb' strokeWidth='10' fill='none' />
-          <circle cx='50' cy='50' r={radius} stroke='#8F1F1F' strokeWidth='10' fill='none' strokeLinecap='round' strokeDasharray={circumference} strokeDashoffset={offset} />
+          <circle cx='50' cy='50' r={radius} stroke='#A51624' strokeWidth='10' fill='none' strokeLinecap='round' strokeDasharray={circumference} strokeDashoffset={offset} />
         </svg>
         <div className='absolute text-center'>
           <p className='text-xl font-semibold text-gray-900'>{safeValue}%</p>
@@ -340,7 +340,7 @@ const VehicleStatsPage = () => {
               </div>
               <div className='rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700'>{rangePreset === 'custom' ? t('admin.vehicleStats.customRange') : t('admin.vehicleStats.currentFocus')}</div>
             </div>
-            <TrendChart data={activeSeries} color='#8F1F1F' fillColor='rgba(143, 31, 31, 0.13)' valueKey='revenue' labelKey='label' formatter={formatCurrency} />
+            <TrendChart data={activeSeries} color='#A51624' fillColor='rgba(165, 22, 36, 0.13)' valueKey='revenue' labelKey='label' formatter={formatCurrency} />
           </div>
 
           <div className='rounded-3xl border border-borderColor bg-white p-6 shadow-sm'>

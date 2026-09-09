@@ -131,7 +131,7 @@ const Settings = () => {
                   onClick={() => setTab(item.id)}
                   className={`w-full rounded-2xl px-3.5 py-3 text-left transition ${
                     active
-                      ? 'bg-primary text-white shadow-[0_12px_28px_-18px_rgba(143,31,31,0.7)]'
+                      ? 'bg-primary text-white shadow-[0_12px_28px_-18px_rgba(165, 22, 36,0.7)]'
                       : 'text-ink/75 hover:bg-sand/70'
                   }`}
                 >

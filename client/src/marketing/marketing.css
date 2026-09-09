@@ -4,9 +4,9 @@
   --mkt-ink: #0a0a0a;
   --mkt-muted: #5a5a5a;
   --mkt-line: rgba(10, 10, 10, 0.1);
-  --mkt-accent: #e10600;
-  --mkt-accent-hover: #c00500;
-  --mkt-soft: rgba(225, 6, 0, 0.07);
+  --mkt-accent: #A51624;
+  --mkt-accent-hover: #8C131F;
+  --mkt-soft: rgba(165, 22, 36, 0.07);
   --mkt-hero: #0a0a0a;
   --mkt-hero-ink: #f5f5f5;
   --mkt-shadow: 0 24px 60px -28px rgba(10, 10, 10, 0.28);
@@ -139,7 +139,7 @@
   border-color: rgba(246, 239, 232, 0.22);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 10px 28px -16px rgba(143, 31, 31, 0.7);
+    0 10px 28px -16px rgba(165, 22, 36, 0.7);
 }
 
 .mkt-btn-primary:hover {
@@ -510,7 +510,7 @@
   width: min(28rem, 88vw);
   height: min(28rem, 70vh);
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(225, 6, 0, 0.12), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(165, 22, 36, 0.12), transparent 68%);
 }
 
 .mkt-menu-line {
@@ -519,7 +519,7 @@
   top: 1.4rem;
   bottom: 12%;
   width: 1px;
-  background: linear-gradient(to bottom, rgba(225, 6, 0, 0.55), rgba(10, 10, 10, 0.08) 55%, transparent);
+  background: linear-gradient(to bottom, rgba(165, 22, 36, 0.55), rgba(10, 10, 10, 0.08) 55%, transparent);
 }
 
 .mkt-menu-body {
@@ -596,7 +596,7 @@
   width: 100%;
   min-height: 3.15rem;
   font-size: 0.95rem;
-  box-shadow: 0 16px 40px -18px rgba(225, 6, 0, 0.4);
+  box-shadow: 0 16px 40px -18px rgba(165, 22, 36, 0.4);
 }
 
 .mkt-menu-note {
@@ -713,7 +713,7 @@
 }
 
 .mkt-shot-dots i:nth-child(1) {
-  background: #8f1f1f;
+  background: #A51624;
 }
 
 .mkt-shot-url {
@@ -1173,7 +1173,7 @@
   width: 3.1rem;
   height: 3.1rem;
   border-radius: 99px;
-  background: conic-gradient(#8f1f1f 0 62%, #d8cfc6 62% 76%, #2b211f 76% 100%);
+  background: conic-gradient(#A51624 0 62%, #d8cfc6 62% 76%, #2b211f 76% 100%);
   flex-shrink: 0;
 }
 
@@ -1431,7 +1431,7 @@
   font-family: var(--font-display);
   font-size: 1.45rem;
   font-weight: 600;
-  box-shadow: 0 0 0 14px rgba(143, 31, 31, 0.08);
+  box-shadow: 0 0 0 14px rgba(165, 22, 36, 0.08);
 }
 
 .mkt-hub-n {
@@ -1455,7 +1455,7 @@
   content: '';
   position: absolute;
   inset: 3.4rem 4.2rem 3.6rem;
-  border: 1px dashed rgba(143, 31, 31, 0.28);
+  border: 1px dashed rgba(165, 22, 36, 0.28);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -1591,7 +1591,7 @@
 .mkt-snip-doc {
   min-height: 6.2rem;
   background: linear-gradient(#f7f4f0, #f7f4f0) padding-box,
-    repeating-linear-gradient(-18deg, transparent, transparent 10px, rgba(143, 31, 31, 0.06) 10px, rgba(143, 31, 31, 0.06) 11px);
+    repeating-linear-gradient(-18deg, transparent, transparent 10px, rgba(165, 22, 36, 0.06) 10px, rgba(165, 22, 36, 0.06) 11px);
 }
 
 .mkt-flow {
@@ -1804,7 +1804,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 58% 70% at 78% 38%, rgba(143, 31, 31, 0.55), transparent 70%),
+    radial-gradient(ellipse 58% 70% at 78% 38%, rgba(165, 22, 36, 0.55), transparent 70%),
     radial-gradient(ellipse 70% 80% at 82% 42%, rgba(0, 0, 0, 0.42), transparent 70%),
     radial-gradient(ellipse 50% 40% at 70% 80%, rgba(18, 4, 4, 0.5), transparent 72%);
 }
@@ -2182,7 +2182,7 @@
 .mkt-foot {
   background: #0b0908;
   color: #f6efe8;
-  border-top: 1px solid rgba(143, 31, 31, 0.32);
+  border-top: 1px solid rgba(165, 22, 36, 0.32);
   padding-top: 2.6rem;
   padding-bottom: max(1.8rem, env(safe-area-inset-bottom));
 }
@@ -2264,7 +2264,7 @@
 .mkt-field textarea:focus {
   outline: 2px solid color-mix(in srgb, var(--mkt-accent) 50%, transparent);
   outline-offset: 1px;
-  border-color: rgba(143, 31, 31, 0.35);
+  border-color: rgba(165, 22, 36, 0.35);
 }
 
 .mkt-note {
@@ -2463,7 +2463,7 @@
   bottom: 0;
   height: 4.8rem;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent, rgba(143, 31, 31, 0.2));
+  background: linear-gradient(to bottom, transparent, rgba(165, 22, 36, 0.2));
 }
 
 .mkt-plans {
@@ -2558,7 +2558,7 @@
   border-color: rgba(246, 239, 232, 0.14);
   box-shadow:
     0 28px 64px -32px rgba(0, 0, 0, 0.55),
-    0 0 40px -20px rgba(143, 31, 31, 0.45);
+    0 0 40px -20px rgba(165, 22, 36, 0.45);
 }
 
 @media (min-width: 900px) {
@@ -2573,7 +2573,7 @@
   inset-inline: 12%;
   top: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(143, 31, 31, 0.95), transparent);
+  background: linear-gradient(90deg, transparent, rgba(165, 22, 36, 0.95), transparent);
 }
 
 .mkt-plan.is-pop .mkt-plan-audience,
@@ -2785,7 +2785,7 @@ html.mkt-rtl,
   width: 58%;
   height: 150%;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(143, 31, 31, 0.36), transparent 66%);
+  background: radial-gradient(ellipse at center, rgba(165, 22, 36, 0.36), transparent 66%);
 }
 
 .mkt-page-hero-copy {

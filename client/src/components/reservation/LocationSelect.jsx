@@ -190,8 +190,8 @@ const LocationSelect = ({
         onClick={() => setOpen((v) => !v)}
         className={`booking-tap ${booking.fieldShell} text-left focus:outline-none ${
           open
-            ? 'border-primary/35 shadow-[0_0_0_3px_rgba(143,31,31,0.08)]'
-            : 'hover:border-borderColor focus-visible:border-primary/35 focus-visible:shadow-[0_0_0_3px_rgba(143,31,31,0.08)]'
+            ? 'border-primary/35 shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)]'
+            : 'hover:border-borderColor focus-visible:border-primary/35 focus-visible:shadow-[0_0_0_3px_rgba(165, 22, 36,0.08)]'
         }`}
         aria-expanded={open}
         aria-haspopup="listbox"

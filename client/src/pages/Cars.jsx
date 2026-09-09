@@ -135,7 +135,7 @@ const Cars = () => {
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
           style={{
             backgroundImage:
-              'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(143,31,31,0.12), transparent 60%)',
+              'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(165, 22, 36,0.12), transparent 60%)',
           }}
         />
         <div className="relative z-10 page-pad page-shell flex w-full flex-col items-center">
