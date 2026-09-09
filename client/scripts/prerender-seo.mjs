@@ -19,7 +19,7 @@ const { pages } = await collectSeoPages()
 let count = 0
 for (const page of pages) {
   if (page.path === '/') {
-    // Apex `/` is the KRIRIDER marketing site. Keep the Vite template
+    // Apex `/` is the RSZ CAR marketing site. Keep the Vite template
     // (title, description, OG) instead of tenant rental SEO.
     continue
   }

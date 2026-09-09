@@ -194,10 +194,10 @@ export async function collectSeoPages() {
   pages.unshift(
     {
       path: '/',
-      title: 'KRIRIDER — Car Rental Management Software',
+      title: 'RSZ CAR — Car Rental Management Software',
       description:
-        'KRIRIDER is an all-in-one car rental management platform for reservations, fleet, customers, contracts, accounting and daily operations.',
-      h1: 'KRIRIDER',
+        'RSZ CAR is an all-in-one car rental management platform for reservations, fleet, customers, contracts, accounting and daily operations.',
+      h1: 'RSZ CAR',
       intro: 'Car rental management software.',
       sections: [],
       faqs: [],

@@ -1,4 +1,4 @@
-import { getSignupInfo, registerSelfServeAgency } from '../services/selfServeSignup.js';
+﻿import { getSignupInfo, registerSelfServeAgency } from '../services/selfServeSignup.js';
 
 export const signupInfo = (_req, res) => {
   res.json({ success: true, ...getSignupInfo() });
@@ -9,7 +9,7 @@ export const selfServeSignup = async (req, res) => {
     const result = await registerSelfServeAgency(req.body || {});
     return res.status(201).json({
       success: true,
-      message: 'Your KRIRIDER agency request has been submitted and is awaiting approval',
+      message: 'Your RSZ CAR agency request has been submitted and is awaiting approval',
       ...result,
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { SHOTS } from './productPreviews'
 import { useMktI18n } from './i18n/MarketingI18n'
@@ -12,7 +12,7 @@ export const Caption = () => {
   return <p className="mkt-caption">{t('caption')}</p>
 }
 
-export const Frame = ({ title = 'KRIRIDER', className = '', children, hover = false }) => {
+export const Frame = ({ title = 'RSZ CAR', className = '', children, hover = false }) => {
   const root = useRef(null)
   const reduce = useReducedMotion()
 

@@ -1,5 +1,6 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { PrimaryCta } from '../Ctas'
+import BrandMark from '../BrandMark'
 import { TRIAL_DAYS } from '../config'
 import { SHOTS } from '../productPreviews'
 import { useMktI18n } from '../i18n/MarketingI18n'
@@ -14,11 +15,19 @@ export const SaasHero = () => {
     <section className="saas-hero">
       <div className="mkt-wrap saas-hero-grid">
         <div>
+          <motion.div
+            className="saas-hero-brand"
+            initial={reduce ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease }}
+          >
+            <BrandMark variant="dark" size="hero" to="/" />
+          </motion.div>
           <motion.p
             className="saas-badge"
             initial={reduce ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease }}
+            transition={{ duration: 0.7, delay: 0.04, ease }}
           >
             <i aria-hidden />
             {t('hero.badge')}

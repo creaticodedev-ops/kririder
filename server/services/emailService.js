@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+﻿import nodemailer from "nodemailer";
 import { PLATFORM_NAME } from "../utils/brand.js";
 
 let transporter = null;
@@ -369,7 +369,7 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-const kririderEmailShell = ({ title, bodyHtml, ctaLabel, ctaHref, footerNote }) => {
+const platformEmailShell = ({ title, bodyHtml, ctaLabel, ctaHref, footerNote }) => {
   const accent = "#8F1F1F";
   const cta = ctaHref
     ? `<p style="margin:28px 0 8px"><a href="${escapeHtml(ctaHref)}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:600">${escapeHtml(ctaLabel || "Open")}</a></p>`
@@ -377,19 +377,19 @@ const kririderEmailShell = ({ title, bodyHtml, ctaLabel, ctaHref, footerNote }) 
   return `
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;color:#1a1614;background:#f7f4f0;padding:24px">
       <div style="background:#fff;border:1px solid #e8e1d8;border-radius:12px;padding:32px 28px">
-        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${accent};font-weight:700">KRIRIDER</p>
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${accent};font-weight:700">RSZ CAR</p>
         <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#1a1614">${escapeHtml(title)}</h1>
         ${bodyHtml}
         ${cta}
         ${footerNote ? `<p style="margin:24px 0 0;font-size:12px;color:#6b6560">${footerNote}</p>` : ""}
       </div>
-      <p style="margin:16px 8px 0;font-size:11px;color:#8a837c">KRIRIDER — car rental management software</p>
+      <p style="margin:16px 8px 0;font-size:11px;color:#8a837c">RSZ CAR — car rental management software</p>
     </div>
   `;
 };
 
 /**
- * Platform approval mail — KRIRIDER branded. Never includes passwords.
+ * Platform approval mail — RSZ CAR branded. Never includes passwords.
  */
 export const sendAgencyApprovedEmail = async ({
   to,
@@ -404,11 +404,11 @@ export const sendAgencyApprovedEmail = async ({
   const supportHtml = support
     ? `If you need help, contact us at <a href="mailto:${escapeHtml(support)}">${escapeHtml(support)}</a>.`
     : "If you need help, reply to this email.";
-  const html = kririderEmailShell({
-    title: "Your KRIRIDER agency has been approved",
+  const html = platformEmailShell({
+    title: "Your RSZ CAR agency has been approved",
     bodyHtml: `
       <p>Hello ${name},</p>
-      <p>Your KRIRIDER agency <strong>${agency}</strong> has been successfully created and approved.</p>
+      <p>Your RSZ CAR agency <strong>${agency}</strong> has been successfully created and approved.</p>
       <p>You can now sign in with the email and password you registered with, then open your owner workspace.</p>
     `,
     ctaLabel: "Access your dashboard",
@@ -417,9 +417,9 @@ export const sendAgencyApprovedEmail = async ({
   });
   return sendEmail({
     to,
-    subject: "Your KRIRIDER agency has been approved",
+    subject: "Your RSZ CAR agency has been approved",
     html,
-    brand: { displayName: "KRIRIDER", replyTo: support },
+    brand: { displayName: "RSZ CAR", replyTo: support },
   });
 };
 
@@ -439,8 +439,8 @@ export const sendAgencyRejectedEmail = async ({
   const supportHtml = support
     ? `Questions: <a href="mailto:${escapeHtml(support)}">${escapeHtml(support)}</a>.`
     : "";
-  const html = kririderEmailShell({
-    title: "KRIRIDER agency request update",
+  const html = platformEmailShell({
+    title: "RSZ CAR agency request update",
     bodyHtml: `
       <p>Hello ${name},</p>
       <p>The registration request for <strong>${agency}</strong> was not approved, so the workspace was not activated.</p>
@@ -450,9 +450,9 @@ export const sendAgencyRejectedEmail = async ({
   });
   return sendEmail({
     to,
-    subject: "KRIRIDER agency request update",
+    subject: "RSZ CAR agency request update",
     html,
-    brand: { displayName: "KRIRIDER", replyTo: support },
+    brand: { displayName: "RSZ CAR", replyTo: support },
   });
 };
 

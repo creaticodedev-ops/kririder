@@ -51,7 +51,7 @@ const heroSchema = new mongoose.Schema(
 );
 
 /**
- * Tenant root for KRI RIDER multi-tenant SaaS.
+ * Tenant root for RSZ CAR multi-tenant SaaS.
  * Business data is scoped by Agency._id (agencyId).
  */
 const agencySchema = new mongoose.Schema(

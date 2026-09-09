@@ -1,4 +1,4 @@
-/* KRIRIDER SaaS marketing — white / black / red */
+/* RSZ CAR SaaS marketing — white / black / red */
 
 .mkt {
   --mkt-bg: #ffffff;
@@ -167,6 +167,14 @@
   display: grid;
   gap: 2.5rem;
   align-items: center;
+}
+
+.saas-hero-brand {
+  margin: 0 0 1.05rem;
+}
+
+.saas-hero-brand .mkt-mark-hero {
+  margin-bottom: 0;
 }
 
 @media (min-width: 960px) {

@@ -1,4 +1,4 @@
-/** Paths that belong to the KRIRIDER SaaS marketing site (not a tenant storefront). */
+/** Paths that belong to the RSZ CAR SaaS marketing site (not a tenant storefront). */
 export const MARKETING_PATHS = new Set(['/', '/contact', '/privacy', '/terms', '/about', '/signup'])
 
 export const isMarketingPath = (pathname = '') => {

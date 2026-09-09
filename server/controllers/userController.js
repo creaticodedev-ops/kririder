@@ -1,4 +1,4 @@
-import User from "../models/User.js"
+﻿import User from "../models/User.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import Car from "../models/Car.js";
@@ -91,7 +91,7 @@ export const loginUser = async (req, res) => {
             if (user.role === 'owner' && user.agencyId) {
               const agency = await Agency.findById(user.agencyId).select('status rejectedAt').lean();
               if (agency?.status === 'rejected' || agency?.rejectedAt) {
-                lockedMessage = 'This KRIRIDER agency request was not approved. Contact support if you believe this is a mistake.';
+                lockedMessage = 'This RSZ CAR agency request was not approved. Contact support if you believe this is a mistake.';
               }
             }
             return res.status(403).json({
@@ -128,7 +128,7 @@ export const loginUser = async (req, res) => {
                     success: false,
                     code: 'APPROVAL_PENDING',
                     message:
-                      'Your KRIRIDER agency is awaiting approval. You will receive an email when it is activated.',
+                      'Your RSZ CAR agency is awaiting approval. You will receive an email when it is activated.',
                 });
             }
             user.lastLoginAt = new Date();
@@ -227,7 +227,7 @@ export const getUserData = async (req, res) => {
                     success: false,
                     code: 'APPROVAL_PENDING',
                     message:
-                      'Your KRIRIDER agency is awaiting approval. You will receive an email when it is activated.',
+                      'Your RSZ CAR agency is awaiting approval. You will receive an email when it is activated.',
                 });
             }
             const safePending = user.toObject ? user.toObject() : { ...user };

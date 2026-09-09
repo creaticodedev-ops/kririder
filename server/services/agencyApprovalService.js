@@ -1,4 +1,4 @@
-import Agency from '../models/Agency.js';
+﻿import Agency from '../models/Agency.js';
 import User from '../models/User.js';
 import Car from '../models/Car.js';
 import Booking from '../models/Booking.js';
@@ -66,23 +66,23 @@ const buildWhatsAppBody = (agency, urls) => {
     return [
       `Bonjour ${name},`,
       '',
-      'Votre espace agence KRIRIDER a été créé et approuvé avec succès.',
+      'Votre espace agence RSZ CAR a été créé et approuvé avec succès.',
       '',
       'Vous pouvez maintenant accéder à votre dashboard:',
       urls.dashboardUrl,
       '',
-      'Bienvenue sur KRIRIDER.',
+      'Bienvenue sur RSZ CAR.',
     ].join('\n');
   }
   return [
     `Hello ${name},`,
     '',
-    'Your KRIRIDER agency workspace has been created and approved.',
+    'Your RSZ CAR agency workspace has been created and approved.',
     '',
     'Access your dashboard:',
     urls.dashboardUrl,
     '',
-    'Welcome to KRIRIDER.',
+    'Welcome to RSZ CAR.',
   ].join('\n');
 };
 
@@ -152,7 +152,7 @@ export const deliverApprovalNotifications = async (agency, owner, { notifyReject
     next.whatsapp = {
       status: 'not_configured',
       at: new Date(),
-      error: 'WhatsApp API is not configured. KRIRIDER uses wa.me links only.',
+      error: 'WhatsApp API is not configured. RSZ CAR uses wa.me links only.',
       waMeUrl: '',
     };
   } else {

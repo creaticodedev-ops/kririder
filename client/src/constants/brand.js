@@ -1,7 +1,7 @@
 /** Platform identity — Super Admin, trial/license, system auth screens only. */
 export const PLATFORM_NAME =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PLATFORM_NAME) ||
-  'KRI RIDER'
+  'RSZ CAR'
 
 /** @deprecated Prefer storefrontProfile.name on tenant surfaces. */
 export const BRAND_NAME = PLATFORM_NAME

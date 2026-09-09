@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { BRAND } from './config'
 import { useMktI18n } from './i18n/MarketingI18n'
-import logoWebp from './brand/kririder-logo.webp'
-import logoPng from './brand/kririder-logo.png'
+import logoWebp from './brand/rsz-car-logo.webp'
+import logoPng from './brand/rsz-car-logo.png'
 
 export const BrandMark = ({ to = '/', className = '', variant = 'dark', size = 'nav' }) => {
   const { t } = useMktI18n()

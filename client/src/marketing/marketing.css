@@ -281,9 +281,10 @@
 }
 
 .mkt-mark-light {
-  background: #0b0908;
+  background: #ffffff;
   border-radius: 10px;
   padding: 0.5rem 0.8rem 0.55rem;
+  box-shadow: 0 1px 0 rgba(10, 10, 10, 0.06);
 }
 
 @media (max-width: 639px) {

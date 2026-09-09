@@ -104,7 +104,7 @@ export const resolveStorefrontSlug = ({
     // ignore malformed search
   }
 
-  // Platform apex (`kririder.com/`) is the KRIRIDER marketing site.
+  // Platform apex marketing homepage is the RSZ CAR SaaS site.
   // Tenant catalogs live at /s/:slug, {slug}.kririder.com, or a custom domain.
   return ''
 }

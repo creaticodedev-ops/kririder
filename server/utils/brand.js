@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Platform identity only — Super Admin, trial/license, system messages.
  * Never use this for agency storefronts, PDFs, emails, or WhatsApp to customers.
  */
 export const PLATFORM_NAME =
-  String(process.env.PLATFORM_NAME || process.env.BRAND_NAME || 'KRI RIDER').trim() ||
-  'KRI RIDER';
+  String(process.env.PLATFORM_NAME || process.env.BRAND_NAME || 'RSZ CAR').trim() ||
+  'RSZ CAR';
 
 export const PLATFORM_SUPPORT_EMAIL =
   String(process.env.PLATFORM_SUPPORT_EMAIL || '').trim() || '';

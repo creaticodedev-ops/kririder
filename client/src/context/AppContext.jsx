@@ -264,7 +264,7 @@ export const AppProvider = ({ children })=>{
     const needsPublicCatalog = Boolean(storefrontSlug || hostTenant.atRoot)
 
     // Scope public API calls to the current agency storefront (slug and/or Host).
-    // The KRIRIDER marketing homepage has no tenant — skip catalog requests.
+    // The RSZ CAR marketing homepage has no tenant — skip catalog requests.
     useEffect(() => {
       applyAgencySlugHeader(storefrontSlug)
       applyAgencyHostHeader(hostTenant.atRoot ? hostTenant.host : '')

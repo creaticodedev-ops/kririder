@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import { getSmtpConfigSummary } from './emailService.js';
 
 export const getPlatformHealth = () => {
@@ -58,7 +58,7 @@ export const getPlatformSettingsSnapshot = () => {
     .trim();
   return {
     platform: {
-      name: String(process.env.PLATFORM_NAME || process.env.BRAND_NAME || 'KRIRIDER').trim() || 'KRIRIDER',
+      name: String(process.env.PLATFORM_NAME || process.env.BRAND_NAME || 'RSZ CAR').trim() || 'RSZ CAR',
       clientUrl: clientUrl || '',
       baseDomain: String(process.env.PLATFORM_BASE_DOMAIN || '').trim(),
     },

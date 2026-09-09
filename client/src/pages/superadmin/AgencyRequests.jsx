@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSuperAdmin, saError } from '../../context/SuperAdminContext'
@@ -382,7 +382,7 @@ export const SuperAdminAgencyRequests = () => {
 
       <SaModal open={approveOpen} onClose={() => setApproveOpen(false)} title="Approve agency?">
         <p className="text-sm text-[var(--sa-text-secondary)] leading-relaxed">
-          You are about to approve this agency and activate its KRIRIDER workspace.
+          You are about to approve this agency and activate its RSZ CAR workspace.
         </p>
         <dl className="mt-4">
           <FieldRow label="Agency" value={selected?.name} />
@@ -391,7 +391,7 @@ export const SuperAdminAgencyRequests = () => {
           <FieldRow label="Phone" value={selected?.phone || selected?.whatsapp} />
         </dl>
         <p className="mt-4 text-xs text-[var(--sa-text-muted)] leading-relaxed">
-          This will activate the agency and allow the owner to access the KRIRIDER workspace. KRIRIDER will email the dashboard
+          This will activate the agency and allow the owner to access the RSZ CAR workspace. RSZ CAR will email the dashboard
           link. WhatsApp is a wa.me link only — API sending is not configured. Notification failure will not undo approval.
         </p>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
@@ -418,7 +418,7 @@ export const SuperAdminAgencyRequests = () => {
       </SaModal>
 
       <SaModal open={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject agency request?">
-        <p className="text-sm text-[var(--sa-text-secondary)]">This agency will not be activated on KRIRIDER.</p>
+        <p className="text-sm text-[var(--sa-text-secondary)]">This agency will not be activated on RSZ CAR.</p>
         <label className={`${sa.label} mt-4`} htmlFor="reject-reason">
           Reason (optional)
         </label>
@@ -502,7 +502,7 @@ export const SuperAdminAgencyRequests = () => {
         <p className="text-sm text-[var(--sa-text-secondary)] leading-relaxed">
           {success?.rejected
             ? 'The request is kept in history. It was not deleted.'
-            : 'The agency is now active. The owner can access the KRIRIDER workspace.'}
+            : 'The agency is now active. The owner can access the RSZ CAR workspace.'}
         </p>
         <dl className="mt-4">
           <FieldRow label="Agency" value={success?.agency?.name} />

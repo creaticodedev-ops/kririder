@@ -16,7 +16,7 @@ process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'e2e-branding-test-secret-min-32-chars!!';
 process.env.CLIENT_URL = process.env.CLIENT_URL || 'https://kririder.com';
 process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-process.env.PLATFORM_NAME = 'KRI RIDER';
+process.env.PLATFORM_NAME = 'RSZ CAR';
 delete process.env.PUBLIC_AGENCY_ID;
 delete process.env.PUBLIC_OWNER_ID;
 delete process.env.AGENCY_NAME;

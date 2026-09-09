@@ -1,5 +1,5 @@
 /**
- * KRIRIDER marketing site copy & commercial presentation.
+ * RSZ CAR marketing site copy & commercial presentation.
  *
  * Pricing / limits below mirror `server/services/planCatalog.js` public plans
  * (basic, pro, enterprise). Display names are marketing labels only —
@@ -7,19 +7,19 @@
  *
  * Edit prices here when the commercial offering changes.
  */
-export const BRAND = 'KRIRIDER'
+export const BRAND = 'RSZ CAR'
 
 export const SEO = {
-  title: 'KRIRIDER — Car Rental Management Software',
+  title: 'RSZ CAR — Car Rental Management Software',
   description:
-    'KRIRIDER helps car rental companies manage reservations, fleet, customers, contracts, invoices and daily operations from one workspace.',
+    'RSZ CAR helps car rental companies manage reservations, fleet, customers, contracts, invoices and daily operations from one workspace.',
 }
 
 export const CONTACT_EMAIL = String(import.meta.env.VITE_PLATFORM_SUPPORT_EMAIL || '').trim()
 export const CONTACT_WHATSAPP = String(import.meta.env.VITE_PLATFORM_SUPPORT_WHATSAPP || '').replace(/\D/g, '')
 export const TRIAL_DAYS = 7
 
-/** Agencies operating on KRIRIDER — presented only as clients, never as the product. */
+/** Agencies operating on RSZ CAR — presented only as clients, never as the product. */
 export const CLIENTS = [
   { name: 'HDN Car', note: 'Rental agency' },
   { name: 'Americonfort', note: 'Rental agency' },
