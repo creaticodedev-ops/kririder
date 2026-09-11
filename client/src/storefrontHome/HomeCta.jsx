@@ -44,7 +44,7 @@ const HomeCta = ({ image }) => {
               className="sf-btn sf-btn-ghost"
               data-analytics-source="home_cta"
             >
-              WhatsApp
+              {t('hero.whatsappCta')}
             </a>
           ) : null}
         </div>

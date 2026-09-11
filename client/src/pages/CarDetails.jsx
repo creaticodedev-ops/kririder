@@ -60,6 +60,7 @@ const CarDetails = () => {
     pickupLocations,
     carsLoading,
     publicPath,
+    storefrontProfile,
   } = useAppContext()
 
   const navigate = useNavigate()
@@ -703,14 +704,16 @@ const CarDetails = () => {
   const seoSlug = uniqueCarSlug(car, cars)
   const seoPath = seoSlug ? `/cars/${seoSlug}` : `/car-details/${car._id}`
   const carName = `${car.brand || ''} ${car.model || ''}`.trim()
+  const agencyName = storefrontProfile?.name || SITE_NAME
 
   return (
     <div className={`page-pad page-shell mt-4 overflow-x-clip bg-gradient-to-b from-white via-white to-sand/40 sm:mt-8 md:mt-10 ${booking.pageBottom}`}>
       <SeoHead
-        title={`Location ${carName} Maroc`}
-        description={`Louez ${carName} avec ${SITE_NAME}. Réservation en ligne.`}
+        title={`${carName} — ${agencyName}`}
+        description={t('carDetails.seoDescription', { car: carName, brand: agencyName })}
         path={seoPath}
         image={car.image || undefined}
+        siteName={agencyName}
         jsonLd={[vehicleProductJsonLd(car, seoPath)]}
       />
       <button
@@ -772,21 +775,25 @@ const CarDetails = () => {
             </div>
 
             <div className="mt-9 grid gap-8 sm:mt-10 sm:grid-cols-2 sm:gap-10">
-              <section>
-                <h2 className={booking.label}>{t('carDetails.description')}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-ink/75">{car.description}</p>
-              </section>
-              <section>
-                <h2 className={booking.label}>{t('carDetails.features')}</h2>
-                <ul className="mt-3 space-y-2.5">
-                  {(car.features?.length ? car.features : ['360 Camera', 'Bluetooth', 'GPS', 'Heated Seats']).map((item) => (
-                    <li key={item} className="flex items-center gap-2.5 text-sm text-ink/75">
-                      <img src={assets.check_icon} className="h-4 w-4 shrink-0 opacity-80" alt="" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {car.description ? (
+                <section>
+                  <h2 className={booking.label}>{t('carDetails.description')}</h2>
+                  <p className="mt-3 text-sm leading-relaxed text-ink/75">{car.description}</p>
+                </section>
+              ) : null}
+              {car.features?.length ? (
+                <section>
+                  <h2 className={booking.label}>{t('carDetails.features')}</h2>
+                  <ul className="mt-3 space-y-2.5">
+                    {car.features.map((item) => (
+                      <li key={item} className="flex items-center gap-2.5 text-sm text-ink/75">
+                        <img src={assets.check_icon} className="h-4 w-4 shrink-0 opacity-80" alt="" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
             </div>
           </Motion.div>
         </div>

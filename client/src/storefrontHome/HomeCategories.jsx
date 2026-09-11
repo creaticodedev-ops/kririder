@@ -42,8 +42,9 @@ const HomeCategories = ({
               />
               <div className="sf-cat-body">
                 <p className="sf-cat-name">{item.category}</p>
-                <p className="sf-cat-price">
+                <p className="sf-cat-meta">
                   {t('hero.fromPerDay', { price: `${currency}${item.from}` })}
+                  {item.count > 1 ? ` · ${item.count}` : ''}
                 </p>
               </div>
             </button>

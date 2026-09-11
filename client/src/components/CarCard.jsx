@@ -7,65 +7,80 @@ import { formatLocationsDisplay } from '../utils/carLocations'
 import PromotionBadge, { PromotionPriceTag } from './PromotionBadge'
 
 const CarCard = ({ car }) => {
-  const currency = import.meta.env.VITE_CURRENCY || 'MAD '
+  const { currency: ctxCurrency } = useAppContext()
+  const currency = ctxCurrency || import.meta.env.VITE_CURRENCY || 'MAD '
   const navigate = useNavigate()
   const { t } = useI18n()
   const { publicPath } = useAppContext()
   const fallbackImage = assets.car_image1
   const promo = car?.displayPromotion || null
   const detailsPath = publicPath?.(`/car-details/${car._id}`) || `/car-details/${car._id}`
+  const available = car.isAvaliable !== false
+
+  const open = () => {
+    navigate(detailsPath)
+    window.scrollTo(0, 0)
+  }
 
   return (
     <article
       role="link"
       tabIndex={0}
-      onClick={() => { navigate(detailsPath); window.scrollTo(0, 0) }}
+      onClick={open}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          navigate(detailsPath)
-          window.scrollTo(0, 0)
+          open()
         }
       }}
-      className="group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 rounded-[1.25rem]"
+      className="group cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 rounded-[1.35rem]"
     >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-[1.25rem] bg-sand ring-1 ring-borderColor/60 shadow-[0_12px_36px_-24px_rgba(22,18,16,0.35)]">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-[1.35rem] bg-sand ring-1 ring-borderColor/55 shadow-[0_18px_48px_-30px_rgba(22,18,16,0.45)]">
         <img
           src={car.image || car.images?.[0] || fallbackImage}
-          onError={(e) => { e.currentTarget.src = fallbackImage }}
+          onError={(e) => {
+            e.currentTarget.src = fallbackImage
+          }}
           alt={`${car.brand} ${car.model}`}
           width={640}
           height={400}
-          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.045]"
           loading="lazy"
           decoding="async"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/10 to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/15 to-transparent" />
 
         {promo ? <PromotionBadge promotion={promo} currency={currency} /> : null}
 
+        <div className="absolute left-3 top-3">
+          <span
+            className={`inline-flex min-h-[1.55rem] items-center rounded-full px-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+              available ? 'bg-primary text-[var(--color-on-primary,#fff)]' : 'bg-ink/55 text-white/80 backdrop-blur-sm'
+            }`}
+          >
+            {available ? t('carCard.available') : t('carCard.unavailable')}
+          </span>
+        </div>
+
         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 sm:bottom-3.5 sm:left-3.5 sm:right-3.5">
           <div className="min-w-0">
-            {car.isAvaliable && (
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85">
-                {t('carCard.available')}
-              </p>
-            )}
-            <h3 className="truncate font-display text-xl font-medium leading-tight text-white sm:text-[1.35rem]">
+            <h3 className="truncate font-display text-xl font-medium leading-tight text-white sm:text-[1.4rem]">
               {car.brand} {car.model}
             </h3>
-            <p className="mt-0.5 truncate text-xs text-white/70">{car.category} · {car.year}</p>
+            <p className="mt-0.5 truncate text-xs text-white/70">
+              {car.category}
+              {car.year ? ` · ${car.year}` : ''}
+            </p>
           </div>
           {promo ? (
-            <PromotionPriceTag
-              promotion={promo}
-              currency={currency}
-              perDayLabel={t('carCard.perDay')}
-            />
+            <PromotionPriceTag promotion={promo} currency={currency} perDayLabel={t('carCard.perDay')} />
           ) : (
             <div className="shrink-0 rounded-xl bg-white/95 px-2.5 py-2 text-right shadow-sm backdrop-blur-sm">
-              <p className="text-sm font-semibold leading-none tabular-nums text-ink">{currency}{car.pricePerDay}</p>
-              <p className="mt-1 text-[10px] text-muted">{t('carCard.perDay')}</p>
+              <p className="text-sm font-semibold leading-none tabular-nums text-ink">
+                {currency}
+                {car.pricePerDay}
+              </p>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.08em] text-muted">{t('carCard.perDay')}</p>
             </div>
           )}
         </div>
