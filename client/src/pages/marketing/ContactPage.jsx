@@ -4,7 +4,7 @@ import SeoHead from '../../seo/SeoHead'
 import MarketingLayout from '../../marketing/MarketingLayout'
 import { WhatsAppDemoCta } from '../../marketing/Ctas'
 import { ProductShot } from '../../marketing/productPreviews'
-import { BRAND, CONTACT_EMAIL, CONTACT_WHATSAPP, demoWhatsAppHref } from '../../marketing/config'
+import { BRAND, CONTACT_EMAIL } from '../../marketing/config'
 import { useMktI18n } from '../../marketing/i18n/MarketingI18n'
 
 export const ContactPage = () => (
@@ -122,9 +122,6 @@ const ContactInner = () => {
 
             <div className="mkt-demo-alt">
               <WhatsAppDemoCta className="mkt-demo-wa">{t('cta.whatsapp')}</WhatsAppDemoCta>
-              <a className="mkt-demo-phone" href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
-                +212 778616837
-              </a>
             </div>
           </div>
 
@@ -198,24 +195,6 @@ const ContactInner = () => {
                   {t('contact.orTrial')}{' '}
                   <Link to="/signup">{t('contact.leadLink')}</Link>
                 </p>
-
-                {(CONTACT_EMAIL || CONTACT_WHATSAPP) && (
-                  <p className="mkt-demo-note is-muted">
-                    {CONTACT_EMAIL ? (
-                      <>
-                        {t('contact.emailLabel')} <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-                      </>
-                    ) : null}
-                    {CONTACT_EMAIL && CONTACT_WHATSAPP ? ' · ' : null}
-                    {CONTACT_WHATSAPP ? (
-                      <>
-                        {t('contact.whatsapp')}{' '}
-                        <a href={`https://wa.me/${CONTACT_WHATSAPP}`}>{CONTACT_WHATSAPP}</a>
-                      </>
-                    ) : null}
-                    {!CONTACT_EMAIL ? t('contact.noEmail') : null}
-                  </p>
-                )}
               </form>
             )}
           </div>

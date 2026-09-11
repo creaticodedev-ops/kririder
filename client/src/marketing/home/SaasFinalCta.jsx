@@ -1,5 +1,4 @@
 import { DemoRequestCta, WhatsAppDemoCta } from '../Ctas'
-import { demoWhatsAppHref } from '../config'
 import { useMktI18n } from '../i18n/MarketingI18n'
 
 export const SaasFinalCta = () => {
@@ -21,12 +20,6 @@ export const SaasFinalCta = () => {
           <DemoRequestCta className="saas-final-demo">{t('cta.demo')}</DemoRequestCta>
           <WhatsAppDemoCta className="saas-final-wa">{t('cta.whatsapp')}</WhatsAppDemoCta>
         </div>
-        <p className="saas-final-phone">
-          <span>{t('footer.whatsappLabel')}</span>
-          <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
-            +212 778616837
-          </a>
-        </p>
       </div>
     </section>
   )

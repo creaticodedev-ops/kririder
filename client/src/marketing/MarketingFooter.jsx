@@ -82,9 +82,6 @@ export const MarketingFooter = () => {
               {t('cta.demo')}
             </DemoRequestCta>
             <WhatsAppDemoCta className="mkt-foot-wa">{t('footer.whatsappCta')}</WhatsAppDemoCta>
-            <a className="mkt-foot-phone" href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
-              +212 778616837
-            </a>
           </div>
         </div>
 
@@ -138,11 +135,6 @@ export const MarketingFooter = () => {
               <li>
                 <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
                   {t('footer.whatsappCta')}
-                </a>
-              </li>
-              <li>
-                <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
-                  +212 778616837
                 </a>
               </li>
             </ul>

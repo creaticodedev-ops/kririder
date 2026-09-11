@@ -4,7 +4,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAppContext } from '../context/AppContext'
 import BrandMark from './BrandMark'
 import { DemoRequestCta, WhatsAppDemoCta } from './Ctas'
-import { demoWhatsAppHref } from './config'
 import MktLangSwitch from './MktLangSwitch'
 import { useMktI18n } from './i18n/MarketingI18n'
 
@@ -282,15 +281,6 @@ export const MarketingNav = () => {
                     <WhatsAppDemoCta className="mkt-menu-wa" onClick={close}>
                       {t('cta.whatsapp')}
                     </WhatsAppDemoCta>
-                    <a
-                      className="mkt-menu-phone"
-                      href={demoWhatsAppHref()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={close}
-                    >
-                      +212 778616837
-                    </a>
                   </>
                 )}
               </motion.div>
