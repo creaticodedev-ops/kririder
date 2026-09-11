@@ -67,6 +67,25 @@
     note: 'Essai gratuit de {{days}} jours — un par agence. Aucun paiement pour commencer.',
   },
   saas: {
+    heroAria: 'Présentation produit RSZ CAR',
+    heroEyebrow: 'Plateforme d’exploitation pour la location',
+    heroLine1: 'Gérez votre agence.',
+    heroLine2: 'Pilotez chaque détail.',
+    heroLead:
+      'La plateforme tout-en-un pour piloter vos véhicules, réservations, clients, contrats et paiements depuis un seul espace.',
+    heroSignalLabel: 'Périmètre de la plateforme',
+    heroSignal: {
+      fleet: 'Véhicules',
+      reservations: 'Réservations',
+      customers: 'Clients',
+      contracts: 'Contrats',
+    },
+    heroPill: {
+      desk: 'Comptoir',
+      deskSub: 'Sur place & en ligne',
+      ops: 'Opérations',
+      opsSub: 'Flotte · calendrier · docs',
+    },
     showcaseKicker: 'Explorer les modules',
     showcaseTitle: 'Une plateforme. Chaque flux critique.',
     showcaseLead:

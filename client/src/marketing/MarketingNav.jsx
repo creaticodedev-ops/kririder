@@ -16,6 +16,8 @@ export const MarketingNav = () => {
   const reduce = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [solid, setSolid] = useState(false)
+  const isHome = location.pathname === '/'
+  const overDark = isHome && !solid && !open
 
   const links = [
     { href: '/#product', label: t('nav.product') },
@@ -25,7 +27,7 @@ export const MarketingNav = () => {
   ]
 
   useEffect(() => {
-    const onScroll = () => setSolid(window.scrollY > 8)
+    const onScroll = () => setSolid(window.scrollY > 24)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -61,9 +63,9 @@ export const MarketingNav = () => {
 
   return (
     <>
-    <header className={`mkt-nav${solid || open ? ' is-solid' : ''}${open ? ' is-open' : ''}`}>
+    <header className={`mkt-nav${solid || open ? ' is-solid' : ''}${open ? ' is-open' : ''}${overDark ? ' is-over-dark' : ''}`}>
       <div className="mkt-wrap mkt-nav-inner">
-        <BrandMark variant="dark" size="nav" />
+        <BrandMark variant={overDark ? 'light' : 'dark'} size="nav" />
         <nav className="mkt-nav-links" aria-label={t('nav.productNav')}>
           {links.map((item) => (
             <Link key={item.href} to={item.href}>

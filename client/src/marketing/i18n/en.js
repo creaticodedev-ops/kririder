@@ -67,6 +67,25 @@
     note: '{{days}}-day free trial — one per agency. No payment to start.',
   },
   saas: {
+    heroAria: 'RSZ CAR product introduction',
+    heroEyebrow: 'Car rental operating platform',
+    heroLine1: 'Run your agency.',
+    heroLine2: 'Command every detail.',
+    heroLead:
+      'The all-in-one platform to operate vehicles, reservations, customers, contracts and payments from a single workspace.',
+    heroSignalLabel: 'Platform scope',
+    heroSignal: {
+      fleet: 'Vehicles',
+      reservations: 'Reservations',
+      customers: 'Customers',
+      contracts: 'Contracts',
+    },
+    heroPill: {
+      desk: 'Counter',
+      deskSub: 'Walk-ins & bookings',
+      ops: 'Operations',
+      opsSub: 'Fleet · calendar · docs',
+    },
     heroBefore: 'Run your car rental business ',
     heroEm: 'smarter',
     heroAfter: '.',
