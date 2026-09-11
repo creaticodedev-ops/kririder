@@ -38,6 +38,8 @@
     seeHow: 'See how it works',
     talk: 'Talk to us',
     account: 'Create account',
+    demo: 'Request a demo',
+    whatsapp: 'Contact on WhatsApp',
     continue: 'Continue',
   },
   footer: {
@@ -137,10 +139,21 @@
         items: ['Subdomain', 'Custom domain', 'Online booking'],
       },
     },
-    showcaseKicker: 'Inside the platform',
-    showcaseTitle: 'Manage the entire rental business from one workspace.',
+    showcaseKicker: 'Explore the modules',
+    showcaseTitle: 'One platform. Every critical workflow.',
     showcaseLead:
-      'Real screens from RSZ CAR — the same tools your team uses for fleet, reservations, contracts and performance.',
+      'Switch between real RSZ CAR screens — the same tools your team uses every day.',
+    premiere: {
+      eyebrow: 'RSZ CAR',
+      title: 'Manage your rental agency. Simply.',
+      lead: 'Vehicles, reservations, customers, contracts and payments — united in one platform.',
+      note: 'Talk to the team and see the workspace live.',
+      float: {
+        fleet: 'Fleet',
+        desk: 'Reservations',
+        docs: 'Contracts',
+      },
+    },
     show: {
       overview: {
         label: 'Overview',

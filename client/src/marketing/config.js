@@ -17,6 +17,19 @@ export const SEO = {
 
 export const CONTACT_EMAIL = String(import.meta.env.VITE_PLATFORM_SUPPORT_EMAIL || '').trim()
 export const CONTACT_WHATSAPP = String(import.meta.env.VITE_PLATFORM_SUPPORT_WHATSAPP || '').replace(/\D/g, '')
+
+/** Sales WhatsApp for marketing demo requests (digits only). */
+export const DEMO_WHATSAPP = '212778616837'
+
+export const DEMO_WHATSAPP_MESSAGE =
+  'Bonjour, je souhaite découvrir RSZ CAR et demander une démonstration de la plateforme.'
+
+export const demoWhatsAppHref = (message = DEMO_WHATSAPP_MESSAGE) => {
+  const phone = DEMO_WHATSAPP
+  const text = encodeURIComponent(String(message || DEMO_WHATSAPP_MESSAGE))
+  return `https://wa.me/${phone}?text=${text}`
+}
+
 export const TRIAL_DAYS = 7
 
 /** Agencies operating on RSZ CAR — presented only as clients, never as the product. */

@@ -38,6 +38,8 @@
     seeHow: 'Voir le fonctionnement',
     talk: 'Nous contacter',
     account: 'Créer un compte',
+    demo: 'Demander une démo',
+    whatsapp: 'Contacter sur WhatsApp',
     continue: 'Continuer',
   },
   footer: {
@@ -65,10 +67,21 @@
     note: 'Essai gratuit de {{days}} jours — un par agence. Aucun paiement pour commencer.',
   },
   saas: {
-    showcaseKicker: 'Dans la plateforme',
-    showcaseTitle: 'Gérez toute l’activité de location depuis un seul espace.',
+    showcaseKicker: 'Explorer les modules',
+    showcaseTitle: 'Une plateforme. Chaque flux critique.',
     showcaseLead:
-      'Écrans réels de RSZ CAR — les mêmes outils que votre équipe utilise pour la flotte, les réservations, les contrats et la performance.',
+      'Parcourez les écrans réels de RSZ CAR — les mêmes outils que votre équipe utilise au quotidien.',
+    premiere: {
+      eyebrow: 'RSZ CAR',
+      title: 'Gérez votre agence de location. Simplement.',
+      lead: 'Véhicules, réservations, clients, contrats et paiements réunis dans une seule plateforme.',
+      note: 'Échangez avec l’équipe et découvrez l’espace de travail en live.',
+      float: {
+        fleet: 'Flotte',
+        desk: 'Réservations',
+        docs: 'Contrats',
+      },
+    },
     show: {
       overview: {
         label: 'Vue d’ensemble',

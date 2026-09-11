@@ -555,27 +555,409 @@
   color: var(--mkt-ink);
 }
 
-/* —— Showcase (product stage) —— */
+/* —— Showcase premiere + explore —— */
 .saas-showcase {
-  background:
-    radial-gradient(ellipse 55% 40% at 80% 0%, rgba(165, 22, 36, 0.05), transparent 60%),
-    linear-gradient(180deg, #fafafa 0%, #ffffff 42%, #ffffff 100%);
+  padding-block: 0;
+  background: #fff;
 }
 
-.saas-showcase-intro {
-  max-width: 40rem;
+.saas-premiere {
+  position: relative;
+  overflow: clip;
+  padding: clamp(3.25rem, 7vw, 5.5rem) 0 clamp(3rem, 6vw, 4.5rem);
+  background:
+    radial-gradient(ellipse 55% 45% at 78% 18%, rgba(165, 22, 36, 0.22), transparent 58%),
+    radial-gradient(ellipse 40% 35% at 12% 88%, rgba(165, 22, 36, 0.08), transparent 55%),
+    linear-gradient(165deg, #070707 0%, #121212 48%, #0a0a0a 100%);
+  color: #f4f4f4;
+}
+
+.saas-premiere-grid {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.25rem);
+  align-items: center;
+}
+
+@media (min-width: 980px) {
+  .saas-premiere-grid {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    gap: 3rem;
+  }
+}
+
+.saas-premiere-eyebrow {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #A51624;
+}
+
+.saas-premiere-title {
+  margin: 0;
+  max-width: 14ch;
+  font-family: var(--font-display);
+  font-size: clamp(2.35rem, 5.2vw, 3.85rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.saas-premiere-lead {
+  margin: 1.15rem 0 0;
+  max-width: 32rem;
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.saas-premiere-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.85rem;
+}
+
+.saas-premiere-demo {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 36px -16px rgba(165, 22, 36, 0.85);
+}
+
+.saas-premiere-note {
+  margin: 1rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.mkt-btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 2.85rem;
+  padding: 0.62rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.mkt-btn-whatsapp:hover {
+  background: rgba(37, 211, 102, 0.12);
+  border-color: rgba(37, 211, 102, 0.55);
+  box-shadow: 0 12px 28px -18px rgba(37, 211, 102, 0.55);
+  transform: translateY(-1px);
+}
+
+.mkt-btn-whatsapp:focus-visible {
+  outline: 2px solid #25d366;
+  outline-offset: 3px;
+}
+
+.mkt-btn-whatsapp .mkt-wa-icon {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mkt-btn-whatsapp:hover .mkt-wa-icon {
+  transform: translateY(-1px) scale(1.05);
+}
+
+.saas-premiere-stage {
+  --tilt-x: 0.5deg;
+  --tilt-y: -1.6deg;
+  --glow-x: 55%;
+  --glow-y: 35%;
+  position: relative;
+  isolation: isolate;
+  padding: 1.25rem 0.35rem 1.5rem;
+}
+
+.saas-premiere-glow {
+  position: absolute;
+  inset: 8% 6% 4%;
+  z-index: 0;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at var(--glow-x) var(--glow-y), rgba(165, 22, 36, 0.38), transparent 42%),
+    radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.08), transparent 55%);
+  filter: blur(18px);
+  opacity: 0.85;
+  pointer-events: none;
+  transition: background 0.35s ease;
+}
+
+.saas-premiere-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 18px;
+  opacity: 0;
+}
+
+.saas-showcase.is-in .saas-premiere-sweep {
+  animation: saas-red-sweep 1.35s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.saas-premiere-sweep::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -40%;
+  width: 42%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    rgba(165, 22, 36, 0.28) 50%,
+    rgba(255, 255, 255, 0.06) 58%,
+    transparent 78%
+  );
+  transform: skewX(-16deg);
+}
+
+@keyframes saas-red-sweep {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(130%);
+  }
+}
+
+.saas-premiere-float {
+  position: absolute;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(12, 12, 12, 0.78);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 40px -24px rgba(0, 0, 0, 0.8);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+
+.saas-premiere-float i {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: var(--mkt-accent);
+  box-shadow: 0 0 0 3px rgba(165, 22, 36, 0.25);
+}
+
+@media (min-width: 980px) {
+  .saas-premiere-float {
+    display: inline-flex;
+  }
+}
+
+.saas-premiere-float.is-a {
+  top: 7%;
+  left: 0;
+}
+
+.saas-premiere-float.is-b {
+  top: 42%;
+  right: -0.25rem;
+}
+
+.saas-premiere-float.is-c {
+  bottom: 10%;
+  left: 4%;
+}
+
+.saas-showcase.is-in .saas-premiere-float.is-a {
+  animation: saas-float-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+}
+
+.saas-showcase.is-in .saas-premiere-float.is-b {
+  animation: saas-float-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.48s both;
+}
+
+.saas-showcase.is-in .saas-premiere-float.is-c {
+  animation: saas-float-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+}
+
+@keyframes saas-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.saas-premiere-frame {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #0d0d0d;
+  box-shadow:
+    0 40px 80px -36px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  transform: perspective(1400px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+
+.saas-premiere-frame:hover {
+  box-shadow:
+    0 48px 90px -34px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(165, 22, 36, 0.22) inset;
+}
+
+.saas-showcase.is-in:not(.is-settled) .saas-premiere-frame.has-depth {
+  animation: saas-premiere-rise 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.saas-showcase.is-settled .saas-premiere-frame.has-depth {
+  animation: none;
+  opacity: 1;
+  filter: none;
+}
+
+@keyframes saas-premiere-rise {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: perspective(1400px) rotateX(4deg) rotateY(-6deg) translateY(28px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: perspective(1400px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, -1.5deg)) translateY(0) scale(1);
+  }
+}
+
+.saas-showcase.is-in .saas-premiere-copy > * {
+  animation: saas-copy-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.saas-showcase.is-in .saas-premiere-eyebrow { animation-delay: 0.05s; }
+.saas-showcase.is-in .saas-premiere-title { animation-delay: 0.12s; }
+.saas-showcase.is-in .saas-premiere-lead { animation-delay: 0.2s; }
+.saas-showcase.is-in .saas-premiere-actions { animation-delay: 0.28s; }
+.saas-showcase.is-in .saas-premiere-note { animation-delay: 0.36s; }
+
+@keyframes saas-copy-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.saas-premiere-viewport {
+  position: relative;
+  aspect-ratio: 900 / 506;
+  background: #050505;
+  animation: saas-shot-in 0.4s ease both;
+}
+
+.saas-premiere-viewport picture,
+.saas-premiere-viewport img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.saas-premiere-viewport img {
+  object-fit: cover;
+  object-position: top left;
+}
+
+.saas-stage-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.85rem;
+  background: #181818;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.saas-stage-chrome span {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.saas-stage-chrome span:first-child {
+  background: var(--mkt-accent);
+}
+
+.saas-stage-chrome p {
+  margin: 0 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 550;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saas-explore {
+  padding-block: clamp(2.75rem, 6vw, 4.5rem);
+}
+
+.saas-explore-head {
+  max-width: 38rem;
+  margin-bottom: 1.75rem;
+}
+
+.saas-explore-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.8vw, 2.15rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--mkt-ink);
 }
 
 .saas-stage {
   display: grid;
-  gap: 1.5rem;
-  margin-top: 2rem;
+  gap: 1.35rem;
 }
 
 @media (min-width: 980px) {
   .saas-stage {
-    grid-template-columns: minmax(15.5rem, 18.5rem) minmax(0, 1fr);
-    gap: 2rem;
+    grid-template-columns: minmax(15rem, 17.5rem) minmax(0, 1fr);
+    gap: 1.75rem;
     align-items: start;
   }
 }
@@ -609,7 +991,7 @@
   align-items: flex-start;
   gap: 0.7rem;
   flex: 0 0 auto;
-  min-width: 11.5rem;
+  min-width: 11rem;
   min-height: 3.1rem;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--mkt-line);
@@ -675,7 +1057,8 @@
 }
 
 @media (max-width: 979px) {
-  .saas-stage-tab-copy span {
+  .saas-stage-tab-copy span,
+  .saas-stage-step {
     display: none;
   }
 
@@ -685,8 +1068,19 @@
     padding: 0.6rem 0.85rem;
   }
 
-  .saas-stage-step {
-    display: none;
+  .saas-premiere-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .saas-premiere-actions .mkt-btn,
+  .saas-premiere-actions .mkt-btn-whatsapp {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .saas-premiere-stage {
+    padding-inline: 0;
   }
 }
 
@@ -694,113 +1088,8 @@
   min-width: 0;
 }
 
-.saas-stage-frame {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--mkt-line-strong);
-  border-radius: 14px;
-  background: #101010;
-  box-shadow:
-    0 28px 60px -32px rgba(10, 10, 10, 0.55),
-    0 1px 0 rgba(255, 255, 255, 0.06) inset;
-}
-
-@media (min-width: 980px) {
-  .saas-stage-frame.has-depth {
-    transform: perspective(1400px) rotateY(-1.4deg) rotateX(0.6deg);
-    transform-origin: 60% 50%;
-  }
-
-  .saas-showcase.is-in .saas-stage-frame.has-depth {
-    animation: saas-stage-settle 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-}
-
-@keyframes saas-stage-settle {
-  from {
-    opacity: 0.72;
-    transform: perspective(1400px) rotateY(-3deg) rotateX(1.2deg) translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: perspective(1400px) rotateY(-1.4deg) rotateX(0.6deg) translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .saas-showcase.is-in .saas-stage-frame.has-depth {
-    animation: none;
-  }
-}
-
-.saas-stage-chrome {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.65rem 0.85rem;
-  background: #181818;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.saas-stage-chrome span {
-  width: 0.48rem;
-  height: 0.48rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.saas-stage-chrome span:first-child {
-  background: var(--mkt-accent);
-}
-
-.saas-stage-chrome p {
-  margin: 0 0 0 0.45rem;
-  font-size: 0.68rem;
-  font-weight: 550;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.saas-stage-viewport {
-  position: relative;
-  background: #0a0a0a;
-  aspect-ratio: 900 / 506;
-  animation: saas-shot-in 0.38s ease both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .saas-stage-viewport {
-    animation: none;
-  }
-}
-
-@keyframes saas-shot-in {
-  from {
-    opacity: 0.4;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.saas-stage-viewport picture,
-.saas-stage-viewport img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.saas-stage-viewport img {
-  object-fit: cover;
-  object-position: top left;
-}
-
-.saas-stage-caption {
-  margin-top: 1.15rem;
+.saas-explore-caption {
+  margin: 0;
   max-width: 36rem;
 }
 
@@ -812,19 +1101,19 @@
   color: var(--mkt-accent);
 }
 
-.saas-stage-caption h3 {
+.saas-explore-caption h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
   font-weight: 500;
   line-height: 1.2;
 }
 
-.saas-stage-caption p:last-child {
+.saas-explore-caption p:last-child {
   margin: 0.45rem 0 0;
   color: var(--mkt-muted);
   line-height: 1.55;
-  font-size: 0.98rem;
+  font-size: 0.96rem;
 }
 
 .saas-stage-strip {
@@ -858,6 +1147,11 @@
   transform: translateY(-1px);
 }
 
+.saas-stage-thumb:focus-visible {
+  outline: 2px solid var(--mkt-accent);
+  outline-offset: 2px;
+}
+
 .saas-stage-thumb picture,
 .saas-stage-thumb img {
   display: block;
@@ -869,76 +1163,43 @@
 
 @media (max-width: 639px) {
   .saas-stage-strip {
-    display: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* legacy tab styles kept harmless if referenced elsewhere */
-.saas-tabs {
-  display: flex;
-  gap: 0.4rem;
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-  margin-bottom: 1.25rem;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+@keyframes saas-shot-in {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.saas-tabs::-webkit-scrollbar {
-  display: none;
+.saas-showcase.is-reduced .saas-premiere-sweep,
+.saas-showcase.is-reduced .saas-premiere-frame.has-depth,
+.saas-showcase.is-reduced .saas-premiere-copy > *,
+.saas-showcase.is-reduced .saas-premiere-float {
+  animation: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
 
-.saas-tab {
-  flex: 0 0 auto;
-  min-height: 2.6rem;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--mkt-line);
-  border-radius: 999px;
-  background: #fff;
-  color: var(--mkt-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
+@media (prefers-reduced-motion: reduce) {
+  .saas-premiere-frame,
+  .saas-premiere-float,
+  .saas-premiere-sweep,
+  .saas-premiere-viewport,
+  .saas-premiere-copy > * {
+    animation: none !important;
+    transition: none !important;
+    filter: none !important;
+  }
 
-.saas-tab[aria-selected='true'] {
-  background: var(--saas-black);
-  border-color: var(--saas-black);
-  color: #fff;
-}
-
-.saas-show-frame {
-  overflow: hidden;
-  border: 1px solid var(--mkt-line-strong);
-  border-radius: 14px;
-  background: #0f0f0f;
-  box-shadow: var(--mkt-shadow);
-}
-
-.saas-show-frame img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9.5;
-  object-fit: cover;
-  object-position: top left;
-}
-
-.saas-show-copy {
-  margin-top: 1.15rem;
-  max-width: 40rem;
-}
-
-.saas-show-copy h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 500;
-}
-
-.saas-show-copy p {
-  margin: 0.45rem 0 0;
-  color: var(--mkt-muted);
-  line-height: 1.55;
+  .mkt-btn-whatsapp:hover {
+    transform: none;
+  }
 }
 
 /* —— Outcomes —— */
