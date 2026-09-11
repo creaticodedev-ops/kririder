@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMktI18n } from './i18n/MarketingI18n'
 import { MKT_LOCALES } from './i18n/locales'
 
-export const MktLangSwitch = ({ className = '' }) => {
+export const MktLangSwitch = ({ className = '', compact = false }) => {
   const { locale, setLocale, t } = useMktI18n()
   const [open, setOpen] = useState(false)
   const root = useRef(null)
@@ -25,7 +25,7 @@ export const MktLangSwitch = ({ className = '' }) => {
   }, [open])
 
   return (
-    <div className={`mkt-lang ${className}`.trim()} ref={root}>
+    <div className={`mkt-lang${compact ? ' is-compact' : ''} ${className}`.trim()} ref={root}>
       <button
         type="button"
         className="mkt-lang-btn"
@@ -38,7 +38,7 @@ export const MktLangSwitch = ({ className = '' }) => {
           <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" />
           <path d="M2 8h12M8 2c2.2 1.8 3.2 3.8 3.2 6S10.2 12.2 8 14C5.8 12.2 4.8 10.2 4.8 8S5.8 3.8 8 2z" stroke="currentColor" strokeWidth="1.3" />
         </svg>
-        <span>{current.native}</span>
+        <span>{compact ? current.short : current.native}</span>
       </button>
       {open ? (
         <ul className="mkt-lang-menu" role="listbox" aria-label={t('nav.language')}>

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAppContext } from '../context/AppContext'
 import BrandMark from './BrandMark'
 import { DemoRequestCta, WhatsAppDemoCta } from './Ctas'
+import { demoWhatsAppHref } from './config'
 import MktLangSwitch from './MktLangSwitch'
 import { useMktI18n } from './i18n/MarketingI18n'
 
@@ -20,6 +21,8 @@ export const MarketingNav = () => {
   const [scrolled, setScrolled] = useState(false)
   const [activeHash, setActiveHash] = useState('')
   const [entered, setEntered] = useState(false)
+  const burgerRef = useRef(null)
+  const menuRef = useRef(null)
 
   const links = useMemo(
     () => [
@@ -28,7 +31,7 @@ export const MarketingNav = () => {
       { href: '/#pricing', label: t('nav.pricing') },
       { href: '/#faq', label: t('nav.faq') },
     ],
-    [t]
+    [t],
   )
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export const MarketingNav = () => {
 
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 18)
+      setScrolled(window.scrollY > 16)
       if (location.pathname !== '/') return
       const sections = links.map((l) => document.getElementById(linkId(l.href))).filter(Boolean)
       let current = ''
@@ -64,9 +67,32 @@ export const MarketingNav = () => {
       if (event.key === 'Escape') setOpen(false)
     }
     document.addEventListener('keydown', onKey)
+
+    const panel = menuRef.current
+    const focusables = panel
+      ? Array.from(panel.querySelectorAll('a[href], button:not([disabled])'))
+      : []
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    first?.focus?.({ preventScroll: true })
+
+    const onTab = (event) => {
+      if (event.key !== 'Tab' || focusables.length === 0) return
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last?.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first?.focus()
+      }
+    }
+    document.addEventListener('keydown', onTab)
+
     return () => {
       document.body.classList.remove('nav-open')
       document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown', onTab)
+      burgerRef.current?.focus?.({ preventScroll: true })
     }
   }, [open])
 
@@ -120,7 +146,9 @@ export const MarketingNav = () => {
                   <button type="button" className="mkt-nav-text" onClick={() => setShowLogin(true)}>
                     {t('nav.login')}
                   </button>
-                  <WhatsAppDemoCta className="mkt-nav-wa">{t('cta.whatsappShort')}</WhatsAppDemoCta>
+                  <WhatsAppDemoCta className="mkt-nav-wa">
+                    {t('cta.whatsappShort')}
+                  </WhatsAppDemoCta>
                   <DemoRequestCta className="mkt-nav-demo" magnetic={false}>
                     {t('cta.demo')}
                   </DemoRequestCta>
@@ -129,8 +157,9 @@ export const MarketingNav = () => {
             </div>
 
             <div className="mkt-nav-mobile">
-              <MktLangSwitch />
+              <MktLangSwitch compact />
               <button
+                ref={burgerRef}
                 type="button"
                 className={`mkt-burger${open ? ' is-open' : ''}`}
                 aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
@@ -152,6 +181,7 @@ export const MarketingNav = () => {
       <AnimatePresence>
         {open ? (
           <motion.div
+            ref={menuRef}
             id="mkt-mobile-menu"
             className="mkt-menu mkt-menu-pro"
             role="dialog"
@@ -159,10 +189,20 @@ export const MarketingNav = () => {
             aria-label={t('nav.productNav')}
             initial={reduce ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={reduce ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ duration: reduce ? 0 : 0.28, ease }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0 }}
+            transition={{ duration: reduce ? 0 : 0.32, ease }}
           >
+            <div className="mkt-menu-atmos" aria-hidden>
+              <span className="mkt-menu-glow" />
+              <span className="mkt-menu-line" />
+            </div>
+
             <div className="mkt-wrap mkt-menu-body">
+              <div className="mkt-menu-top">
+                <BrandMark variant="light" size="nav" className="mkt-menu-logo" />
+                <p className="mkt-menu-kicker">{t('saas.heroEyebrow')}</p>
+              </div>
+
               <motion.nav
                 className="mkt-menu-links"
                 aria-label={t('nav.productNav')}
@@ -171,7 +211,7 @@ export const MarketingNav = () => {
                 variants={{
                   hidden: {},
                   show: {
-                    transition: reduce ? { staggerChildren: 0 } : { staggerChildren: 0.06, delayChildren: 0.05 },
+                    transition: reduce ? { staggerChildren: 0 } : { staggerChildren: 0.055, delayChildren: 0.08 },
                   },
                 }}
               >
@@ -179,13 +219,17 @@ export const MarketingNav = () => {
                   <motion.div
                     key={item.href}
                     variants={{
-                      hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
-                      show: { opacity: 1, y: 0, transition: { duration: 0.45, ease } },
+                      hidden: reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 },
+                      show: { opacity: 1, y: 0, transition: { duration: 0.48, ease } },
                     }}
                   >
-                    <Link to={item.href} className="mkt-menu-link" onClick={close}>
+                    <Link
+                      to={item.href}
+                      className={`mkt-menu-link${isActive(item.href) ? ' is-active' : ''}`}
+                      onClick={close}
+                    >
                       <span>{String(index + 1).padStart(2, '0')}</span>
-                      {item.label}
+                      <em>{item.label}</em>
                     </Link>
                   </motion.div>
                 ))}
@@ -193,16 +237,30 @@ export const MarketingNav = () => {
 
               <motion.div
                 className="mkt-menu-actions"
-                initial={reduce ? false : { opacity: 0, y: 12 }}
+                initial={reduce ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: reduce ? 0 : 0.45, delay: reduce ? 0 : 0.28, ease }}
+                transition={{ duration: reduce ? 0 : 0.48, delay: reduce ? 0 : 0.32, ease }}
               >
                 {isOwner ? (
                   <>
-                    <button type="button" className="mkt-menu-login" onClick={() => { close(); navigate('/owner') }}>
+                    <button
+                      type="button"
+                      className="mkt-menu-login"
+                      onClick={() => {
+                        close()
+                        navigate('/owner')
+                      }}
+                    >
                       {t('nav.dashboard')}
                     </button>
-                    <button type="button" className="mkt-btn mkt-btn-primary mkt-menu-cta" onClick={() => { close(); logout() }}>
+                    <button
+                      type="button"
+                      className="mkt-btn mkt-btn-primary mkt-menu-cta"
+                      onClick={() => {
+                        close()
+                        logout()
+                      }}
+                    >
                       {t('nav.logout')}
                     </button>
                   </>
@@ -218,12 +276,21 @@ export const MarketingNav = () => {
                     >
                       {t('nav.login')}
                     </button>
-                    <WhatsAppDemoCta className="mkt-menu-wa" onClick={close}>
-                      {t('cta.whatsapp')}
-                    </WhatsAppDemoCta>
                     <DemoRequestCta className="mkt-menu-cta" magnetic={false} onClick={close}>
                       {t('cta.demo')}
                     </DemoRequestCta>
+                    <WhatsAppDemoCta className="mkt-menu-wa" onClick={close}>
+                      {t('cta.whatsapp')}
+                    </WhatsAppDemoCta>
+                    <a
+                      className="mkt-menu-phone"
+                      href={demoWhatsAppHref()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={close}
+                    >
+                      +212 778616837
+                    </a>
                   </>
                 )}
               </motion.div>
