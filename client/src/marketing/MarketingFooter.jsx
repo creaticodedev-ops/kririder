@@ -5,29 +5,34 @@ import { DemoRequestCta, WhatsAppDemoCta } from './Ctas'
 import { BRAND, demoWhatsAppHref } from './config'
 import { useMktI18n } from './i18n/MarketingI18n'
 
-const PRODUCT_LINKS = [
-  { to: '/#capabilities', labelKey: 'footer.link.features' },
-  { to: '/#product', labelKey: 'footer.link.fleet' },
-  { to: '/#product', labelKey: 'footer.link.reservations' },
-  { to: '/#product', labelKey: 'footer.link.contracts' },
-  { to: '/#product', labelKey: 'footer.link.customers' },
-  { to: '/#capabilities', labelKey: 'footer.link.analytics' },
+/**
+ * Footer IA mirrors real owner modules (see `ownerNavGroups` in assets.js)
+ * and public marketing anchors — labels only, no app routes.
+ */
+const PLATFORM_LINKS = [
+  { to: '/#product', labelKey: 'footer.module.dashboard' },
+  { to: '/#product', labelKey: 'footer.module.reservations' },
+  { to: '/#product', labelKey: 'footer.module.calendar' },
+  { to: '/#product', labelKey: 'footer.module.fleet' },
+  { to: '/#product', labelKey: 'footer.module.customers' },
+  { to: '/#product', labelKey: 'footer.module.contracts' },
+  { to: '/#product', labelKey: 'footer.module.invoices' },
+  { to: '/#product', labelKey: 'footer.module.analytics' },
 ]
 
-const EXPLORE_LINKS = [
+const AGENCY_LINKS = [
+  { to: '/#product', labelKey: 'footer.module.walkIn' },
+  { to: '/#product', labelKey: 'footer.module.maintenance' },
+  { to: '/#product', labelKey: 'footer.module.locations' },
+  { to: '/#product', labelKey: 'footer.module.reports' },
+]
+
+const RESOURCE_LINKS = [
   { to: '/#product', labelKey: 'nav.product' },
   { to: '/#features', labelKey: 'nav.features' },
   { to: '/#pricing', labelKey: 'nav.pricing' },
   { to: '/#faq', labelKey: 'nav.faq' },
-]
-
-const COMPANY_LINKS = [
   { to: '/about', labelKey: 'nav.about' },
-  { to: '/contact', labelKey: 'footer.contact' },
-  { to: '/contact?intent=demo', labelKey: 'cta.demo' },
-]
-
-const LEGAL_LINKS = [
   { to: '/privacy', labelKey: 'footer.privacy' },
   { to: '/terms', labelKey: 'footer.terms' },
 ]
@@ -88,37 +93,59 @@ export const MarketingFooter = () => {
         </div>
 
         <div className="mkt-foot-cols">
-          <nav className="mkt-foot-col" aria-label={t('footer.product')}>
-            <h2>{t('footer.product')}</h2>
-            {PRODUCT_LINKS.map((item) => (
-              <Link key={item.labelKey} to={item.to}>
-                {t(item.labelKey)}
-              </Link>
-            ))}
+          <nav className="mkt-foot-col" aria-label={t('footer.platform')}>
+            <h2>{t('footer.platform')}</h2>
+            <ul>
+              {PLATFORM_LINKS.map((item) => (
+                <li key={item.labelKey}>
+                  <Link to={item.to}>{t(item.labelKey)}</Link>
+                </li>
+              ))}
+            </ul>
           </nav>
-          <nav className="mkt-foot-col" aria-label={t('footer.explore')}>
-            <h2>{t('footer.explore')}</h2>
-            {EXPLORE_LINKS.map((item) => (
-              <Link key={item.labelKey} to={item.to}>
-                {t(item.labelKey)}
-              </Link>
-            ))}
+
+          <nav className="mkt-foot-col" aria-label={t('footer.agency')}>
+            <h2>{t('footer.agency')}</h2>
+            <ul>
+              {AGENCY_LINKS.map((item) => (
+                <li key={item.labelKey}>
+                  <Link to={item.to}>{t(item.labelKey)}</Link>
+                </li>
+              ))}
+            </ul>
           </nav>
-          <nav className="mkt-foot-col" aria-label={t('footer.company')}>
-            <h2>{t('footer.company')}</h2>
-            {COMPANY_LINKS.map((item) => (
-              <Link key={item.labelKey} to={item.to}>
-                {t(item.labelKey)}
-              </Link>
-            ))}
+
+          <nav className="mkt-foot-col" aria-label={t('footer.resources')}>
+            <h2>{t('footer.resources')}</h2>
+            <ul>
+              {RESOURCE_LINKS.map((item) => (
+                <li key={item.labelKey}>
+                  <Link to={item.to}>{t(item.labelKey)}</Link>
+                </li>
+              ))}
+            </ul>
           </nav>
-          <nav className="mkt-foot-col" aria-label={t('footer.legal')}>
-            <h2>{t('footer.legal')}</h2>
-            {LEGAL_LINKS.map((item) => (
-              <Link key={item.labelKey} to={item.to}>
-                {t(item.labelKey)}
-              </Link>
-            ))}
+
+          <nav className="mkt-foot-col" aria-label={t('footer.contact')}>
+            <h2>{t('footer.contact')}</h2>
+            <ul>
+              <li>
+                <Link to="/contact?intent=demo">{t('cta.demo')}</Link>
+              </li>
+              <li>
+                <Link to="/contact">{t('footer.contactPage')}</Link>
+              </li>
+              <li>
+                <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
+                  {t('footer.whatsappCta')}
+                </a>
+              </li>
+              <li>
+                <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
+                  +212 778616837
+                </a>
+              </li>
+            </ul>
           </nav>
         </div>
 
