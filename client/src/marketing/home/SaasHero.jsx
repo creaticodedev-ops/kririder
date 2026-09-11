@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { PrimaryCta } from '../Ctas'
 import BrandMark from '../BrandMark'
 import { TRIAL_DAYS } from '../config'
-import { SHOTS } from '../productPreviews'
+import { ProductShot } from '../productPreviews'
 import { useMktI18n } from '../i18n/MarketingI18n'
 
 const ease = [0.22, 1, 0.36, 1]
@@ -86,13 +86,11 @@ export const SaasHero = () => {
               <span />
               <span />
             </div>
-            <img
-              src={SHOTS.dashboard}
+            <ProductShot
+              id="dashboard"
               alt={t('alts.dashboard')}
-              width={1280}
-              height={800}
-              decoding="async"
-              fetchPriority="high"
+              eager
+              sizes="(max-width: 959px) 92vw, min(560px, 42vw)"
             />
           </div>
           <div className="saas-float-card is-a" aria-hidden>
