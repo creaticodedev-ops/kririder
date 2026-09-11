@@ -28,8 +28,8 @@ export const BrandMark = ({ to = '/', className = '', variant = 'dark', size = '
         <img
           src={png}
           alt={BRAND}
-          width={1024}
-          height={168}
+          width={800}
+          height={132}
           decoding="async"
           draggable="false"
         />

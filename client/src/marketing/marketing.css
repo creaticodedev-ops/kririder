@@ -371,14 +371,14 @@
 }
 
 .mkt-nav-pro .mkt-mark-nav img {
-  height: 1.55rem;
-  max-width: min(9.8rem, 42vw);
+  height: 1.72rem;
+  max-width: min(11rem, 48vw);
   transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), max-width 0.45s ease;
 }
 
 .mkt-nav-pro.is-scrolled .mkt-mark-nav img {
-  height: 1.38rem;
-  max-width: min(8.8rem, 40vw);
+  height: 1.5rem;
+  max-width: min(9.6rem, 44vw);
 }
 
 .mkt-nav-pro .mkt-nav-links {
