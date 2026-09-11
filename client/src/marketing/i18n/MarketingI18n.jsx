@@ -19,6 +19,52 @@ const deepMerge = (target, source) => {
   return out
 }
 
+const contactEsExtras = {
+  demoKicker: 'Demo del producto',
+  demoTitle: 'Descubra RSZ CAR en acción.',
+  demoLead:
+    'Solicite una demostración personalizada de la plataforma — reservas, flota, clientes, contratos y pagos en un solo espacio.',
+  point1: 'Recorrido en vivo adaptado a sus flujos reales',
+  point2: 'Respuestas según el tamaño de flota y su equipo',
+  point3: 'Respuesta rápida por WhatsApp o email',
+  formKickerDemo: 'Solicitud de demo',
+  formTitleDemo: 'Solicite su demo',
+  successKicker: 'Solicitud lista',
+  successTitle: 'Gracias — le contactaremos en breve.',
+  backHome: 'Volver al inicio',
+  fleetPh: 'p. ej. 15 vehículos',
+  messagePh: 'Cuéntenos brevemente qué necesita…',
+  messagePhDemo: 'Háblenos de su agencia y su disponibilidad…',
+  orTrial: '¿Prefiere probar primero?',
+  seoDemoTitle: 'Solicitar una demo de RSZ CAR',
+  seoDemoDescription: 'Reserve una demostración personalizada de RSZ CAR para su agencia de alquiler.',
+  formKicker: 'Contacto',
+  formTitle: 'Enviar un mensaje',
+}
+
+const contactArExtras = {
+  demoKicker: 'عرض توضيحي للمنتج',
+  demoTitle: 'اكتشف RSZ CAR عملياً.',
+  demoLead:
+    'اطلب عرضاً توضيحياً مخصصاً للمنصة — الحجوزات والأسطول والعملاء والعقود والمدفوعات في مساحة واحدة.',
+  point1: 'جولة مباشرة وفق تدفقات عملك الحقيقية',
+  point2: 'إجابات حسب حجم الأسطول وفريقك',
+  point3: 'رد سريع عبر واتساب أو البريد',
+  formKickerDemo: 'طلب عرض توضيحي',
+  formTitleDemo: 'اطلب عرضك التوضيحي',
+  successKicker: 'الطلب جاهز',
+  successTitle: 'شكراً — سنتواصل معك قريباً.',
+  backHome: 'العودة إلى الصفحة الرئيسية',
+  fleetPh: 'مثلاً 15 مركبة',
+  messagePh: 'أخبرنا باختصار بما تحتاجه…',
+  messagePhDemo: 'أخبرنا عن وكالتك ومواعيد تفرّغك…',
+  orTrial: 'هل تفضّل التجربة أولاً؟',
+  seoDemoTitle: 'طلب عرض توضيحي لـ RSZ CAR',
+  seoDemoDescription: 'احجز عرضاً توضيحياً مخصصاً لـ RSZ CAR لوكالة تأجير السيارات.',
+  formKicker: 'تواصل',
+  formTitle: 'أرسل رسالة',
+}
+
 const esPatched = deepMerge(es, {
   cta: {
     demo: 'Solicitar una demo',
@@ -29,6 +75,10 @@ const esPatched = deepMerge(es, {
     statistics: 'Estadísticas de vehículos RSZ CAR: ingresos y utilización',
   },
   saas: saasEsExtras,
+  contact: contactEsExtras,
+  signup: {
+    moreOptional: 'Añadir ciudad y tamaño de flota (opcional)',
+  },
 })
 
 const arPatched = deepMerge(ar, {
@@ -41,6 +91,10 @@ const arPatched = deepMerge(ar, {
     statistics: 'إحصاءات مركبات RSZ CAR: الإيرادات والاستخدام',
   },
   saas: saasArExtras,
+  contact: contactArExtras,
+  signup: {
+    moreOptional: 'إضافة المدينة وحجم الأسطول (اختياري)',
+  },
 })
 
 const frPatched = deepMerge(fr, {
