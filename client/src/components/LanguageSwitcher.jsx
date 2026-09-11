@@ -21,7 +21,7 @@ const LanguageSwitcher = ({ className = '', variant = 'default' }) => {
         className={`flex items-center gap-1 rounded-lg border text-sm transition-colors cursor-pointer ${
           isBare ? btnClass : `gap-1.5 px-2.5 py-1.5 ${btnClass}`
         }`}
-        aria-label="Change language"
+        aria-label={t('nav.language')}
       >
         <span className="font-medium tracking-wide">{language.toUpperCase()}</span>
         {!isBare && (

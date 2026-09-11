@@ -3,9 +3,51 @@ import { ar } from './ar'
 import { en } from './en'
 import { es } from './es'
 import { fr } from './fr'
-import { getLocaleMeta, getNested, interpolate, readStoredLocale, writeStoredLocale } from './locales'
+import { getLocaleMeta, getNested, interpolate } from './locales'
+import { LANG_CHANGE_EVENT, readStoredLocale, writeStoredLocale } from './localeSync'
+import { saasArExtras, saasEsExtras, saasFrExtras } from './saasLocaleExtras'
 
-const dictionaries = { en, fr, es, ar }
+const deepMerge = (target, source) => {
+  if (source === undefined || source === null) return target
+  if (Array.isArray(source)) return source
+  if (typeof source !== 'object') return source
+  const base = target && typeof target === 'object' && !Array.isArray(target) ? target : {}
+  const out = { ...base }
+  for (const key of Object.keys(source)) {
+    out[key] = deepMerge(base[key], source[key])
+  }
+  return out
+}
+
+const esPatched = deepMerge(es, {
+  cta: {
+    demo: 'Solicitar una demo',
+    whatsapp: 'Contactar por WhatsApp',
+    whatsappShort: 'WhatsApp',
+  },
+  alts: {
+    statistics: 'Estadísticas de vehículos RSZ CAR: ingresos y utilización',
+  },
+  saas: saasEsExtras,
+})
+
+const arPatched = deepMerge(ar, {
+  cta: {
+    demo: 'طلب عرض توضيحي',
+    whatsapp: 'التواصل عبر واتساب',
+    whatsappShort: 'واتساب',
+  },
+  alts: {
+    statistics: 'إحصاءات مركبات RSZ CAR: الإيرادات والاستخدام',
+  },
+  saas: saasArExtras,
+})
+
+const frPatched = deepMerge(fr, {
+  saas: saasFrExtras,
+})
+
+const dictionaries = { en, fr: frPatched, es: esPatched, ar: arPatched }
 
 const MarketingI18nContext = createContext(null)
 
@@ -18,6 +60,16 @@ export const MarketingI18nProvider = ({ children }) => {
     setLocaleState(code)
     writeStoredLocale(code)
   }
+
+  useEffect(() => {
+    const onBridge = (event) => {
+      const code = event?.detail?.code
+      if (!dictionaries[code] || code === locale) return
+      setLocaleState(code)
+    }
+    window.addEventListener(LANG_CHANGE_EVENT, onBridge)
+    return () => window.removeEventListener(LANG_CHANGE_EVENT, onBridge)
+  }, [locale])
 
   useEffect(() => {
     const html = document.documentElement

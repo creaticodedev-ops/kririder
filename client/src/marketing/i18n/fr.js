@@ -295,9 +295,6 @@
         'Conditions commerciales adaptées',
       ],
     },
-    finalTitle: 'Prêt à reprendre le contrôle de votre agence ?',
-    finalLead:
-      'Découvrez comment RSZ CAR peut centraliser votre activité et simplifier votre quotidien.',
   },
   final: {
     kicker: 'Passer à l’action',

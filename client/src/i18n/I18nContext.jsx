@@ -2,6 +2,11 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { en as baseEn, fr as baseFr, es as baseEs } from './translations'
 import { adminEn, adminFr, adminEs } from './adminTranslations'
 import { superadminEn, superadminFr, superadminEs } from './superadminTranslations'
+import {
+  LANG_CHANGE_EVENT,
+  persistAppLocale,
+  readPreferredAppLocale,
+} from './langBridge'
 
 const en = { ...baseEn, admin: adminEn, superadmin: superadminEn }
 const fr = { ...baseFr, admin: adminFr, superadmin: superadminFr }
@@ -14,20 +19,45 @@ const I18nContext = createContext(null)
 const getNested = (obj, path) =>
   path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj)
 
+const initialLanguage = () => {
+  const preferred = readPreferredAppLocale()
+  if (preferred && dictionaries[preferred]) return preferred
+  try {
+    const stored = localStorage.getItem('language')
+    if (dictionaries[stored]) return stored
+  } catch {
+    /* ignore */
+  }
+  return 'en'
+}
+
 export const I18nProvider = ({ children }) => {
-  const [language, setLanguageState] = useState(() => {
-    return localStorage.getItem('language') || 'en'
-  })
+  const [language, setLanguageState] = useState(initialLanguage)
 
   const setLanguage = (lang) => {
     if (!dictionaries[lang]) return
     setLanguageState(lang)
-    localStorage.setItem('language', lang)
+    persistAppLocale(lang)
     document.documentElement.lang = lang
+    if (lang !== 'ar') {
+      document.documentElement.dir = 'ltr'
+      document.documentElement.classList.remove('mkt-rtl')
+    }
   }
 
   useEffect(() => {
     document.documentElement.lang = language
+  }, [language])
+
+  useEffect(() => {
+    const onBridge = (event) => {
+      const code = event?.detail?.code
+      if (!dictionaries[code] || code === language) return
+      setLanguageState(code)
+      document.documentElement.lang = code
+    }
+    window.addEventListener(LANG_CHANGE_EVENT, onBridge)
+    return () => window.removeEventListener(LANG_CHANGE_EVENT, onBridge)
   }, [language])
 
   const t = useMemo(() => {
@@ -38,7 +68,7 @@ export const I18nProvider = ({ children }) => {
       if (typeof value !== 'string') return key
       return Object.keys(vars).reduce(
         (str, k) => str.replace(new RegExp(`{{${k}}}`, 'g'), String(vars[k])),
-        value
+        value,
       )
     }
   }, [language])
