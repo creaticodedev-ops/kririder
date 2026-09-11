@@ -37,6 +37,12 @@ const Eye = ({ off = false }) => (
   </svg>
 )
 
+const Check = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+    <path d="M2.5 7.2l2.8 2.8 6.2-6.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export const SignupPage = () => (
   <MarketingLayout footer={false}>
     <SignupInner />
@@ -188,18 +194,18 @@ const SignupInner = () => {
               <em>{t('signup.titleEm')}</em>
             </h1>
             <p className="mkt-signup-lead">{t('signup.leadShort', { days: trialDays })}</p>
-            <ul className="mkt-signup-trust" aria-label={t('signup.kicker')}>
+            <ul className="mkt-signup-checks">
               <li>
-                <strong>{t('signup.rail1t', { days: trialDays })}</strong>
-                <span>{t('signup.rail1s')}</span>
+                <Check />
+                <span>{t('signup.rail1t', { days: trialDays })} — {t('signup.rail1s')}</span>
               </li>
               <li>
-                <strong>{t('signup.rail3t')}</strong>
-                <span>{t('signup.rail3s')}</span>
+                <Check />
+                <span>{t('signup.rail3t')} — {t('signup.rail3s')}</span>
               </li>
               <li>
-                <strong>{t('signup.rail4t')}</strong>
-                <span>{t('signup.rail4s')}</span>
+                <Check />
+                <span>{t('signup.rail4t')} — {t('signup.rail4s')}</span>
               </li>
             </ul>
           </header>
@@ -247,132 +253,124 @@ const SignupInner = () => {
                   <p className="mkt-signup-form-lead">{t('signup.leadAccount')}</p>
                 </div>
 
-                <div className="mkt-signup-block">
-                  <p className="mkt-signup-block-label">{t('signup.blockAccount')}</p>
-                  <div className="mkt-signup-fields">
-                    <label className={`mkt-signup-field${fieldErrors.name ? ' is-bad' : ''}`}>
-                      <span>{t('signup.name')}</span>
+                <div className="mkt-signup-fields">
+                  <label className={`mkt-signup-field${fieldErrors.name ? ' is-bad' : ''}`}>
+                    <span>{t('signup.name')}</span>
+                    <input
+                      id="su-name"
+                      autoComplete="name"
+                      required
+                      value={form.name}
+                      onChange={setField('name')}
+                      onBlur={blur('name')}
+                    />
+                    {fieldErrors.name ? <em>{fieldErrors.name}</em> : null}
+                  </label>
+
+                  <label className={`mkt-signup-field${fieldErrors.email ? ' is-bad' : ''}`}>
+                    <span>{t('signup.email')}</span>
+                    <input
+                      id="su-email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={form.email}
+                      onChange={setField('email')}
+                      onBlur={blur('email')}
+                    />
+                    {fieldErrors.email ? <em>{fieldErrors.email}</em> : null}
+                  </label>
+
+                  <label className={`mkt-signup-field${fieldErrors.password ? ' is-bad' : ''}`}>
+                    <span>{t('signup.password')}</span>
+                    <div className="mkt-signup-pass">
                       <input
-                        id="su-name"
-                        autoComplete="name"
+                        id="su-pass"
+                        type={showPass ? 'text' : 'password'}
+                        autoComplete="new-password"
                         required
-                        value={form.name}
-                        onChange={setField('name')}
-                        onBlur={blur('name')}
+                        minLength={minPassword}
+                        value={form.password}
+                        onChange={setField('password')}
+                        onBlur={blur('password')}
                       />
-                      {fieldErrors.name ? <em>{fieldErrors.name}</em> : null}
-                    </label>
-
-                    <label className={`mkt-signup-field${fieldErrors.email ? ' is-bad' : ''}`}>
-                      <span>{t('signup.email')}</span>
-                      <input
-                        id="su-email"
-                        type="email"
-                        autoComplete="email"
-                        required
-                        value={form.email}
-                        onChange={setField('email')}
-                        onBlur={blur('email')}
-                      />
-                      {fieldErrors.email ? <em>{fieldErrors.email}</em> : null}
-                    </label>
-
-                    <label className={`mkt-signup-field${fieldErrors.password ? ' is-bad' : ''}`}>
-                      <span>{t('signup.password')}</span>
-                      <div className="mkt-signup-pass">
-                        <input
-                          id="su-pass"
-                          type={showPass ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          required
-                          minLength={minPassword}
-                          value={form.password}
-                          onChange={setField('password')}
-                          onBlur={blur('password')}
-                        />
-                        <button
-                          type="button"
-                          className="mkt-signup-eye"
-                          aria-label={showPass ? t('signup.hidePassword') : t('signup.showPassword')}
-                          onClick={() => setShowPass((v) => !v)}
-                        >
-                          <Eye off={showPass} />
-                        </button>
-                      </div>
-                      {fieldErrors.password ? <em>{fieldErrors.password}</em> : null}
-                    </label>
-
-                    <label className={`mkt-signup-field${fieldErrors.confirmPassword ? ' is-bad' : ''}`}>
-                      <span>{t('signup.confirm')}</span>
-                      <div className="mkt-signup-pass">
-                        <input
-                          id="su-pass2"
-                          type={showPass2 ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          required
-                          value={form.confirmPassword}
-                          onChange={setField('confirmPassword')}
-                          onBlur={blur('confirmPassword')}
-                        />
-                        <button
-                          type="button"
-                          className="mkt-signup-eye"
-                          aria-label={showPass2 ? t('signup.hidePassword') : t('signup.showPassword')}
-                          onClick={() => setShowPass2((v) => !v)}
-                        >
-                          <Eye off={showPass2} />
-                        </button>
-                      </div>
-                      {fieldErrors.confirmPassword ? <em>{fieldErrors.confirmPassword}</em> : null}
-                    </label>
-                  </div>
-                </div>
-
-                <div className="mkt-signup-block">
-                  <p className="mkt-signup-block-label">{t('signup.blockAgency')}</p>
-                  <div className="mkt-signup-fields">
-                    <label className={`mkt-signup-field is-full${fieldErrors.agencyName ? ' is-bad' : ''}`}>
-                      <span>{t('signup.agency')}</span>
-                      <input
-                        id="su-agency"
-                        required
-                        value={form.agencyName}
-                        onChange={setField('agencyName')}
-                        onBlur={blur('agencyName')}
-                      />
-                      {fieldErrors.agencyName ? <em>{fieldErrors.agencyName}</em> : null}
-                    </label>
-
-                    <label className="mkt-signup-field is-full">
-                      <span>{t('signup.country')}</span>
-                      <select id="su-country" value={form.country} onChange={setField('country')}>
-                        {COUNTRIES.map((country) => (
-                          <option key={country} value={country}>
-                            {t(`countries.${country}`)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-
-                  <details className="mkt-signup-more">
-                    <summary>{t('signup.moreOptional')}</summary>
-                    <div className="mkt-signup-fields is-nested">
-                      <label className="mkt-signup-field">
-                        <span>{t('signup.phone')}</span>
-                        <input id="su-phone" type="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} />
-                      </label>
-                      <label className="mkt-signup-field">
-                        <span>{t('signup.city')}</span>
-                        <input id="su-city" value={form.city} onChange={setField('city')} />
-                      </label>
-                      <label className="mkt-signup-field is-full">
-                        <span>{t('signup.fleet')}</span>
-                        <input id="su-fleet" placeholder={t('signup.fleetPh')} value={form.fleetSize} onChange={setField('fleetSize')} />
-                      </label>
+                      <button
+                        type="button"
+                        className="mkt-signup-eye"
+                        aria-label={showPass ? t('signup.hidePassword') : t('signup.showPassword')}
+                        onClick={() => setShowPass((v) => !v)}
+                      >
+                        <Eye off={showPass} />
+                      </button>
                     </div>
-                  </details>
+                    {fieldErrors.password ? <em>{fieldErrors.password}</em> : null}
+                  </label>
+
+                  <label className={`mkt-signup-field${fieldErrors.confirmPassword ? ' is-bad' : ''}`}>
+                    <span>{t('signup.confirm')}</span>
+                    <div className="mkt-signup-pass">
+                      <input
+                        id="su-pass2"
+                        type={showPass2 ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        required
+                        value={form.confirmPassword}
+                        onChange={setField('confirmPassword')}
+                        onBlur={blur('confirmPassword')}
+                      />
+                      <button
+                        type="button"
+                        className="mkt-signup-eye"
+                        aria-label={showPass2 ? t('signup.hidePassword') : t('signup.showPassword')}
+                        onClick={() => setShowPass2((v) => !v)}
+                      >
+                        <Eye off={showPass2} />
+                      </button>
+                    </div>
+                    {fieldErrors.confirmPassword ? <em>{fieldErrors.confirmPassword}</em> : null}
+                  </label>
+
+                  <label className={`mkt-signup-field is-full${fieldErrors.agencyName ? ' is-bad' : ''}`}>
+                    <span>{t('signup.agency')}</span>
+                    <input
+                      id="su-agency"
+                      required
+                      value={form.agencyName}
+                      onChange={setField('agencyName')}
+                      onBlur={blur('agencyName')}
+                    />
+                    {fieldErrors.agencyName ? <em>{fieldErrors.agencyName}</em> : null}
+                  </label>
+
+                  <label className="mkt-signup-field is-full">
+                    <span>{t('signup.country')}</span>
+                    <select id="su-country" value={form.country} onChange={setField('country')}>
+                      {COUNTRIES.map((country) => (
+                        <option key={country} value={country}>
+                          {t(`countries.${country}`)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
+
+                <details className="mkt-signup-more">
+                  <summary>{t('signup.moreOptional')}</summary>
+                  <div className="mkt-signup-fields is-nested">
+                    <label className="mkt-signup-field">
+                      <span>{t('signup.phone')}</span>
+                      <input id="su-phone" type="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} />
+                    </label>
+                    <label className="mkt-signup-field">
+                      <span>{t('signup.city')}</span>
+                      <input id="su-city" value={form.city} onChange={setField('city')} />
+                    </label>
+                    <label className="mkt-signup-field is-full">
+                      <span>{t('signup.fleet')}</span>
+                      <input id="su-fleet" placeholder={t('signup.fleetPh')} value={form.fleetSize} onChange={setField('fleetSize')} />
+                    </label>
+                  </div>
+                </details>
 
                 {error ? (
                   <p className="mkt-signup-error" role="alert">
@@ -399,11 +397,11 @@ const SignupInner = () => {
               </form>
             )}
           </div>
-        </div>
 
-        <p className="mkt-signup-legal">
-          © {new Date().getFullYear()} {BRAND}
-        </p>
+          <p className="mkt-signup-legal">
+            © {new Date().getFullYear()} {BRAND}
+          </p>
+        </div>
       </section>
     </>
   )
