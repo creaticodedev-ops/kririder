@@ -98,6 +98,15 @@ export const DemoRequestCta = ({ children, className = '', arrow = true, magneti
   )
 }
 
+export const SignupNavCta = ({ children, className = '', onClick }) => {
+  const { t } = useMktI18n()
+  return (
+    <Link to="/signup" className={`mkt-btn mkt-btn-ghost mkt-nav-signup ${className}`.trim()} onClick={onClick}>
+      {children ?? t('cta.register')}
+    </Link>
+  )
+}
+
 export const WhatsAppDemoCta = ({ children, className = '', onClick }) => {
   const { t } = useMktI18n()
   return (

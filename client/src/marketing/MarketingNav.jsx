@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useAppContext } from '../context/AppContext'
 import BrandMark from './BrandMark'
-import { DemoRequestCta, WhatsAppDemoCta } from './Ctas'
+import { DemoRequestCta, SignupNavCta, WhatsAppDemoCta } from './Ctas'
 import MktLangSwitch from './MktLangSwitch'
 import { useMktI18n } from './i18n/MarketingI18n'
 
@@ -148,6 +148,7 @@ export const MarketingNav = () => {
                   <WhatsAppDemoCta className="mkt-nav-wa">
                     {t('cta.whatsappShort')}
                   </WhatsAppDemoCta>
+                  <SignupNavCta className="mkt-nav-signup">{t('cta.register')}</SignupNavCta>
                   <DemoRequestCta className="mkt-nav-demo" magnetic={false}>
                     {t('cta.demo')}
                   </DemoRequestCta>
@@ -275,6 +276,9 @@ export const MarketingNav = () => {
                     >
                       {t('nav.login')}
                     </button>
+                    <SignupNavCta className="mkt-menu-signup" onClick={close}>
+                      {t('cta.register')}
+                    </SignupNavCta>
                     <DemoRequestCta className="mkt-menu-cta" magnetic={false} onClick={close}>
                       {t('cta.demo')}
                     </DemoRequestCta>
