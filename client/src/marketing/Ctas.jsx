@@ -80,14 +80,15 @@ export const ContactCta = ({ children, className = '' }) => {
   )
 }
 
-export const DemoRequestCta = ({ children, className = '', arrow = true }) => {
+export const DemoRequestCta = ({ children, className = '', arrow = true, magnetic = true, onClick }) => {
   const { t } = useMktI18n()
-  const mag = useMagnetic(true)
+  const mag = useMagnetic(magnetic)
   return (
     <Link
       ref={mag.ref}
       to="/contact?intent=demo"
       className={`mkt-btn mkt-btn-primary mkt-cta ${className}`.trim()}
+      onClick={onClick}
       onMouseMove={mag.onMove}
       onMouseLeave={mag.onLeave}
     >
@@ -97,7 +98,7 @@ export const DemoRequestCta = ({ children, className = '', arrow = true }) => {
   )
 }
 
-export const WhatsAppDemoCta = ({ children, className = '' }) => {
+export const WhatsAppDemoCta = ({ children, className = '', onClick }) => {
   const { t } = useMktI18n()
   return (
     <a
@@ -105,6 +106,7 @@ export const WhatsAppDemoCta = ({ children, className = '' }) => {
       className={`mkt-btn mkt-btn-whatsapp ${className}`.trim()}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
     >
       <WhatsAppIcon />
       <span>{children ?? t('cta.whatsapp')}</span>

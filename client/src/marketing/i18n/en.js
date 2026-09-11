@@ -40,6 +40,7 @@
     account: 'Create account',
     demo: 'Request a demo',
     whatsapp: 'Contact on WhatsApp',
+    whatsappShort: 'WhatsApp',
     continue: 'Continue',
   },
   footer: {

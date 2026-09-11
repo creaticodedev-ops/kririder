@@ -84,28 +84,7 @@
   justify-content: center;
 }
 
-/* —— Nav overrides for light SaaS (solid state) —— */
-.mkt-nav.is-solid {
-  background: rgba(255, 255, 255, 0.94);
-  border-bottom-color: var(--mkt-line);
-  box-shadow: none;
-}
-
-.mkt-nav:not(.is-over-dark) {
-  background: rgba(255, 255, 255, 0.78);
-  border-bottom: 1px solid transparent;
-  backdrop-filter: blur(14px);
-}
-
-.mkt-nav:not(.is-over-dark) .mkt-nav-links a {
-  color: var(--mkt-muted);
-  font-weight: 500;
-}
-
-.mkt-nav:not(.is-over-dark) .mkt-nav-links a:hover {
-  color: var(--mkt-ink);
-}
-
+/* —— Shared button polish —— */
 .mkt-btn-primary {
   background: var(--mkt-accent);
   color: #fff;
@@ -156,14 +135,14 @@
   position: relative;
   overflow: clip;
   min-height: min(100svh, 58rem);
-  padding: 6.5rem 0 3.5rem;
+  padding: 7.25rem 0 3.5rem;
   color: #f5f5f5;
   background: #050505;
 }
 
 @media (min-width: 900px) {
   .saas-hero {
-    padding: 7.25rem 0 4.75rem;
+    padding: 8rem 0 4.75rem;
   }
 }
 
@@ -708,75 +687,6 @@
   .saas-hero-pill {
     transition: none !important;
   }
-}
-
-/* Nav over dark hero */
-.mkt-nav.is-over-dark {
-  background: transparent;
-  border-bottom-color: transparent;
-  backdrop-filter: none;
-}
-
-.mkt-nav.is-over-dark .mkt-nav-links a {
-  color: rgba(255, 255, 255, 0.68);
-}
-
-.mkt-nav.is-over-dark .mkt-nav-links a:hover {
-  color: #fff;
-}
-
-.mkt-nav.is-over-dark .mkt-btn-ghost {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.mkt-nav.is-over-dark .mkt-btn-ghost:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.mkt-nav.is-over-dark .mkt-burger-lines i {
-  background: #fff;
-}
-
-.mkt-nav.is-over-dark.is-solid,
-.mkt-nav.is-over-dark.is-open {
-  background: rgba(255, 255, 255, 0.94);
-  border-bottom-color: var(--mkt-line);
-  backdrop-filter: blur(14px);
-}
-
-.mkt-nav.is-over-dark.is-solid .mkt-nav-links a,
-.mkt-nav.is-over-dark.is-open .mkt-nav-links a {
-  color: var(--mkt-muted);
-}
-
-.mkt-nav.is-over-dark.is-solid .mkt-nav-links a:hover,
-.mkt-nav.is-over-dark.is-open .mkt-nav-links a:hover {
-  color: var(--mkt-ink);
-}
-
-.mkt-nav.is-over-dark.is-solid .mkt-btn-ghost,
-.mkt-nav.is-over-dark.is-open .mkt-btn-ghost {
-  color: var(--mkt-ink);
-  border-color: var(--mkt-line-strong);
-}
-
-.mkt-nav.is-over-dark .mkt-lang-btn {
-  color: rgba(255, 255, 255, 0.78);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.mkt-nav.is-over-dark .mkt-lang-btn:hover,
-.mkt-nav.is-over-dark .mkt-lang-btn[aria-expanded='true'] {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.mkt-nav.is-over-dark.is-solid .mkt-lang-btn,
-.mkt-nav.is-over-dark.is-open .mkt-lang-btn {
-  color: var(--mkt-ink);
-  border-color: var(--mkt-line);
 }
 
 /* —— Trust —— */
