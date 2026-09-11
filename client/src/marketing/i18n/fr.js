@@ -75,7 +75,7 @@
       eyebrow: 'RSZ CAR',
       title: 'Gérez votre agence de location. Simplement.',
       lead: 'Véhicules, réservations, clients, contrats et paiements réunis dans une seule plateforme.',
-      note: 'Échangez avec l’équipe et découvrez l’espace de travail en live.',
+      note: 'Réponse rapide · Démonstration personnalisée',
       float: {
         fleet: 'Flotte',
         desk: 'Réservations',

@@ -15,22 +15,20 @@ const VIEWS = [
 ]
 
 const FLOATS = [
-  { id: 'fleet', pos: 'is-a' },
-  { id: 'desk', pos: 'is-b' },
-  { id: 'docs', pos: 'is-c' },
+  { id: 'fleet', pos: 'is-a', line: 'a' },
+  { id: 'desk', pos: 'is-b', line: 'b' },
+  { id: 'docs', pos: 'is-c', line: 'c' },
 ]
 
 const prefetchShot = (shotId) => {
   const shot = SHOT_META[shotId]
   if (!shot || typeof window === 'undefined') return
-  const href = shot.webp
-  if ([...document.head.querySelectorAll('link[rel="prefetch"]')].some((n) => n.href.includes(href.split('/').pop()))) {
-    return
-  }
+  const file = String(shot.webp).split('/').pop()
+  if ([...document.head.querySelectorAll('link[rel="prefetch"]')].some((n) => n.href.includes(file))) return
   const link = document.createElement('link')
   link.rel = 'prefetch'
   link.as = 'image'
-  link.href = href
+  link.href = shot.webp
   link.type = 'image/webp'
   document.head.appendChild(link)
 }
@@ -56,7 +54,7 @@ export const SaasShowcase = () => {
           io.disconnect()
         }
       },
-      { rootMargin: '80px 0px', threshold: 0.12 }
+      { rootMargin: '100px 0px', threshold: 0.1 }
     )
     io.observe(node)
     return () => io.disconnect()
@@ -67,12 +65,13 @@ export const SaasShowcase = () => {
       if (entered) setSettled(true)
       return undefined
     }
-    const timer = window.setTimeout(() => setSettled(true), 1100)
+    const timer = window.setTimeout(() => setSettled(true), 1200)
     return () => window.clearTimeout(timer)
   }, [entered, reduce])
 
   useEffect(() => {
     if (!entered) return
+    prefetchShot('dashboard')
     prefetchShot(VIEWS[(activeIdx + 1) % VIEWS.length].shot)
     prefetchShot(VIEWS[(activeIdx - 1 + VIEWS.length) % VIEWS.length].shot)
   }, [activeIdx, entered])
@@ -81,30 +80,33 @@ export const SaasShowcase = () => {
     if (reduce || !entered || !stageRef.current) return undefined
     if (typeof window === 'undefined' || !window.matchMedia('(pointer:fine)').matches) return undefined
     const node = stageRef.current
+    let raf = 0
     const onMove = (event) => {
-      const box = node.getBoundingClientRect()
-      const x = ((event.clientX - box.left) / box.width - 0.5) * 2
-      const y = ((event.clientY - box.top) / box.height - 0.5) * 2
-      node.style.setProperty('--tilt-x', `${(y * -2.2).toFixed(2)}deg`)
-      node.style.setProperty('--tilt-y', `${(x * 3.2).toFixed(2)}deg`)
-      node.style.setProperty('--glow-x', `${((event.clientX - box.left) / box.width) * 100}%`)
-      node.style.setProperty('--glow-y', `${((event.clientY - box.top) / box.height) * 100}%`)
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const box = node.getBoundingClientRect()
+        const x = ((event.clientX - box.left) / box.width - 0.5) * 2
+        const y = ((event.clientY - box.top) / box.height - 0.5) * 2
+        node.style.setProperty('--tilt-x', `${(y * -1.8).toFixed(2)}deg`)
+        node.style.setProperty('--tilt-y', `${(x * 2.6).toFixed(2)}deg`)
+        node.style.setProperty('--glow-x', `${((event.clientX - box.left) / box.width) * 100}%`)
+        node.style.setProperty('--glow-y', `${((event.clientY - box.top) / box.height) * 100}%`)
+      })
     }
     const onLeave = () => {
-      node.style.setProperty('--tilt-x', '0.5deg')
-      node.style.setProperty('--tilt-y', '-1.6deg')
+      node.style.setProperty('--tilt-x', '0.6deg')
+      node.style.setProperty('--tilt-y', '-2deg')
     }
-    node.addEventListener('pointermove', onMove)
+    node.addEventListener('pointermove', onMove, { passive: true })
     node.addEventListener('pointerleave', onLeave)
     return () => {
+      cancelAnimationFrame(raf)
       node.removeEventListener('pointermove', onMove)
       node.removeEventListener('pointerleave', onLeave)
     }
   }, [entered, reduce])
 
-  const select = useCallback((idx) => {
-    setActiveIdx(idx)
-  }, [])
+  const select = useCallback((idx) => setActiveIdx(idx), [])
 
   const onKeyNav = (event) => {
     let next = null
@@ -124,27 +126,25 @@ export const SaasShowcase = () => {
       className={`saas-section saas-showcase${entered ? ' is-in' : ''}${settled ? ' is-settled' : ''}${reduce ? ' is-reduced' : ''}`}
       id="product"
     >
+      {/* —— First slide: cinematic product premiere —— */}
       <div className="saas-premiere">
-        <div className="mkt-wrap saas-premiere-grid">
-          <div className="saas-premiere-copy">
+        <div className="saas-premiere-aura" aria-hidden />
+        <div className="mkt-wrap saas-premiere-inner">
+          <header className="saas-premiere-copy">
             <p className="saas-premiere-eyebrow">{t('saas.premiere.eyebrow')}</p>
             <h2 className="saas-premiere-title">{t('saas.premiere.title')}</h2>
             <p className="saas-premiere-lead">{t('saas.premiere.lead')}</p>
+          </header>
 
-            <div className="saas-premiere-actions">
-              <DemoRequestCta className="saas-premiere-demo">{t('cta.demo')}</DemoRequestCta>
-              <WhatsAppDemoCta className="saas-premiere-wa">{t('cta.whatsapp')}</WhatsAppDemoCta>
-            </div>
-            <p className="saas-premiere-note">{t('saas.premiere.note')}</p>
-          </div>
-
-          <div
-            ref={stageRef}
-            className="saas-premiere-stage"
-            aria-hidden={false}
-          >
+          <div ref={stageRef} className="saas-premiere-stage">
             <div className="saas-premiere-glow" aria-hidden />
             <div className="saas-premiere-sweep" aria-hidden />
+
+            <svg className="saas-premiere-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+              <path className="is-a" d="M18 18 C 28 28, 34 34, 42 40" fill="none" />
+              <path className="is-b" d="M86 36 C 74 42, 66 46, 58 50" fill="none" />
+              <path className="is-c" d="M22 82 C 32 72, 38 64, 44 58" fill="none" />
+            </svg>
 
             {FLOATS.map((item) => (
               <div key={item.id} className={`saas-premiere-float ${item.pos}`} aria-hidden>
@@ -158,21 +158,31 @@ export const SaasShowcase = () => {
                 <span />
                 <span />
                 <span />
-                <p>{t(`saas.show.${active.id}.chrome`)}</p>
+                <p>{t('saas.show.overview.chrome')}</p>
               </div>
-              <div className="saas-premiere-viewport" key={active.shot}>
+              <div className="saas-premiere-viewport">
                 <ProductShot
-                  id={active.shot}
-                  alt={t(`alts.${active.shot}`)}
-                  eager={activeIdx === 0}
-                  sizes="(max-width: 900px) 94vw, min(720px, 52vw)"
+                  id="dashboard"
+                  alt={t('alts.dashboard')}
+                  eager
+                  sizes="(max-width: 720px) 94vw, min(980px, 86vw)"
                 />
               </div>
+              <div className="saas-premiere-reflection" aria-hidden />
             </div>
+          </div>
+
+          <div className="saas-premiere-cta-block">
+            <div className="saas-premiere-actions">
+              <DemoRequestCta className="saas-premiere-demo">{t('cta.demo')}</DemoRequestCta>
+              <WhatsAppDemoCta className="saas-premiere-wa">{t('cta.whatsapp')}</WhatsAppDemoCta>
+            </div>
+            <p className="saas-premiere-note">{t('saas.premiere.note')}</p>
           </div>
         </div>
       </div>
 
+      {/* —— Discover modules —— */}
       <div className="mkt-wrap saas-explore">
         <div className="saas-explore-head">
           <p className="saas-kicker">{t('saas.showcaseKicker')}</p>
@@ -212,11 +222,28 @@ export const SaasShowcase = () => {
 
           <div className="saas-stage-main">
             <div
-              className="saas-stage-caption saas-explore-caption"
+              className="saas-explore-frame"
               role="tabpanel"
               id={`${baseId}-panel`}
               aria-labelledby={`${baseId}-tab-${active.id}`}
             >
+              <div className="saas-stage-chrome" aria-hidden>
+                <span />
+                <span />
+                <span />
+                <p>{t(`saas.show.${active.id}.chrome`)}</p>
+              </div>
+              <div className="saas-explore-viewport" key={active.shot}>
+                <ProductShot
+                  id={active.shot}
+                  alt={t(`alts.${active.shot}`)}
+                  eager={false}
+                  sizes="(max-width: 900px) 94vw, min(820px, 58vw)"
+                />
+              </div>
+            </div>
+
+            <div className="saas-stage-caption saas-explore-caption">
               <p className="saas-stage-index" aria-hidden>
                 {String(activeIdx + 1).padStart(2, '0')} / {String(VIEWS.length).padStart(2, '0')}
               </p>
@@ -224,7 +251,7 @@ export const SaasShowcase = () => {
               <p>{t(`saas.show.${active.id}.body`)}</p>
             </div>
 
-            <div className="saas-stage-strip" aria-label={t('saas.showcaseKicker')}>
+            <div className="saas-stage-strip">
               {VIEWS.map((view, idx) => (
                 <button
                   key={view.id}

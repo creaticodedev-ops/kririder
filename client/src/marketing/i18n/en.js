@@ -147,7 +147,7 @@
       eyebrow: 'RSZ CAR',
       title: 'Manage your rental agency. Simply.',
       lead: 'Vehicles, reservations, customers, contracts and payments — united in one platform.',
-      note: 'Talk to the team and see the workspace live.',
+      note: 'Fast response · Tailored product demo',
       float: {
         fleet: 'Fleet',
         desk: 'Reservations',
