@@ -1,20 +1,32 @@
-import { ContactCta, PrimaryCta } from '../Ctas'
-import { TRIAL_DAYS } from '../config'
+import { DemoRequestCta, WhatsAppDemoCta } from '../Ctas'
+import { demoWhatsAppHref } from '../config'
 import { useMktI18n } from '../i18n/MarketingI18n'
 
 export const SaasFinalCta = () => {
   const { t } = useMktI18n()
 
   return (
-    <section className="saas-final">
-      <div className="mkt-wrap">
+    <section className="saas-final" aria-labelledby="saas-final-title">
+      <div className="saas-final-atmos" aria-hidden>
+        <span className="saas-final-glow" />
+        <span className="saas-final-line" />
+      </div>
+      <div className="mkt-wrap saas-final-inner">
         <p className="saas-kicker">{t('final.kicker')}</p>
-        <h2 className="saas-h2">{t('saas.finalTitle')}</h2>
-        <p className="saas-lead">{t('final.lead', { days: TRIAL_DAYS })}</p>
+        <h2 id="saas-final-title" className="saas-h2">
+          {t('saas.finalTitle')}
+        </h2>
+        <p className="saas-lead">{t('saas.finalLead')}</p>
         <div className="saas-final-actions">
-          <PrimaryCta variant="light">{t('cta.trialLong')}</PrimaryCta>
-          <ContactCta className="mkt-btn-ghost-light">{t('cta.talk')}</ContactCta>
+          <DemoRequestCta className="saas-final-demo">{t('cta.demo')}</DemoRequestCta>
+          <WhatsAppDemoCta className="saas-final-wa">{t('cta.whatsapp')}</WhatsAppDemoCta>
         </div>
+        <p className="saas-final-phone">
+          <span>{t('footer.whatsappLabel')}</span>
+          <a href={demoWhatsAppHref()} target="_blank" rel="noopener noreferrer">
+            +212 778616837
+          </a>
+        </p>
       </div>
     </section>
   )

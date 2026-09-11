@@ -217,6 +217,49 @@
   transform: translate3d(var(--mx, 0px), calc(var(--my, 0px) + 1px), 0) scale(0.985);
 }
 
+.mkt-btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 2.85rem;
+  min-width: 11.5rem;
+  padding: 0.62rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.mkt-btn-whatsapp:hover {
+  background: rgba(37, 211, 102, 0.12);
+  border-color: rgba(37, 211, 102, 0.55);
+  box-shadow: 0 12px 28px -18px rgba(37, 211, 102, 0.55);
+  transform: translateY(-1px);
+}
+
+.mkt-btn-whatsapp:focus-visible {
+  outline: 2px solid #25d366;
+  outline-offset: 3px;
+}
+
+.mkt-btn-whatsapp .mkt-wa-icon {
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mkt-btn-whatsapp:hover .mkt-wa-icon {
+  transform: translateY(-1px) scale(1.05);
+}
+
 .mkt-play {
   width: 0;
   height: 0;
@@ -2274,59 +2317,343 @@
   }
 }
 
-.mkt-foot {
-  background: #0b0908;
-  color: #f6efe8;
-  border-top: 1px solid rgba(165, 22, 36, 0.32);
-  padding-top: 2.6rem;
-  padding-bottom: max(1.8rem, env(safe-area-inset-bottom));
+/* —— Footer (RSZ CAR signature) —— */
+.mkt-foot.mkt-foot-pro {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, rgba(8, 8, 8, 0.2) 0%, transparent 18%),
+    #070707;
+  color: rgba(255, 255, 255, 0.72);
+  border-top: 0;
+  padding: clamp(2.8rem, 7vw, 4.6rem) 0 max(2rem, env(safe-area-inset-bottom));
 }
 
-.mkt-foot .mkt-lead {
-  color: rgba(246, 239, 232, 0.58);
+.mkt-foot-atmos {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.mkt-foot-grid {
+.mkt-foot-glow {
+  position: absolute;
+  inset: auto -10% -35% 35%;
+  height: 70%;
+  background: radial-gradient(ellipse at center, rgba(165, 22, 36, 0.18), transparent 68%);
+  filter: blur(8px);
+  opacity: 0.85;
+  animation: mkt-foot-breathe 14s ease-in-out infinite alternate;
+}
+
+.mkt-foot-gridlines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.045;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.55) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(180deg, transparent, #000 28%, #000 72%, transparent);
+}
+
+.mkt-foot-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.mkt-foot-stage {
   display: grid;
   gap: 1.6rem;
+  align-items: end;
+  padding-bottom: clamp(1.8rem, 4vw, 2.6rem);
 }
 
-@media (min-width: 800px) {
-  .mkt-foot-grid {
-    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+@media (min-width: 900px) {
+  .mkt-foot-stage {
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.9fr);
+    gap: 2.4rem;
   }
 }
 
-.mkt-foot h2 {
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin: 0 0 0.7rem;
-  color: rgba(246, 239, 232, 0.5);
+.mkt-foot-brand {
+  max-width: 34rem;
 }
 
-.mkt-foot a {
-  display: block;
-  color: rgba(246, 239, 232, 0.62);
+.mkt-foot-pro .mkt-foot-logo {
+  display: inline-flex;
+}
+
+.mkt-foot-pro .mkt-mark-foot img {
+  height: clamp(2.15rem, 4.2vw, 2.85rem);
+  max-width: min(18rem, 82vw);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+  opacity: 0.92;
+}
+
+.mkt-foot-pro.is-in .mkt-mark-foot img {
+  opacity: 1;
+}
+
+.mkt-foot-pro .mkt-foot-logo:hover img {
+  transform: translateY(-1px);
+}
+
+.mkt-foot-statement {
+  margin: 1.05rem 0 0;
+  max-width: 32rem;
+  font-size: clamp(0.98rem, 1.7vw, 1.08rem);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.58);
+  text-wrap: pretty;
+}
+
+.mkt-foot-stage-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+}
+
+@media (min-width: 900px) {
+  .mkt-foot-stage-actions {
+    align-items: flex-end;
+  }
+}
+
+.mkt-foot-demo,
+.mkt-foot-wa {
+  width: 100%;
+  min-height: 3rem;
+  justify-content: center;
+}
+
+@media (min-width: 900px) {
+  .mkt-foot-demo,
+  .mkt-foot-wa {
+    width: auto;
+    min-width: 14.5rem;
+  }
+}
+
+.mkt-foot-wa {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+.mkt-foot-wa:hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #fff !important;
+}
+
+.mkt-foot-phone {
+  display: inline-flex;
+  justify-content: center;
+  margin-top: 0.15rem;
+  color: rgba(255, 255, 255, 0.42);
   text-decoration: none;
-  margin: 0.32rem 0;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  transition: color 0.22s ease;
 }
 
-.mkt-foot a:hover {
+.mkt-foot-phone:hover,
+.mkt-foot-phone:focus-visible {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+@media (min-width: 900px) {
+  .mkt-foot-phone {
+    justify-content: flex-end;
+    padding-inline-end: 0.35rem;
+  }
+}
+
+.mkt-foot-divider {
+  height: 1px;
+  margin: 0 0 clamp(1.6rem, 4vw, 2.3rem);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(165, 22, 36, 0.55) 18%,
+    rgba(255, 255, 255, 0.12) 52%,
+    rgba(165, 22, 36, 0.35) 82%,
+    transparent
+  );
+}
+
+.mkt-foot-divider span {
+  display: block;
+  width: 2.4rem;
+  height: 2px;
+  margin: -1px auto 0;
+  background: #A51624;
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(165, 22, 36, 0.45);
+}
+
+.mkt-foot-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.55rem 1.25rem;
+}
+
+@media (min-width: 760px) {
+  .mkt-foot-cols {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.8rem;
+  }
+}
+
+.mkt-foot-col h2 {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.mkt-foot-col a {
+  position: relative;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.38rem 0;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+
+.mkt-foot-col a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: auto;
+  bottom: -0.12rem;
+  width: 0;
+  height: 1px;
+  background: #A51624;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mkt-foot-col a:hover,
+.mkt-foot-col a:focus-visible {
   color: #fff;
+  transform: translateX(2px);
+}
+
+.mkt-foot-col a:hover::after,
+.mkt-foot-col a:focus-visible::after {
+  width: 100%;
+}
+
+.mkt[dir='rtl'] .mkt-foot-col a:hover,
+.mkt[dir='rtl'] .mkt-foot-col a:focus-visible {
+  transform: translateX(-2px);
+}
+
+.mkt[dir='rtl'] .mkt-foot-col a::after {
+  left: auto;
+  right: 0;
+}
+
+.mkt-foot-sign {
+  position: relative;
+  margin-top: clamp(2.2rem, 5vw, 3.2rem);
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.mkt-foot-mark {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -0.35rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 14vw, 7.5rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 0.82;
+  color: rgba(255, 255, 255, 0.035);
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .mkt-foot-legal {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 0.7rem;
-  margin-top: 2rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(246, 239, 232, 0.42);
+  gap: 0.65rem 1.2rem;
+  color: rgba(255, 255, 255, 0.38);
   font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.mkt-foot-legal p {
+  margin: 0;
+}
+
+.mkt-foot-pro .mkt-foot-stage,
+.mkt-foot-pro .mkt-foot-cols,
+.mkt-foot-pro .mkt-foot-sign {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mkt-foot-pro.is-in .mkt-foot-stage,
+.mkt-foot-pro.is-in .mkt-foot-cols,
+.mkt-foot-pro.is-in .mkt-foot-sign {
+  opacity: 1;
+  transform: none;
+}
+
+.mkt-foot-pro.is-in .mkt-foot-cols {
+  transition-delay: 0.08s;
+}
+
+.mkt-foot-pro.is-in .mkt-foot-sign {
+  transition-delay: 0.16s;
+}
+
+@keyframes mkt-foot-breathe {
+  from {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0.95;
+    transform: translate3d(-2%, -3%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-foot-glow {
+    animation: none;
+  }
+
+  .mkt-foot-pro .mkt-foot-stage,
+  .mkt-foot-pro .mkt-foot-cols,
+  .mkt-foot-pro .mkt-foot-sign,
+  .mkt-foot-pro .mkt-mark-foot img {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .mkt-form {

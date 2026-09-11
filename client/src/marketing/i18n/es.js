@@ -42,7 +42,10 @@
   },
   footer: {
     blurb: 'Software de gestión de alquiler para reservas, flota, clientes, contratos y el día a día.',
+    statement:
+      'La plataforma operativa para agencias modernas — vehículos, reservas, clientes, contratos y pagos en un solo espacio.',
     product: 'Producto',
+    explore: 'Explorar',
     workspace: 'Espacio de trabajo',
     company: 'Empresa',
     contact: 'Contacto',
@@ -50,7 +53,17 @@
     privacy: 'Privacidad',
     terms: 'Términos',
     rights: 'Todos los derechos reservados.',
-    built: 'Hecho para empresas de alquiler de vehículos.',
+    built: 'Hecho para profesionales del alquiler de vehículos.',
+    whatsappLabel: 'WhatsApp',
+    whatsappCta: 'WhatsApp',
+    link: {
+      features: 'Funciones',
+      fleet: 'Vehículos',
+      reservations: 'Reservas',
+      contracts: 'Contratos',
+      customers: 'Clientes',
+      analytics: 'Estadísticas',
+    },
   },
   hero: {
     badge: 'Sistema operativo para alquiler de coches',

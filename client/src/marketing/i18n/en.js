@@ -45,7 +45,10 @@
   },
   footer: {
     blurb: 'Car rental management software for reservations, fleet, customers, contracts and daily operations.',
+    statement:
+      'The operating platform for modern rental agencies — vehicles, reservations, customers, contracts and payments in one workspace.',
     product: 'Product',
+    explore: 'Explore',
     workspace: 'Workspace',
     company: 'Company',
     contact: 'Contact',
@@ -53,7 +56,17 @@
     privacy: 'Privacy',
     terms: 'Terms',
     rights: 'All rights reserved.',
-    built: 'Built for car rental businesses.',
+    built: 'Built for car rental professionals.',
+    whatsappLabel: 'WhatsApp',
+    whatsappCta: 'WhatsApp',
+    link: {
+      features: 'Features',
+      fleet: 'Vehicles',
+      reservations: 'Reservations',
+      contracts: 'Contracts',
+      customers: 'Customers',
+      analytics: 'Analytics',
+    },
   },
   hero: {
     badge: 'Car rental management software',
@@ -287,7 +300,9 @@
         a: 'Create an account to open a free trial workspace, or contact the team if you need a demo for an established fleet.',
       },
     ],
-    finalTitle: 'Ready to run your rental business differently?',
+    finalTitle: 'Ready to take back control of your agency?',
+    finalLead:
+      'See how RSZ CAR can centralize your operations and simplify the day-to-day of your rental business.',
   },
   proof: {
     label: 'Customers',
@@ -416,9 +431,9 @@
     },
   },
   final: {
-    kicker: 'Get started',
+    kicker: 'Take action',
     title: 'Run your rental business with RSZ CAR.',
-    lead: 'Create an account in minutes. {{days}}-day free trial — one per agency. No payment during registration.',
+    lead: 'Request a demo or reach us on WhatsApp. Fast response for serious rental agencies.',
   },
   about: {
     kicker: 'Company',

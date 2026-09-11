@@ -45,7 +45,10 @@
   },
   footer: {
     blurb: 'Logiciel de gestion de location pour les réservations, la flotte, les clients, les contrats et le quotidien.',
+    statement:
+      'La plateforme d’exploitation des agences modernes — véhicules, réservations, clients, contrats et paiements dans un seul espace.',
     product: 'Produit',
+    explore: 'Explorer',
     workspace: 'Espace de travail',
     company: 'Entreprise',
     contact: 'Contact',
@@ -54,6 +57,16 @@
     terms: 'Conditions',
     rights: 'Tous droits réservés.',
     built: 'Conçu pour les professionnels de la location.',
+    whatsappLabel: 'WhatsApp',
+    whatsappCta: 'WhatsApp',
+    link: {
+      features: 'Fonctionnalités',
+      fleet: 'Véhicules',
+      reservations: 'Réservations',
+      contracts: 'Contrats',
+      customers: 'Clients',
+      analytics: 'Statistiques',
+    },
   },
   hero: {
     badge: 'Système d’exploitation pour la location',
@@ -272,11 +285,14 @@
         'Conditions commerciales adaptées',
       ],
     },
+    finalTitle: 'Prêt à reprendre le contrôle de votre agence ?',
+    finalLead:
+      'Découvrez comment RSZ CAR peut centraliser votre activité et simplifier votre quotidien.',
   },
   final: {
-    kicker: 'Départ',
+    kicker: 'Passer à l’action',
     title: 'Pilotez votre location avec RSZ CAR.',
-    lead: 'Créez un compte en quelques minutes. Essai de {{days}} jours — un par agence. Aucun paiement à l’inscription.',
+    lead: 'Demandez une démonstration ou écrivez-nous sur WhatsApp. Réponse rapide pour les agences sérieuses.',
   },
   about: {
     kicker: 'Entreprise',
